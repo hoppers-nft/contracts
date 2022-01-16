@@ -109,9 +109,7 @@ contract FrogNFT is ERC721, ERC2981 {
     }
 
     function levelUp(
-        uint256 tokenId,
-        uint256 newAbility,
-        uint256 newPower
+        uint256 tokenId
     ) external {
         if (caretakers[msg.sender] == 0) revert InvalidCaretaker();
 
