@@ -5,11 +5,11 @@ import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC721} from "@solmate/tokens/ERC721.sol";
 import {ERC2981} from "./ERC2981.sol";
 
+//slither-disable-next-line locked-ether
 contract FrogNFT is ERC721, ERC2981 {
     using SafeTransferLib for address;
 
     address public owner;
-    uint256 public saleTime;
 
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLE STORAGE
@@ -17,6 +17,7 @@ contract FrogNFT is ERC721, ERC2981 {
     uint256 public immutable MAX_PER_ADDRESS;
     uint256 public immutable MAX_SUPPLY;
     uint256 public immutable MINT_COST;
+    uint256 public immutable SALE_TIME;
 
     /*///////////////////////////////////////////////////////////////
                                 FROGS
@@ -32,8 +33,8 @@ contract FrogNFT is ERC721, ERC2981 {
         uint8 fertility;
     }
 
-    mapping(uint256 => Frog) frogs;
-    uint256 frogsLength;
+    mapping(uint256 => Frog) public frogs;
+    uint256 public frogsLength;
 
     // whitelist for leveling up
     mapping(address => uint256) public caretakers;
@@ -68,7 +69,7 @@ contract FrogNFT is ERC721, ERC2981 {
 
         MINT_COST = _MINT_COST;
         MAX_SUPPLY = _MAX_SUPPLY;
-        _SALE_TIME = _SALE_TIME;
+        SALE_TIME = _SALE_TIME;
 
         //slither-disable-next-line missing-zero-check
         MAX_PER_ADDRESS = _MAX_PER_ADDRESS;
@@ -108,9 +109,7 @@ contract FrogNFT is ERC721, ERC2981 {
         delete caretakers[caretaker];
     }
 
-    function levelUp(
-        uint256 tokenId
-    ) external {
+    function levelUp(uint256 tokenId) external {
         if (caretakers[msg.sender] == 0) revert InvalidCaretaker();
 
         // overflow is unrealistic
@@ -139,20 +138,20 @@ contract FrogNFT is ERC721, ERC2981 {
 
     //slither-disable-next-line weak-prng
     function generate(uint256 seed) internal pure returns (Frog memory) {
-        return Frog({
-            strength: uint8((seed >> (8*1)) % 10),
-            agility: uint8((seed >> (8*2)) % 10),
-            vitality: uint8((seed >> (8*3)) % 10),
-            intelligence: uint8((seed >> (8*4)) % 10),
-            fertility: uint8((seed >> (8*5)) % 10),
-            level: 0,
-            experience: 0
-        });
+        return
+            Frog({
+                strength: uint8((seed >> (8 * 1)) % 10),
+                agility: uint8((seed >> (8 * 2)) % 10),
+                vitality: uint8((seed >> (8 * 3)) % 10),
+                intelligence: uint8((seed >> (8 * 4)) % 10),
+                fertility: uint8((seed >> (8 * 5)) % 10),
+                level: 0,
+                experience: 0
+            });
     }
 
-    function mint(uint256 numberOfMints) payable external {
-
-        if(MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
+    function mint(uint256 numberOfMints) external payable {
+        if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
 
         uint256 frogID = frogsLength;
 
@@ -163,22 +162,28 @@ contract FrogNFT is ERC721, ERC2981 {
 
         // overflow is unrealistic
         unchecked {
-           frogsLength += numberOfMints;
+            frogsLength += numberOfMints;
 
             uint256 seed = enoughRandom();
             for (uint256 i = 0; i < numberOfMints; i++) {
                 _mint(msg.sender, frogID + i);
-               frogs[frogID + i] = generate(seed >> i);
+                frogs[frogID + i] = generate(seed >> i);
             }
         }
-
     }
 
     function getFrog(uint256 tokenId) external view returns (Frog memory) {
         return frogs[tokenId];
     }
 
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        //slither-disable-next-line redundant-statements
+        tokenId;
         return "TODO"; // todo
     }
 

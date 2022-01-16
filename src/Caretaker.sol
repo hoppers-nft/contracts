@@ -6,7 +6,6 @@ import {Fly} from "./Fly.sol";
 import {FrogNFT} from "./Frog.sol";
 
 contract CareTaker {
-
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLE STORAGE
     //////////////////////////////////////////////////////////////*/
@@ -16,15 +15,16 @@ contract CareTaker {
     error InvalidOwner();
 
     constructor(address fly, address frog) {
+        // slither-disable-next-line missing-zero-check
         FLY = fly;
+        // slither-disable-next-line missing-zero-check
         FROG = frog;
     }
 
     function levelUp(uint256 tokenId) external {
-        if(FrogNFT(FROG).ownerOf(tokenId) != msg.sender) revert InvalidOwner();
+        if (FrogNFT(FROG).ownerOf(tokenId) != msg.sender) revert InvalidOwner();
 
         // todo how much fly
         // todo how much XP (FrogNFT might have to consume internally)
     }
-
 }
