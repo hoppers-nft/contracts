@@ -138,16 +138,18 @@ contract FrogNFT is ERC721, ERC2981 {
 
     //slither-disable-next-line weak-prng
     function generate(uint256 seed) internal pure returns (Frog memory) {
-        return
-            Frog({
-                strength: uint8((seed >> (8 * 1)) % 10),
-                agility: uint8((seed >> (8 * 2)) % 10),
-                vitality: uint8((seed >> (8 * 3)) % 10),
-                intelligence: uint8((seed >> (8 * 4)) % 10),
-                fertility: uint8((seed >> (8 * 5)) % 10),
-                level: 0,
-                experience: 0
-            });
+        unchecked {
+            return
+                Frog({
+                    strength: uint8((seed >> (8 * 1)) % 10) + 1,
+                    agility: uint8((seed >> (8 * 2)) % 10) + 1,
+                    vitality: uint8((seed >> (8 * 3)) % 10) + 1,
+                    intelligence: uint8((seed >> (8 * 4)) % 10) + 1,
+                    fertility: uint8((seed >> (8 * 5)) % 10) + 1,
+                    level: 0,
+                    experience: 0
+                });
+        }
     }
 
     function mint(uint256 numberOfMints) external payable {
