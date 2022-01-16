@@ -174,6 +174,10 @@ contract FrogNFT is ERC721, ERC2981 {
 
     }
 
+    function getFrog(uint256 tokenId) external view returns (Frog memory) {
+        return frogs[tokenId];
+    }
+
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         return "TODO"; // todo
     }
