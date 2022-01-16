@@ -54,8 +54,5 @@ abstract contract Zone {
         FrogNFT.Frog memory frog,
         uint256 tokenId,
         uint256 hourDuration
-    ) internal pure virtual returns (uint256) // solhint-disable-next-line
-    {
-
-    }
+    ) internal pure virtual returns (uint256) {} // solhint-disable-line
 }
