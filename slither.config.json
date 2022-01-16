@@ -1,0 +1,12 @@
+{
+  "detectors_to_exclude": "events-maths,assembly,naming-convention,solc-version,timestamp",
+  "solc_disable_warnings": true,
+  "filter_paths": "lib/",
+  "solc_remaps": [
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "ds-test/=lib/ds-test/src/",
+    "@chainlink/=lib/chainlink/",
+    "@solmate/=lib/solmate/src/",
+    "@base64/=lib/base64/"
+  ]
+}

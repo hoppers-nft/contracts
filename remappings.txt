@@ -1,0 +1,5 @@
+@chainlink/=lib/chainlink/
+@solmate/=lib/solmate/src/
+@openzeppelin/=lib/openzeppelin-contracts/
+@base64/=lib/base64/
+ds-test/=lib/ds-test/src/

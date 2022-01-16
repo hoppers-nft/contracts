@@ -1,0 +1,58 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+name: Tests
+
+jobs:
+  tests-stable:
+    name: Tests (Stable)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+        
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+        
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Test
+        run: forge test
+
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+        
+      - name: Checkout submodules
+        run: git submodule update --init --recursive      
+
+      - name: Install solc
+        run: | 
+          sudo add-apt-repository -y ppa:ethereum/ethereum
+          sudo add-apt-repository -y ppa:ethereum/ethereum-dev
+          sudo apt-get update
+          sudo apt-get install -y solc
+
+      - name: Slither Install
+        run: pip3 install slither-analyzer
+
+      - name: Solhint Install
+        run: npm install -g solhint prettier prettier-plugin-solidity
+
+      - name: Slither Run
+        run: slither src/ --config-file slither.config.json
+      
+      - name: Solhint Run
+        run: solhint src/*.sol -w 0
+
+      - name: Prettier Run
+        run: npx prettier --check 'src/**/*.sol'
