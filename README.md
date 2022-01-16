@@ -8,6 +8,7 @@
 * `Zone.sol`:
   * Template/abstract contract for zones which can mint `Fly`
   * Contracts using the template have to override `calculateFarmAmount`
+  * Example: `zones/Pond.sol`
 * `Caretaker.sol`
   * Contract which can issue a level_up from the user. 
 
