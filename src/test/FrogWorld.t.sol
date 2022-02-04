@@ -16,7 +16,7 @@ interface HEVM {
     function prank(address, address) external;
 
     function startPrank(address) external;
-    
+
     function startPrank(address, address) external;
 
     function stopPrank() external;
@@ -26,9 +26,7 @@ interface HEVM {
     function expectRevert(bytes calldata) external;
 }
 
-
 contract HopperWorld is DSTest {
-
     // Cheatcodes
     HEVM private hevm = HEVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -48,7 +46,7 @@ contract HopperWorld is DSTest {
     Fly public FLY;
     CareTaker public CARETAKER;
     Pond public POND;
-    
+
     function setUp() public {
         owner = msg.sender;
 
@@ -83,23 +81,19 @@ contract HopperWorld is DSTest {
         );
         HOPPER.mint(1);
 
-        hevm.expectRevert(
-            abi.encodeWithSelector(HopperNFT.MintLimit.selector)
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
+        HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(
+            MAX_MINT_PER_CALL + 1
         );
-        HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(MAX_MINT_PER_CALL + 1);
 
         HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
-
 
         hevm.stopPrank();
     }
 
     function testScenario() public {
-        
         // hevm.prank(user1);
         // HOPPER.mint(10);
-
-
     }
 
     function testNames() public {
@@ -137,5 +131,36 @@ contract HopperWorld is DSTest {
             keccak256(bytes("myhopper")) ==
                 keccak256(bytes(HOPPER.getHopperName(0)))
         );
+    }
+
+    function testLevels() public {
+        hevm.prank(user1, user1);
+        HOPPER.mint{value: MINT_COST}(1);
+
+        hevm.prank(user1);
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
+        HOPPER.levelUp(0);
+
+        hevm.startPrank(caretakerUser);
+        HOPPER.levelUp(0);
+
+        (uint32 level, , , , , , ) = HOPPER.hoppers(0);
+        assert(level == 1);
+
+        for (uint256 i; i < 99; ++i) {
+            HOPPER.levelUp(0);
+        }
+
+        (level, , , , , , ) = HOPPER.hoppers(0);
+        assert(level == 100);
+
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.MaxLevelReached.selector)
+        );
+        HOPPER.levelUp(0);
+
+        hevm.stopPrank();
     }
 }

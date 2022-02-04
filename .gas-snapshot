@@ -1,3 +1,4 @@
 HopperWorld:testHopperMint() (gas: 544809)
+HopperWorld:testLevels() (gas: 266250)
 HopperWorld:testNames() (gas: 155772)
 HopperWorld:testScenario() (gas: 143)

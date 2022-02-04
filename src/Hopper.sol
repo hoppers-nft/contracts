@@ -58,6 +58,7 @@ contract HopperNFT is ERC721, ERC2981 {
     error InvalidTokenID();
     error MaxLength25();
     error OnlyEOAAllowed();
+    error MaxLevelReached();
 
     constructor(
         string memory _NFT_NAME,
@@ -119,6 +120,8 @@ contract HopperNFT is ERC721, ERC2981 {
     }
 
     function levelUp(uint256 tokenId) external onlyCareTaker {
+        if (hoppers[tokenId].level == 100) revert MaxLevelReached();
+
         // overflow is unrealistic
         unchecked {
             ++(hoppers[tokenId].level);
@@ -126,7 +129,8 @@ contract HopperNFT is ERC721, ERC2981 {
     }
 
     function changeHopperName(uint256 tokenId, string calldata name)
-        external onlyCareTaker
+        external
+        onlyCareTaker
     {
         if (bytes(name).length > 25) revert MaxLength25();
 
@@ -192,6 +196,11 @@ contract HopperNFT is ERC721, ERC2981 {
         }
     }
 
+    /*///////////////////////////////////////////////////////////////
+                          HOPPER VIEW FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    // todo fix
     function getHopper(uint256 tokenId) external view returns (Hopper memory) {
         return hoppers[tokenId];
     }

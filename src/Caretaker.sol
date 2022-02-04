@@ -22,7 +22,8 @@ contract CareTaker {
     }
 
     function levelUp(uint256 tokenId) external {
-        if (HopperNFT(HOPPER).ownerOf(tokenId) != msg.sender) revert InvalidOwner();
+        if (HopperNFT(HOPPER).ownerOf(tokenId) != msg.sender)
+            revert InvalidOwner();
 
         // todo how much fly
         // todo how much XP (HopperNFT might have to consume internally)
