@@ -72,14 +72,14 @@ contract FrogWorld is DSTest {
         hevm.startPrank(user1);
 
         hevm.expectRevert(
-            abi.encode(FrogNFT.InsufficientAmount)
+            abi.encodeWithSelector(FrogNFT.InsufficientAmount.selector)
         );
-        FROG.mint(MAX_MINT_PER_CALL + 1);
+        FROG.mint(1);
 
         hevm.expectRevert(
             abi.encodeWithSelector(FrogNFT.MintLimit.selector)
         );
-        FROG.mint{value: MINT_COST}(MAX_MINT_PER_CALL + 1);
+        FROG.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(MAX_MINT_PER_CALL + 1);
 
         hevm.stopPrank();
     }
