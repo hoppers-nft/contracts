@@ -38,7 +38,7 @@ contract HopperNFT is ERC721, ERC2981 {
     uint256 public hoppersLength;
 
     // whitelist for leveling up
-    mapping(address => uint256) public caretakers;
+    mapping(address => uint256) public zones;
 
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
@@ -101,25 +101,25 @@ contract HopperNFT is ERC721, ERC2981 {
 
     /*///////////////////////////////////////////////////////////////
                         HOPPER LEVEL MECHANICS
-            Caretakers are other authorized contracts that
+            Zones are other authorized contracts that
                 according to their own logic can issue a hopper
                     to level up
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyCareTaker() {
-        if (caretakers[msg.sender] == 0) revert Unauthorized();
+    modifier onlyZone() {
+        if (zones[msg.sender] == 0) revert Unauthorized();
         _;
     }
 
-    function addCaretaker(address caretaker) external onlyOwner {
-        caretakers[caretaker] = 1;
+    function addZone(address zone) external onlyOwner {
+        zones[zone] = 1;
     }
 
-    function removeCaretaker(address caretaker) external onlyOwner {
-        delete caretakers[caretaker];
+    function removeZone(address zone) external onlyOwner {
+        delete zones[zone];
     }
 
-    function levelUp(uint256 tokenId) external onlyCareTaker {
+    function levelUp(uint256 tokenId) external onlyZone {
         // max level is checked on zone
         unchecked {
             ++(hoppers[tokenId].level);
@@ -128,7 +128,7 @@ contract HopperNFT is ERC721, ERC2981 {
 
     function changeHopperName(uint256 tokenId, string calldata name)
         external
-        onlyCareTaker
+        onlyZone
     {
         if (bytes(name).length > 25) revert MaxLength25();
 

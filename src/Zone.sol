@@ -126,8 +126,51 @@ abstract contract Zone {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    LEVEL UP REQUIREMENTS
+                    NAMES & LEVELING
     //////////////////////////////////////////////////////////////*/
+
+    function payAction(uint256 flyRequired, bool useOwnRewards) internal {
+        if (useOwnRewards) {
+            uint256 _rewards = rewards[msg.sender];
+
+            // Pays for level up from the pending rewards
+            if (_rewards >= flyRequired) {
+                unchecked {
+                    rewards[msg.sender] -= flyRequired;
+                }
+            } else if (_rewards > 0) {
+                rewards[msg.sender] = 0;
+                unchecked {
+                    flyRequired -= _rewards;
+                }
+            }
+        }
+
+        // Sender pays for level up. Will revert, if not enough balance
+        if (flyRequired > 0) {
+            Fly(FLY).burn(msg.sender, flyRequired);
+        }
+    }
+
+    function changeHopperName(
+        uint256 tokenId,
+        string calldata name,
+        bool useOwnRewards
+    ) external {
+        // Check hopper ownership
+        address zoneHopperOwner = hopperOwners[tokenId];
+        if (zoneHopperOwner != msg.sender) {
+            // Saves gas in certain paths
+            if (HopperNFT(HOPPER).ownerOf(tokenId) != msg.sender) {
+                revert WrongTokenID();
+            }
+        }
+
+        uint256 flyRequired = 0; // todo should be changed
+        payAction(flyRequired, useOwnRewards);
+
+        HopperNFT(HOPPER).changeHopperName(tokenId, name);
+    }
 
     function getLevelUpCost(uint256 currentLevel)
         internal
@@ -160,28 +203,7 @@ abstract contract Zone {
 
         // Check if there's enough FLY (balance + pending rewards) to level up hopper
         HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(tokenId);
-        uint256 flyRequired = getLevelUpCost(hopper.level);
-
-        if (useOwnRewards) {
-            uint256 _rewards = rewards[msg.sender];
-
-            // Pays for level up from the pending rewards
-            if (_rewards >= flyRequired) {
-                unchecked {
-                    rewards[msg.sender] -= flyRequired;
-                }
-            } else if (_rewards > 0) {
-                rewards[msg.sender] = 0;
-                unchecked {
-                    flyRequired -= _rewards;
-                }
-            }
-        }
-
-        // Sender pays for level up. Will revert, if not enough balance
-        if (flyRequired > 0) {
-            Fly(FLY).burn(msg.sender, flyRequired);
-        }
+        payAction(getLevelUpCost(hopper.level), useOwnRewards);
 
         // Update owners shares if hopper is staked
         if (zoneHopperOwner == msg.sender) {
