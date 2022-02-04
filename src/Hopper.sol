@@ -33,6 +33,7 @@ contract HopperNFT is ERC721, ERC2981 {
         uint8 fertility;
     }
 
+    mapping(uint256 => string) public hoppersNames;
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
 
@@ -44,6 +45,8 @@ contract HopperNFT is ERC721, ERC2981 {
     //////////////////////////////////////////////////////////////*/
 
     event OwnerUpdated(address indexed newOwner);
+    event LevelUp(uint256 tokenId);
+    event NameChange(uint256 tokenId);
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -52,8 +55,9 @@ contract HopperNFT is ERC721, ERC2981 {
     error MintLimit();
     error InsufficientAmount();
     error Unauthorized();
-    error InvalidCaretaker();
     error InvalidTokenID();
+    error MaxLength25();
+    error OnlyEOAAllowed();
 
     constructor(
         string memory _NFT_NAME,
@@ -101,6 +105,11 @@ contract HopperNFT is ERC721, ERC2981 {
                     to level up
     //////////////////////////////////////////////////////////////*/
 
+    modifier onlyCareTaker() {
+        if (caretakers[msg.sender] == 0) revert Unauthorized();
+        _;
+    }
+
     function addCaretaker(address caretaker) external onlyOwner {
         caretakers[caretaker] = 1;
     }
@@ -109,13 +118,21 @@ contract HopperNFT is ERC721, ERC2981 {
         delete caretakers[caretaker];
     }
 
-    function levelUp(uint256 tokenId) external {
-        if (caretakers[msg.sender] == 0) revert InvalidCaretaker();
-
+    function levelUp(uint256 tokenId) external onlyCareTaker {
         // overflow is unrealistic
         unchecked {
-            hoppers[tokenId].level += 1;
+            ++(hoppers[tokenId].level);
         }
+    }
+
+    function changeHopperName(uint256 tokenId, string calldata name)
+        external onlyCareTaker
+    {
+        if (bytes(name).length > 25) revert MaxLength25();
+
+        hoppersNames[tokenId] = name;
+
+        emit NameChange(tokenId);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -154,6 +171,7 @@ contract HopperNFT is ERC721, ERC2981 {
 
     function mint(uint256 numberOfMints) external payable {
         if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
+        if (msg.sender != tx.origin) revert OnlyEOAAllowed();
 
         uint256 hopperID = hoppersLength;
 
@@ -176,6 +194,18 @@ contract HopperNFT is ERC721, ERC2981 {
 
     function getHopper(uint256 tokenId) external view returns (Hopper memory) {
         return hoppers[tokenId];
+    }
+
+    function getHopperName(uint256 tokenId)
+        public
+        view
+        returns (string memory name)
+    {
+        name = hoppersNames[tokenId];
+
+        if (bytes(name).length == 0) {
+            name = "Unnamed";
+        }
     }
 
     function tokenURI(uint256 tokenId)

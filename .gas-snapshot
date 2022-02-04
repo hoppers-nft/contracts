@@ -1,2 +1,3 @@
-HopperWorld:testHopperMint() (gas: 544687)
-HopperWorld:testScenario() (gas: 209)
+HopperWorld:testHopperMint() (gas: 544809)
+HopperWorld:testNames() (gas: 155772)
+HopperWorld:testScenario() (gas: 143)

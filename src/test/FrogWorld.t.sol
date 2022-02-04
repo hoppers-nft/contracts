@@ -13,7 +13,11 @@ interface HEVM {
 
     function prank(address) external;
 
+    function prank(address, address) external;
+
     function startPrank(address) external;
+    
+    function startPrank(address, address) external;
 
     function stopPrank() external;
 
@@ -33,6 +37,7 @@ contract HopperWorld is DSTest {
     address public user1 = address(0x1337);
     address public user2 = address(0x1338);
     address public user3 = address(0x1339);
+    address public caretakerUser = address(0x1340);
 
     // Settings
     uint256 public MAX_MINT_PER_CALL = 10;
@@ -66,10 +71,12 @@ contract HopperWorld is DSTest {
         hevm.deal(user1, 10_000 ether);
         hevm.deal(user2, 10_000 ether);
         hevm.deal(user3, 10_000 ether);
+
+        HOPPER.addCaretaker(caretakerUser);
     }
 
     function testHopperMint() public {
-        hevm.startPrank(user1);
+        hevm.startPrank(user1, user1);
 
         hevm.expectRevert(
             abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
@@ -93,5 +100,42 @@ contract HopperWorld is DSTest {
         // HOPPER.mint(10);
 
 
+    }
+
+    function testNames() public {
+        hevm.prank(user1, user1);
+        HOPPER.mint{value: MINT_COST}(1);
+
+        assert(
+            keccak256(bytes("Unnamed")) ==
+                keccak256(bytes(HOPPER.getHopperName(0)))
+        );
+
+        hevm.prank(user2);
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
+        HOPPER.changeHopperName(0, "hopper");
+
+        hevm.prank(caretakerUser);
+        HOPPER.changeHopperName(0, "hopper");
+        assert(
+            keccak256(bytes("hopper")) ==
+                keccak256(bytes(HOPPER.getHopperName(0)))
+        );
+
+        hevm.prank(user1);
+        HOPPER.transferFrom(user1, user2, 0);
+        assert(
+            keccak256(bytes("hopper")) ==
+                keccak256(bytes(HOPPER.getHopperName(0)))
+        );
+
+        hevm.prank(caretakerUser);
+        HOPPER.changeHopperName(0, "myhopper");
+        assert(
+            keccak256(bytes("myhopper")) ==
+                keccak256(bytes(HOPPER.getHopperName(0)))
+        );
     }
 }
