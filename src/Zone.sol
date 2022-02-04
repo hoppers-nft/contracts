@@ -218,20 +218,24 @@ abstract contract Zone {
 
         for (uint256 i; i < numTokens; ++i) {
             uint256 tokenId = tokenIds[i];
+
+            // Can the hopper enter this zone?
             HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(
                 tokenId
             );
-
             if (!canEnter(hopper)) revert UnfitHopper();
 
+            // Increment user shares
             _baseShares += _calculateBaseShare(hopper);
 
+            // Hopper Accounting
             hopperOwners[tokenId] = msg.sender;
             unchecked {
                 ++numHoppersOfOwner[msg.sender];
             }
             HopperNFT(HOPPER).transferFrom(msg.sender, address(this), tokenId);
         }
+
         baseSharesBalance[msg.sender] = _baseShares;
 
         unchecked {
@@ -251,15 +255,17 @@ abstract contract Zone {
         for (uint256 i; i < numTokens; ++i) {
             uint256 tokenId = tokenIds[i];
 
+            // Can the user unstake this hopper
             if (hopperOwners[tokenId] != msg.sender) revert WrongTokenID();
-
             HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(
                 tokenId
             );
 
+            // Decrement user shares
             _baseShares -= _calculateBaseShare(hopper);
             // todo would cached hopperBaseShare be cheaper?
 
+            // Hopper Accounting
             delete hopperOwners[tokenId];
             unchecked {
                 --numHoppersOfOwner[msg.sender];

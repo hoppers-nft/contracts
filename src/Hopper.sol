@@ -120,9 +120,7 @@ contract HopperNFT is ERC721, ERC2981 {
     }
 
     function levelUp(uint256 tokenId) external onlyCareTaker {
-        if (hoppers[tokenId].level == 100) revert MaxLevelReached();
-
-        // overflow is unrealistic
+        // max level is checked on zone
         unchecked {
             ++(hoppers[tokenId].level);
         }
