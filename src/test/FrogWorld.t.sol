@@ -81,6 +81,9 @@ contract HopperWorld is DSTest {
         );
         HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(MAX_MINT_PER_CALL + 1);
 
+        HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
+
+
         hevm.stopPrank();
     }
 

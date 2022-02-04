@@ -167,7 +167,7 @@ contract HopperNFT is ERC721, ERC2981 {
             hoppersLength += numberOfMints;
 
             uint256 seed = enoughRandom();
-            for (uint256 i = 0; i < numberOfMints; i++) {
+            for (uint256 i; i < numberOfMints; ++i) {
                 _mint(msg.sender, hopperID + i);
                 hoppers[hopperID + i] = generate(seed >> i);
             }
