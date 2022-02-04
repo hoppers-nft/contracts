@@ -19,24 +19,18 @@ abstract contract Zone {
     mapping(address => uint256) public numHoppersOfOwner;
     mapping(uint256 => uint256) public hopperBaseShare;
 
-    // mapping(uint256 => uint256) public hopperSnapshots;
-
     address public owner;
-    address public architect;
 
     /*///////////////////////////////////////////////////////////////
                                 Accounting
     //////////////////////////////////////////////////////////////*/
-    uint256 public baseEmissionRate;
     uint256 public emissionRate;
-    uint256 public lastEmissionUpdatedTime;
 
     uint256 public totalSupply;
     uint256 public lastUpdatedTime;
     uint256 public rewardPerShareStored;
 
     mapping(address => uint256) public baseSharesBalance;
-    mapping(address => uint256) public actualSharesBalance;
     mapping(address => uint256) public userRewardPerSharePaid;
     mapping(address => uint256) public rewards;
 
@@ -45,7 +39,6 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
     error Unauthorized();
     error UnfitHopper();
-    error TooSoon();
     error WrongTokenID();
 
     /*///////////////////////////////////////////////////////////////
@@ -53,7 +46,6 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
 
     event UpdatedOwner(address indexed owner);
-    event UpdatedArchitect(address indexed architect);
     event UpdatedEmission(uint256 emissionRate);
 
     /*///////////////////////////////////////////////////////////////
@@ -71,24 +63,14 @@ abstract contract Zone {
         _;
     }
 
-    modifier onlyArchitect() {
-        if (msg.sender != architect) revert Unauthorized();
-        _;
-    }
-
     function setOwner(address _owner) external onlyOwner {
         owner = _owner;
         emit UpdatedOwner(_owner);
     }
 
-    function setArchitect(address _architect) external onlyOwner {
-        architect = _architect;
-        emit UpdatedArchitect(_architect);
-    }
-
     function updateEmissionRate(uint256 _emissionRate) external onlyOwner {
         emissionRate = _emissionRate;
-        emit UpdatedEmission(emissionRate);
+        emit UpdatedEmission(_emissionRate);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -106,9 +88,8 @@ abstract contract Zone {
     }
 
     function earned(address account) public view returns (uint256) {
-        // todo hmmmm
         return
-            ((actualSharesBalance[account] *
+            ((baseSharesBalance[account] *
                 (rewardPerShare() - userRewardPerSharePaid[account])) / 1e18) +
             rewards[account];
     }
@@ -166,10 +147,10 @@ abstract contract Zone {
             }
         }
 
-        uint256 flyRequired = 0; // todo should be changeable
-        payAction(flyRequired, useOwnRewards);
-
-        HopperNFT(HOPPER).changeHopperName(tokenId, name);
+        payAction(
+            HopperNFT(HOPPER).changeHopperName(tokenId, name), // returns price
+            useOwnRewards
+        );
     }
 
     function getLevelUpCost(uint256 currentLevel)
@@ -228,7 +209,7 @@ abstract contract Zone {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    EXTERNAL REWARD MODIFIERS
+                    STAKE / UNSTAKE / CLAIM
     //////////////////////////////////////////////////////////////*/
 
     function enter(uint256[] calldata tokenIds) external {

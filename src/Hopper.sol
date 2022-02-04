@@ -33,6 +33,7 @@ contract HopperNFT is ERC721, ERC2981 {
         uint8 category;
     }
 
+    uint256 nameFee;
     mapping(uint256 => string) public hoppersNames;
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
@@ -47,6 +48,7 @@ contract HopperNFT is ERC721, ERC2981 {
     event OwnerUpdated(address indexed newOwner);
     event LevelUp(uint256 tokenId);
     event NameChange(uint256 tokenId);
+    event UpdatedNameFee(uint256 namefee);
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -68,16 +70,18 @@ contract HopperNFT is ERC721, ERC2981 {
         uint256 _MAX_PER_ADDRESS,
         address _ROYALTY_ADDRESS,
         uint256 _ROYALTY_FEE,
-        uint256 _SALE_TIME
+        uint256 _SALE_TIME,
+        uint256 _NAME_FEE
     ) ERC721(_NFT_NAME, _NFT_SYMBOL) ERC2981(_ROYALTY_ADDRESS, _ROYALTY_FEE) {
         owner = msg.sender;
 
         MINT_COST = _MINT_COST;
         MAX_SUPPLY = _MAX_SUPPLY;
         SALE_TIME = _SALE_TIME;
-
         //slither-disable-next-line missing-zero-check
         MAX_PER_ADDRESS = _MAX_PER_ADDRESS;
+
+        nameFee = _NAME_FEE;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -97,6 +101,11 @@ contract HopperNFT is ERC721, ERC2981 {
 
     function withdraw() external onlyOwner {
         owner.safeTransferETH(address(this).balance);
+    }
+
+    function setNameChangeFee(uint256 _nameFee) external onlyOwner {
+        nameFee = _nameFee;
+        emit UpdatedNameFee(_nameFee);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -129,12 +138,14 @@ contract HopperNFT is ERC721, ERC2981 {
     function changeHopperName(uint256 tokenId, string calldata name)
         external
         onlyZone
+        returns (uint256)
     {
         if (bytes(name).length > 25) revert MaxLength25();
 
         hoppersNames[tokenId] = name;
 
         emit NameChange(tokenId);
+        return nameFee;
     }
 
     /*///////////////////////////////////////////////////////////////
