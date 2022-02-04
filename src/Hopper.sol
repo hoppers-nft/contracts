@@ -24,8 +24,8 @@ contract HopperNFT is ERC721, ERC2981 {
     //////////////////////////////////////////////////////////////*/
 
     struct Hopper {
-        uint32 level;
-        uint32 experience;
+        uint208 level;
+        uint8 category;
         uint8 strength;
         uint8 agility;
         uint8 vitality;
@@ -168,7 +168,7 @@ contract HopperNFT is ERC721, ERC2981 {
                     intelligence: uint8((seed >> (8 * 4)) % 10) + 1,
                     fertility: uint8((seed >> (8 * 5)) % 10) + 1,
                     level: 0,
-                    experience: 0
+                    category: 0
                 });
         }
     }

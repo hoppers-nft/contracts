@@ -146,7 +146,7 @@ contract HopperWorld is DSTest {
         hevm.startPrank(caretakerUser);
         HOPPER.levelUp(0);
 
-        (uint32 level, , , , , , ) = HOPPER.hoppers(0);
+        (uint208 level, , , , , , ) = HOPPER.hoppers(0);
         assert(level == 1);
 
         for (uint256 i; i < 99; ++i) {
