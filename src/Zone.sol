@@ -146,7 +146,7 @@ abstract contract Zone {
             }
         }
 
-        // Sender pays for level up. Will revert, if not enough balance
+        // Sender pays for action. Will revert, if not enough balance
         if (flyRequired > 0) {
             Fly(FLY).burn(msg.sender, flyRequired);
         }
@@ -166,7 +166,7 @@ abstract contract Zone {
             }
         }
 
-        uint256 flyRequired = 0; // todo should be changed
+        uint256 flyRequired = 0; // todo should be changeable
         payAction(flyRequired, useOwnRewards);
 
         HopperNFT(HOPPER).changeHopperName(tokenId, name);
