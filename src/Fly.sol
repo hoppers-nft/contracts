@@ -62,4 +62,9 @@ contract Fly is ERC20 {
         if (zones[msg.sender] == 0) revert InvalidZone();
         _mint(receiver, amount);
     }
+
+    function burn(address from, uint256 amount) external {
+        if (zones[msg.sender] == 0) revert InvalidZone();
+        _burn(from, amount);
+    }
 }

@@ -25,12 +25,12 @@ contract HopperNFT is ERC721, ERC2981 {
 
     struct Hopper {
         uint208 level;
-        uint8 category;
         uint8 strength;
         uint8 agility;
         uint8 vitality;
         uint8 intelligence;
         uint8 fertility;
+        uint8 category;
     }
 
     mapping(uint256 => string) public hoppersNames;
