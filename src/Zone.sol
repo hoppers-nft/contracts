@@ -3,31 +3,31 @@ pragma solidity 0.8.11;
 
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {Fly} from "./Fly.sol";
-import {FrogNFT} from "./Frog.sol";
+import {HopperNFT} from "./Hopper.sol";
 
 abstract contract Zone {
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLE STORAGE
     //////////////////////////////////////////////////////////////*/
     address public immutable FLY;
-    address public immutable FROG;
+    address public immutable HOPPER;
 
     /*///////////////////////////////////////////////////////////////
-                                FROGS
+                                HOPPERS
     //////////////////////////////////////////////////////////////*/
-    mapping(uint256 => address) public frogOwners;
-    mapping(uint256 => uint256) public frogSnapshots;
+    mapping(uint256 => address) public hopperOwners;
+    mapping(uint256 => uint256) public hopperSnapshots;
 
-    constructor(address fly, address frog) {
+    constructor(address fly, address hopper) {
         FLY = fly;
-        FROG = frog;
+        HOPPER = hopper;
     }
 
     function enter(uint256 tokenId) external {
-        frogOwners[tokenId] = msg.sender;
+        hopperOwners[tokenId] = msg.sender;
         // solhint-disable-next-line
-        frogSnapshots[tokenId] = block.timestamp;
-        FrogNFT(FROG).transferFrom(msg.sender, address(this), tokenId);
+        hopperSnapshots[tokenId] = block.timestamp;
+        HopperNFT(HOPPER).transferFrom(msg.sender, address(this), tokenId);
     }
 
     function exit(uint256 tokenId) external {
@@ -36,22 +36,22 @@ abstract contract Zone {
             // todo
             hourDuration =
                 // solhint-disable-next-line
-                ((block.timestamp - frogSnapshots[tokenId]) / 60) /
+                ((block.timestamp - hopperSnapshots[tokenId]) / 60) /
                 60;
         }
 
-        FrogNFT.Frog memory frog = FrogNFT(FROG).getFrog(tokenId);
-        uint256 amount = calculateFarmAmount(frog, tokenId, hourDuration);
+        HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(tokenId);
+        uint256 amount = calculateFarmAmount(hopper, tokenId, hourDuration);
 
-        delete frogOwners[tokenId];
-        delete frogSnapshots[tokenId];
+        delete hopperOwners[tokenId];
+        delete hopperSnapshots[tokenId];
 
         Fly(FLY).mint(msg.sender, amount);
-        FrogNFT(FROG).transferFrom(address(this), msg.sender, tokenId);
+        HopperNFT(HOPPER).transferFrom(address(this), msg.sender, tokenId);
     }
 
     function calculateFarmAmount(
-        FrogNFT.Frog memory frog,
+        HopperNFT.Hopper memory hopper,
         uint256 tokenId,
         uint256 hourDuration
     ) internal pure virtual returns (uint256) {} // solhint-disable-line

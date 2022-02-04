@@ -6,7 +6,7 @@ import {ERC721} from "@solmate/tokens/ERC721.sol";
 import {ERC2981} from "./ERC2981.sol";
 
 //slither-disable-next-line locked-ether
-contract FrogNFT is ERC721, ERC2981 {
+contract HopperNFT is ERC721, ERC2981 {
     using SafeTransferLib for address;
 
     address public owner;
@@ -20,10 +20,10 @@ contract FrogNFT is ERC721, ERC2981 {
     uint256 public immutable SALE_TIME;
 
     /*///////////////////////////////////////////////////////////////
-                                FROGS
+                                HOPPERS
     //////////////////////////////////////////////////////////////*/
 
-    struct Frog {
+    struct Hopper {
         uint32 level;
         uint32 experience;
         uint8 strength;
@@ -33,8 +33,8 @@ contract FrogNFT is ERC721, ERC2981 {
         uint8 fertility;
     }
 
-    mapping(uint256 => Frog) public frogs;
-    uint256 public frogsLength;
+    mapping(uint256 => Hopper) public hoppers;
+    uint256 public hoppersLength;
 
     // whitelist for leveling up
     mapping(address => uint256) public caretakers;
@@ -95,9 +95,9 @@ contract FrogNFT is ERC721, ERC2981 {
     }
 
     /*///////////////////////////////////////////////////////////////
-                        FROG LEVEL MECHANICS
+                        HOPPER LEVEL MECHANICS
             Caretakers are other authorized contracts that
-                according to their own logic can issue a frog
+                according to their own logic can issue a hopper
                     to level up
     //////////////////////////////////////////////////////////////*/
 
@@ -114,12 +114,12 @@ contract FrogNFT is ERC721, ERC2981 {
 
         // overflow is unrealistic
         unchecked {
-            frogs[tokenId].level += 1;
+            hoppers[tokenId].level += 1;
         }
     }
 
     /*///////////////////////////////////////////////////////////////
-                          FROG GENERATION
+                          HOPPER GENERATION
     //////////////////////////////////////////////////////////////*/
 
     function enoughRandom() internal view returns (uint256) {
@@ -137,10 +137,10 @@ contract FrogNFT is ERC721, ERC2981 {
     }
 
     //slither-disable-next-line weak-prng
-    function generate(uint256 seed) internal pure returns (Frog memory) {
+    function generate(uint256 seed) internal pure returns (Hopper memory) {
         unchecked {
             return
-                Frog({
+                Hopper({
                     strength: uint8((seed >> (8 * 1)) % 10) + 1,
                     agility: uint8((seed >> (8 * 2)) % 10) + 1,
                     vitality: uint8((seed >> (8 * 3)) % 10) + 1,
@@ -155,27 +155,27 @@ contract FrogNFT is ERC721, ERC2981 {
     function mint(uint256 numberOfMints) external payable {
         if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
 
-        uint256 frogID = frogsLength;
+        uint256 hopperID = hoppersLength;
 
         if (
             numberOfMints > MAX_PER_ADDRESS ||
-            frogID + numberOfMints > MAX_SUPPLY
+            hopperID + numberOfMints > MAX_SUPPLY
         ) revert MintLimit();
 
         // overflow is unrealistic
         unchecked {
-            frogsLength += numberOfMints;
+            hoppersLength += numberOfMints;
 
             uint256 seed = enoughRandom();
             for (uint256 i = 0; i < numberOfMints; i++) {
-                _mint(msg.sender, frogID + i);
-                frogs[frogID + i] = generate(seed >> i);
+                _mint(msg.sender, hopperID + i);
+                hoppers[hopperID + i] = generate(seed >> i);
             }
         }
     }
 
-    function getFrog(uint256 tokenId) external view returns (Frog memory) {
-        return frogs[tokenId];
+    function getHopper(uint256 tokenId) external view returns (Hopper memory) {
+        return hoppers[tokenId];
     }
 
     function tokenURI(uint256 tokenId)

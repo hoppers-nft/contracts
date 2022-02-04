@@ -1,7 +1,7 @@
 # Hopper
 
 # Contracts
-* `Frog.sol`: NFT
+* `Hopper.sol`: NFT
   * Leveling up can only be done by an external contract approved by the contract owner.
 * `Fly.sol`: ERC20
   * Minting can only be done by a `Zone` approved by the contract owner.
@@ -14,7 +14,7 @@
 
 # Description
 ## Attributes
-All of the attiributes will be stored on chain. Name of the frog, accessories and the ipfs link will be stored offchain.
+All of the attiributes will be stored on chain. Name of the hopper, accessories and the ipfs link will be stored offchain.
 
  * Strength (Randomly assigned a value between 1-10 during minting)
 

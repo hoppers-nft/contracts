@@ -4,7 +4,7 @@ pragma solidity 0.8.11;
 import "ds-test/test.sol";
 
 import "../Fly.sol";
-import "../Frog.sol";
+import "../Hopper.sol";
 import "../Caretaker.sol";
 import "../zones/Pond.sol";
 
@@ -23,7 +23,7 @@ interface HEVM {
 }
 
 
-contract FrogWorld is DSTest {
+contract HopperWorld is DSTest {
 
     // Cheatcodes
     HEVM private hevm = HEVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -39,7 +39,7 @@ contract FrogWorld is DSTest {
     uint256 public MINT_COST = 1 ether;
 
     // Deployments
-    FrogNFT public FROG;
+    HopperNFT public HOPPER;
     Fly public FLY;
     CareTaker public CARETAKER;
     Pond public POND;
@@ -48,9 +48,9 @@ contract FrogWorld is DSTest {
         owner = msg.sender;
 
         // Deploy
-        FROG = new FrogNFT(
-            "Frog",
-            "Frog",
+        HOPPER = new HopperNFT(
+            "Hopper",
+            "Hopper",
             MINT_COST,
             10_000,
             MAX_MINT_PER_CALL,
@@ -59,8 +59,8 @@ contract FrogWorld is DSTest {
             0
         );
         FLY = new Fly("FLY", "FLY");
-        CARETAKER = new CareTaker(address(FLY), address(FROG));
-        POND = new Pond(address(FLY), address(FROG));
+        CARETAKER = new CareTaker(address(FLY), address(HOPPER));
+        POND = new Pond(address(FLY), address(HOPPER));
 
         // Add funds
         hevm.deal(user1, 10_000 ether);
@@ -68,18 +68,18 @@ contract FrogWorld is DSTest {
         hevm.deal(user3, 10_000 ether);
     }
 
-    function testFrogMint() public {
+    function testHopperMint() public {
         hevm.startPrank(user1);
 
         hevm.expectRevert(
-            abi.encodeWithSelector(FrogNFT.InsufficientAmount.selector)
+            abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
         );
-        FROG.mint(1);
+        HOPPER.mint(1);
 
         hevm.expectRevert(
-            abi.encodeWithSelector(FrogNFT.MintLimit.selector)
+            abi.encodeWithSelector(HopperNFT.MintLimit.selector)
         );
-        FROG.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(MAX_MINT_PER_CALL + 1);
+        HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(MAX_MINT_PER_CALL + 1);
 
         hevm.stopPrank();
     }
@@ -87,7 +87,7 @@ contract FrogWorld is DSTest {
     function testScenario() public {
         
         // hevm.prank(user1);
-        // FROG.mint(10);
+        // HOPPER.mint(10);
 
 
     }
