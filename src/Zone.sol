@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.11;
 
+import {veFly} from "./veFly.sol";
 import {Fly} from "./Fly.sol";
+import {Ballot} from "./Ballot.sol";
 import {HopperNFT} from "./Hopper.sol";
 
 abstract contract Zone {
@@ -9,6 +11,7 @@ abstract contract Zone {
                             IMMUTABLE STORAGE
     //////////////////////////////////////////////////////////////*/
     address public immutable FLY;
+    address public immutable VE_FLY;
     address public immutable HOPPER;
 
     /*///////////////////////////////////////////////////////////////
@@ -18,11 +21,13 @@ abstract contract Zone {
     mapping(uint256 => address) public hopperOwners;
     mapping(address => uint256) public numHoppersOfOwner;
     mapping(uint256 => uint256) public hopperBaseShare;
+    mapping(address => uint256) public rewards;
 
     address public owner;
+    address public ballot;
 
     /*///////////////////////////////////////////////////////////////
-                                Accounting
+                        Accounting/Rewards NFT
     //////////////////////////////////////////////////////////////*/
     uint256 public emissionRate;
 
@@ -32,7 +37,18 @@ abstract contract Zone {
 
     mapping(address => uint256) public baseSharesBalance;
     mapping(address => uint256) public userRewardPerSharePaid;
-    mapping(address => uint256) public rewards;
+
+    /*///////////////////////////////////////////////////////////////
+                        Accounting/Rewards veFLY
+    //////////////////////////////////////////////////////////////*/
+    uint256 public bonusEmissionRate;
+
+    uint256 public totalVeShare;
+    uint256 public lastBonusUpdatedTime;
+    uint256 public bonusRewardPerShareStored;
+
+    mapping(address => uint256) public veSharesBalance;
+    mapping(address => uint256) public userBonusRewardPerSharePaid;
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -40,21 +56,28 @@ abstract contract Zone {
     error Unauthorized();
     error UnfitHopper();
     error WrongTokenID();
+    error NoHopperStaked();
 
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
 
     event UpdatedOwner(address indexed owner);
+    event UpdatedBallot(address indexed ballot);
     event UpdatedEmission(uint256 emissionRate);
 
     /*///////////////////////////////////////////////////////////////
                            CONTRACT MANAGEMENT
     //////////////////////////////////////////////////////////////*/
-    constructor(address fly, address hopper) {
+    constructor(
+        address fly,
+        address vefly,
+        address hopper
+    ) {
         owner = msg.sender;
 
         FLY = fly;
+        VE_FLY = vefly;
         HOPPER = hopper;
     }
 
@@ -63,14 +86,31 @@ abstract contract Zone {
         _;
     }
 
+    modifier onlyBallotOrOwner() {
+        if (msg.sender != owner && msg.sender != ballot) revert Unauthorized();
+        _;
+    }
+
     function setOwner(address _owner) external onlyOwner {
         owner = _owner;
         emit UpdatedOwner(_owner);
     }
 
-    function updateEmissionRate(uint256 _emissionRate) external onlyOwner {
+    function setBallot(address _ballot) external onlyOwner {
+        ballot = _ballot;
+        emit UpdatedBallot(_ballot);
+    }
+
+    function setEmissionRate(uint256 _emissionRate) external onlyOwner {
         emissionRate = _emissionRate;
         emit UpdatedEmission(_emissionRate);
+    }
+
+    function setBonusEmissionRate(uint256 _bonusEmissionRate)
+        external
+        onlyBallotOrOwner
+    {
+        bonusEmissionRate = _bonusEmissionRate;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -100,10 +140,39 @@ abstract contract Zone {
 
         rewards[account] = earned(account);
         userRewardPerSharePaid[account] = rewardPerShareStored;
+
+        _updateAccountBonusReward(account);
     }
 
-    function _updateVeFlyShare(uint256 userShare) internal {
-        //todo
+    /*///////////////////////////////////////////////////////////////
+                           BONUS REWARDS ACCOUNTING
+    //////////////////////////////////////////////////////////////*/
+
+    function bonusRewardPerShare() public view returns (uint256) {
+        if (totalVeShare == 0) {
+            return 0;
+        }
+        return
+            bonusRewardPerShareStored +
+            (((block.timestamp - lastBonusUpdatedTime) *
+                bonusEmissionRate *
+                1e18) / totalVeShare);
+    }
+
+    function earnedBonus(address account) public view returns (uint256) {
+        return
+            ((veSharesBalance[account] *
+                (bonusRewardPerShare() -
+                    userBonusRewardPerSharePaid[account])) / 1e18) +
+            rewards[account];
+    }
+
+    function _updateAccountBonusReward(address account) internal {
+        bonusRewardPerShareStored = bonusRewardPerShare();
+        lastBonusUpdatedTime = block.timestamp;
+
+        rewards[account] = earnedBonus(account);
+        userBonusRewardPerSharePaid[account] = bonusRewardPerShareStored;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -201,15 +270,15 @@ abstract contract Zone {
                 hopperShare;
             baseSharesBalance[msg.sender] = newBaseShare;
 
-            // todo does this require level to be taken into account?
-            _updateVeFlyShare(newBaseShare);
+            _updateAccountReward(msg.sender);
+            _updateVote(newBaseShare, 0);
         }
 
         HopperNFT(HOPPER).levelUp(tokenId);
     }
 
     /*///////////////////////////////////////////////////////////////
-                    STAKE / UNSTAKE / CLAIM
+                    STAKE / UNSTAKE NFT && CLAIM FLY
     //////////////////////////////////////////////////////////////*/
 
     function enter(uint256[] calldata tokenIds) external {
@@ -245,7 +314,7 @@ abstract contract Zone {
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
 
-        _updateVeFlyShare(_baseShares);
+        _updateVote(_baseShares, 0);
     }
 
     function exit(uint256[] calldata tokenIds) external {
@@ -283,7 +352,7 @@ abstract contract Zone {
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
 
-        _updateVeFlyShare(_baseShares);
+        _updateVote(_baseShares, 0);
     }
 
     function claim() external {
@@ -293,6 +362,54 @@ abstract contract Zone {
         rewards[msg.sender] = 0;
 
         Fly(FLY).mint(msg.sender, _accountRewards);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                            VOTE veFLY 
+    //////////////////////////////////////////////////////////////*/
+
+    function _updateVote(uint256 baseShares, uint256 veFlyAmount)
+        internal
+        returns (uint256)
+    {
+        uint256 before = veSharesBalance[msg.sender];
+
+        if (before > 0 || veFlyAmount > 0) {
+            uint256 current = Ballot(ballot).vote(msg.sender, baseShares, veFlyAmount);
+            veSharesBalance[msg.sender] = current;
+            unchecked {
+                totalVeShare = totalVeShare + current - before;
+            }
+        }
+    }
+
+    function vote(uint256 veFlyAmount) external {
+        _updateAccountBonusReward(msg.sender);
+        _updateVote(baseSharesBalance[msg.sender], veFlyAmount);
+    }
+
+    function unvote(uint256 veFlyAmount) external {
+        _updateAccountBonusReward(msg.sender);
+
+        uint256 before = veSharesBalance[msg.sender];
+        uint256 current = Ballot(ballot).unvote(
+            msg.sender,
+            baseSharesBalance[msg.sender],
+            veFlyAmount
+        );
+
+        veSharesBalance[msg.sender] = current;
+        unchecked {
+            totalVeShare = totalVeShare + current - before;
+        }
+    }
+
+    function forceUnvote(address user) external {
+        if (msg.sender != ballot) revert Unauthorized();
+
+        _updateAccountBonusReward(msg.sender);
+
+        delete veSharesBalance[msg.sender];
     }
 
     /*///////////////////////////////////////////////////////////////
