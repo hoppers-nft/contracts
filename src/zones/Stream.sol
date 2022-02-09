@@ -4,7 +4,7 @@ pragma solidity 0.8.11;
 import {HopperNFT} from "../Hopper.sol";
 import {Zone} from "../Zone.sol";
 
-contract Pond is Zone {
+contract Stream is Zone {
     constructor(
         address fly,
         address vefly,
@@ -27,6 +27,6 @@ contract Pond is Zone {
         override
         returns (uint256)
     {
-        return (hopper.strength * hopper.level * 10e8) / (10 * 100);
+        return (hopper.agility * hopper.level * 10e8) / (10 * 100);
     }
 }

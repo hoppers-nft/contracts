@@ -73,6 +73,8 @@ contract veFly {
         uint256 _generationRate,
         uint256 _maxRatio
     ) {
+        owner = msg.sender;
+
         FLY = _flyAddress;
 
         genDetails = GenerationDetails({
@@ -171,7 +173,7 @@ contract veFly {
         unchecked {
             flyBalanceOf[msg.sender] -= amount;
         }
-        Fly(FLY).transferFrom(address(this), msg.sender, amount);
+        Fly(FLY).transfer(msg.sender, amount);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -199,8 +201,8 @@ contract veFly {
     function canWithdraw(address account) public view returns (bool) {
         uint256 length = arrValidBallots.length;
         for (uint256 i; i < length; ++i) {
-            if (hasUserVoted[arrValidBallots[i]][msg.sender]) return true;
+            if (hasUserVoted[arrValidBallots[i]][msg.sender]) return false;
         }
-        return false;
+        return true;
     }
 }

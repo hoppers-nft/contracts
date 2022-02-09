@@ -176,7 +176,7 @@ contract HopperNFT is ERC721, ERC2981 {
                     vitality: uint8((seed >> (8 * 3)) % 10) + 1,
                     intelligence: uint8((seed >> (8 * 4)) % 10) + 1,
                     fertility: uint8((seed >> (8 * 5)) % 10) + 1,
-                    level: 0,
+                    level: 1,
                     category: 0
                 });
         }

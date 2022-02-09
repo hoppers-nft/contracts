@@ -5,7 +5,6 @@ import "ds-test/test.sol";
 
 import "../Fly.sol";
 import "../Hopper.sol";
-import "../Caretaker.sol";
 import "../zones/Pond.sol";
 
 interface HEVM {
@@ -35,7 +34,6 @@ contract HopperWorld is DSTest {
     address public user1 = address(0x1337);
     address public user2 = address(0x1338);
     address public user3 = address(0x1339);
-    address public caretakerUser = address(0x1340);
 
     // Settings
     uint256 public MAX_MINT_PER_CALL = 10;
@@ -44,123 +42,119 @@ contract HopperWorld is DSTest {
     // Deployments
     HopperNFT public HOPPER;
     Fly public FLY;
-    CareTaker public CARETAKER;
     Pond public POND;
 
     function setUp() public {
         owner = msg.sender;
 
-        // Deploy
-        HOPPER = new HopperNFT(
-            "Hopper",
-            "Hopper",
-            MINT_COST,
-            10_000,
-            MAX_MINT_PER_CALL,
-            address(0x1337),
-            5,
-            0
-        );
-        FLY = new Fly("FLY", "FLY");
-        CARETAKER = new CareTaker(address(FLY), address(HOPPER));
-        POND = new Pond(address(FLY), address(HOPPER));
+        // // Deploy
+        // HOPPER = new HopperNFT(
+        //     "Hopper",
+        //     "Hopper",
+        //     MINT_COST,
+        //     10_000,
+        //     MAX_MINT_PER_CALL,
+        //     address(0x1337),
+        //     5,
+        //     0
+        // );
+        // FLY = new Fly("FLY", "FLY");
+        // POND = new Pond(address(FLY), address(HOPPER));
 
-        // Add funds
-        hevm.deal(user1, 10_000 ether);
-        hevm.deal(user2, 10_000 ether);
-        hevm.deal(user3, 10_000 ether);
-
-        HOPPER.addCaretaker(caretakerUser);
+        // // Add funds
+        // hevm.deal(user1, 10_000 ether);
+        // hevm.deal(user2, 10_000 ether);
+        // hevm.deal(user3, 10_000 ether);
     }
 
-    function testHopperMint() public {
-        hevm.startPrank(user1, user1);
+    // function testHopperMint() public {
+    //     hevm.startPrank(user1, user1);
 
-        hevm.expectRevert(
-            abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
-        );
-        HOPPER.mint(1);
+    //     hevm.expectRevert(
+    //         abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
+    //     );
+    //     HOPPER.mint(1);
 
-        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
-        HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(
-            MAX_MINT_PER_CALL + 1
-        );
+    //     hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
+    //     HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(
+    //         MAX_MINT_PER_CALL + 1
+    //     );
 
-        HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
+    //     HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
 
-        hevm.stopPrank();
-    }
+    //     hevm.stopPrank();
+    // }
 
-    function testScenario() public {
-        // hevm.prank(user1);
-        // HOPPER.mint(10);
-    }
+    // function testScenario() public {
+    //     // hevm.prank(user1);
+    //     // HOPPER.mint(10);
+    // }
 
-    function testNames() public {
-        hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST}(1);
+    // function testNames() public {
+    //     hevm.prank(user1, user1);
+    //     HOPPER.mint{value: MINT_COST}(1);
 
-        assert(
-            keccak256(bytes("Unnamed")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
-        );
+    //     assert(
+    //         keccak256(bytes("Unnamed")) ==
+    //             keccak256(bytes(HOPPER.getHopperName(0)))
+    //     );
 
-        hevm.prank(user2);
-        hevm.expectRevert(
-            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
-        );
-        HOPPER.changeHopperName(0, "hopper");
+    //     hevm.prank(user2);
+    //     hevm.expectRevert(
+    //         abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+    //     );
+    //     HOPPER.changeHopperName(0, "hopper");
 
-        hevm.prank(caretakerUser);
-        HOPPER.changeHopperName(0, "hopper");
-        assert(
-            keccak256(bytes("hopper")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
-        );
+    //     hevm.prank(caretakerUser);
+    //     HOPPER.changeHopperName(0, "hopper");
+    //     assert(
+    //         keccak256(bytes("hopper")) ==
+    //             keccak256(bytes(HOPPER.getHopperName(0)))
+    //     );
 
-        hevm.prank(user1);
-        HOPPER.transferFrom(user1, user2, 0);
-        assert(
-            keccak256(bytes("hopper")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
-        );
+    //     hevm.prank(user1);
+    //     HOPPER.transferFrom(user1, user2, 0);
+    //     assert(
+    //         keccak256(bytes("hopper")) ==
+    //             keccak256(bytes(HOPPER.getHopperName(0)))
+    //     );
 
-        hevm.prank(caretakerUser);
-        HOPPER.changeHopperName(0, "myhopper");
-        assert(
-            keccak256(bytes("myhopper")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
-        );
-    }
+    //     hevm.prank(caretakerUser);
+    //     HOPPER.changeHopperName(0, "myhopper");
+    //     assert(
+    //         keccak256(bytes("myhopper")) ==
+    //             keccak256(bytes(HOPPER.getHopperName(0)))
+    //     );
+    // }
 
-    function testLevels() public {
-        hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST}(1);
+    // function testLevels() public {
+    //     hevm.prank(user1, user1);
+    //     HOPPER.mint{value: MINT_COST}(1);
 
-        hevm.prank(user1);
-        hevm.expectRevert(
-            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
-        );
-        HOPPER.levelUp(0);
+    //     hevm.prank(user1);
+    //     hevm.expectRevert(
+    //         abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+    //     );
+    //     HOPPER.levelUp(0);
 
-        hevm.startPrank(caretakerUser);
-        HOPPER.levelUp(0);
+    //     hevm.startPrank(caretakerUser);
+    //     HOPPER.levelUp(0);
 
-        (uint208 level, , , , , , ) = HOPPER.hoppers(0);
-        assert(level == 1);
+    //     (uint208 level, , , , , , ) = HOPPER.hoppers(0);
+    //     assert(level == 1);
 
-        for (uint256 i; i < 99; ++i) {
-            HOPPER.levelUp(0);
-        }
+    //     for (uint256 i; i < 99; ++i) {
+    //         HOPPER.levelUp(0);
+    //     }
 
-        (level, , , , , , ) = HOPPER.hoppers(0);
-        assert(level == 100);
+    //     (level, , , , , , ) = HOPPER.hoppers(0);
+    //     assert(level == 100);
 
-        hevm.expectRevert(
-            abi.encodeWithSelector(HopperNFT.MaxLevelReached.selector)
-        );
-        HOPPER.levelUp(0);
+    //     hevm.expectRevert(
+    //         abi.encodeWithSelector(HopperNFT.MaxLevelReached.selector)
+    //     );
+    //     HOPPER.levelUp(0);
 
-        hevm.stopPrank();
-    }
+    //     hevm.stopPrank();
+    // }
 }

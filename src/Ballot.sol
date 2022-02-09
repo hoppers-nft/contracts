@@ -122,8 +122,7 @@ contract Ballot {
 
         // veFly Accounting
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
-        if (totalVeFly > veFly(VEFLY).balanceOf(user))
-            revert NotEnoughVeFly();
+        if (totalVeFly > veFly(VEFLY).balanceOf(user)) revert NotEnoughVeFly();
 
         userVeFlyUsed[user] = totalVeFly;
 
@@ -150,7 +149,6 @@ contract Ballot {
 
         if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
 
-
         // Recalculate veShare
         uint256 veshare = _calcVeShare(eshares, remainingVeFly);
         _updateVeShare(user, veshare);
@@ -174,7 +172,7 @@ contract Ballot {
         uint256 reward = countReward();
         rewardSnapshot = block.timestamp;
 
-        if(reward == 0) revert TooSoon();
+        if (reward == 0) revert TooSoon();
 
         uint256 totalVotes;
         address[] memory _arrAdventures = arrAdventures;

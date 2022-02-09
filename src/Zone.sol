@@ -315,7 +315,6 @@ abstract contract Zone {
         unchecked {
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
-
         _updateVote(_baseShares, 0);
     }
 
@@ -370,13 +369,15 @@ abstract contract Zone {
                             VOTE veFLY 
     //////////////////////////////////////////////////////////////*/
 
-    function _updateVote(uint256 baseShares, uint256 veFlyAmount)
-        internal
-    {
+    function _updateVote(uint256 baseShares, uint256 veFlyAmount) internal {
         uint256 before = veSharesBalance[msg.sender];
 
         if (before > 0 || veFlyAmount > 0) {
-            uint256 current = Ballot(ballot).vote(msg.sender, baseShares, veFlyAmount);
+            uint256 current = Ballot(ballot).vote(
+                msg.sender,
+                baseShares,
+                veFlyAmount
+            );
             veSharesBalance[msg.sender] = current;
             unchecked {
                 totalVeShare = totalVeShare + current - before;
@@ -387,7 +388,7 @@ abstract contract Zone {
     function vote(uint256 veFlyAmount, bool recount) external {
         _updateAccountBonusReward(msg.sender);
         _updateVote(baseSharesBalance[msg.sender], veFlyAmount);
-        if(recount) Ballot(ballot).count();
+        if (recount) Ballot(ballot).count();
     }
 
     function unvote(uint256 veFlyAmount, bool recount) external {
@@ -404,7 +405,7 @@ abstract contract Zone {
         unchecked {
             totalVeShare = totalVeShare + current - before;
         }
-        if(recount) Ballot(ballot).count();
+        if (recount) Ballot(ballot).count();
     }
 
     function forceUnvote(address user) external {
