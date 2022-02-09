@@ -422,6 +422,7 @@ abstract contract Zone {
     function canEnter(HopperNFT.Hopper memory hopper)
         public
         pure
+        virtual
         returns (bool)
     {}
 
