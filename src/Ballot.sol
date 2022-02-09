@@ -11,7 +11,7 @@ contract Ballot {
     address[] validZones;
 
     bool enabled;
-    uint256 nextCountTime;
+    uint256 rewardSnapshot;
     uint256 bonusEmissionRate;
     uint256 countRewardRate;
 
@@ -36,7 +36,7 @@ contract Ballot {
 
     constructor(address _flyAddress, address _veFlyAddress) {
         owner = msg.sender;
-        nextCountTime = type(uint256).max;
+        rewardSnapshot = type(uint256).max;
         FLY = _flyAddress;
         VEFLY = _veFlyAddress;
     }
@@ -52,11 +52,11 @@ contract Ballot {
     }
 
     function openBallot() external onlyOwner {
-        nextCountTime = block.timestamp + 24 hours;
+        rewardSnapshot = block.timestamp;
     }
 
     function closeBallot() external onlyOwner {
-        nextCountTime = type(uint256).max;
+        rewardSnapshot = type(uint256).max;
     }
 
     function addAdventures(address[] calldata _adventures) external onlyOwner {
@@ -163,19 +163,18 @@ contract Ballot {
     }
 
     function countReward() public view returns (uint256) {
-        uint256 _nextCountTime = nextCountTime;
+        uint256 _rewardSnapshot = rewardSnapshot;
 
-        if (block.timestamp < _nextCountTime) return 0;
+        if (block.timestamp < _rewardSnapshot) return 0;
 
-        return countRewardRate * (block.timestamp - _nextCountTime);
+        return countRewardRate * (block.timestamp - _rewardSnapshot);
     }
 
     function count() external {
         uint256 reward = countReward();
+        rewardSnapshot = block.timestamp;
 
-        if (reward == 0) revert TooSoon();
-
-        nextCountTime = block.timestamp + 24 hours;
+        if(reward == 0) revert TooSoon();
 
         uint256 totalVotes;
         address[] memory _arrAdventures = arrAdventures;

@@ -102,6 +102,7 @@ abstract contract Zone {
     }
 
     function setEmissionRate(uint256 _emissionRate) external onlyOwner {
+        rewardPerShareStored = rewardPerShare();
         emissionRate = _emissionRate;
         emit UpdatedEmission(_emissionRate);
     }
@@ -110,6 +111,7 @@ abstract contract Zone {
         external
         onlyBallotOrOwner
     {
+        bonusRewardPerShareStored = bonusRewardPerShare();
         bonusEmissionRate = _bonusEmissionRate;
     }
 
@@ -370,7 +372,6 @@ abstract contract Zone {
 
     function _updateVote(uint256 baseShares, uint256 veFlyAmount)
         internal
-        returns (uint256)
     {
         uint256 before = veSharesBalance[msg.sender];
 
@@ -383,12 +384,13 @@ abstract contract Zone {
         }
     }
 
-    function vote(uint256 veFlyAmount) external {
+    function vote(uint256 veFlyAmount, bool recount) external {
         _updateAccountBonusReward(msg.sender);
         _updateVote(baseSharesBalance[msg.sender], veFlyAmount);
+        if(recount) Ballot(ballot).count();
     }
 
-    function unvote(uint256 veFlyAmount) external {
+    function unvote(uint256 veFlyAmount, bool recount) external {
         _updateAccountBonusReward(msg.sender);
 
         uint256 before = veSharesBalance[msg.sender];
@@ -402,14 +404,15 @@ abstract contract Zone {
         unchecked {
             totalVeShare = totalVeShare + current - before;
         }
+        if(recount) Ballot(ballot).count();
     }
 
     function forceUnvote(address user) external {
         if (msg.sender != ballot) revert Unauthorized();
 
-        _updateAccountBonusReward(msg.sender);
+        _updateAccountBonusReward(user);
 
-        delete veSharesBalance[msg.sender];
+        delete veSharesBalance[user];
     }
 
     /*///////////////////////////////////////////////////////////////
