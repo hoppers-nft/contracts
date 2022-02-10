@@ -53,7 +53,7 @@ contract HopperTest is BaseTest {
 
         hevm.prank(address(POND));
         HOPPER.changeHopperName(0, "hopper1");
-    
+
         hevm.prank(address(POND));
         HOPPER.changeHopperName(0, "hopper");
 

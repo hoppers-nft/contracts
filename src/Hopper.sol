@@ -33,14 +33,19 @@ contract HopperNFT is ERC721, ERC2981 {
         uint8 category;
     }
 
-    uint256 nameFee;
-    mapping(bytes32 => bool) public takenNames;
-    mapping(uint256 => string) public hoppersNames;
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
 
     // whitelist for leveling up
     mapping(address => uint256) public zones;
+
+    /*///////////////////////////////////////////////////////////////
+                            HOPPER NAMES
+    //////////////////////////////////////////////////////////////*/
+
+    uint256 nameFee;
+    mapping(bytes32 => bool) public takenNames;
+    mapping(uint256 => string) public hoppersNames;
 
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
