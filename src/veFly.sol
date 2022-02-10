@@ -201,7 +201,7 @@ contract veFly {
     function canWithdraw(address account) public view returns (bool) {
         uint256 length = arrValidBallots.length;
         for (uint256 i; i < length; ++i) {
-            if (hasUserVoted[arrValidBallots[i]][msg.sender]) return false;
+            if (hasUserVoted[arrValidBallots[i]][account]) return false;
         }
         return true;
     }
