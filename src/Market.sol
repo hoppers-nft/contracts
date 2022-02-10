@@ -228,4 +228,5 @@ contract Market {
             }
             return _listings;
         }
-    }}
+    }
+}

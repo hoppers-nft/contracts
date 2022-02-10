@@ -104,7 +104,8 @@ abstract contract Zone {
     }
 
     function setEmissionRate(uint256 _emissionRate) external onlyOwner {
-        rewardPerShareStored = rewardPerShare();
+        _updateRewardPerShareStored();
+
         emissionRate = _emissionRate;
         emit UpdatedEmission(_emissionRate);
     }
@@ -113,7 +114,8 @@ abstract contract Zone {
         external
         onlyBallotOrOwner
     {
-        bonusRewardPerShareStored = bonusRewardPerShare();
+        _updateBonusRewardPerShareStored();
+
         bonusEmissionRate = _bonusEmissionRate;
     }
 
@@ -138,9 +140,13 @@ abstract contract Zone {
             rewards[account];
     }
 
-    function _updateAccountReward(address account) internal {
+    function _updateRewardPerShareStored() internal {
         rewardPerShareStored = rewardPerShare();
         lastUpdatedTime = block.timestamp;
+    }
+
+    function _updateAccountReward(address account) internal {
+        _updateRewardPerShareStored();
 
         rewards[account] = earned(account);
         userRewardPerSharePaid[account] = rewardPerShareStored;
@@ -171,10 +177,14 @@ abstract contract Zone {
             rewards[account];
     }
 
+    function _updateBonusRewardPerShareStored() internal {
+        bonusRewardPerShareStored = bonusRewardPerShare();
+        lastBonusUpdatedTime = block.timestamp;
+    }
+
     function _updateAccountBonusReward(address account) internal {
         if (veSharesBalance[account] > 0) {
-            bonusRewardPerShareStored = bonusRewardPerShare();
-            lastBonusUpdatedTime = block.timestamp;
+            _updateBonusRewardPerShareStored();
 
             rewards[account] = earnedBonus(account);
             userBonusRewardPerSharePaid[account] = bonusRewardPerShareStored;

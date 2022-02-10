@@ -5,16 +5,11 @@ import {BaseTest, HEVM, HopperNFT} from "./BaseTest.sol";
 import {Market} from "../Market.sol";
 
 contract HopperTest is BaseTest {
-
     Market MARKET;
     uint256 marketFee = 2;
 
     function setUpMarket() public {
-
-        MARKET = new Market(
-            address(HOPPER),
-            marketFee
-        );
+        MARKET = new Market(address(HOPPER), marketFee);
 
         hevm.prank(user1);
         HOPPER.setApprovalForAll(address(MARKET), true);
@@ -68,7 +63,7 @@ contract HopperTest is BaseTest {
         uint256 amount
     ) public {
         Market.Listing memory listing = MARKET.getListings(id, 1)[0];
-        
+
         uint256 prevAgentBalance = address(agent).balance;
         uint256 prevOwnerBalance = address(listing.owner).balance;
         uint256 prevMarketBalance = address(MARKET).balance;
@@ -81,7 +76,10 @@ contract HopperTest is BaseTest {
 
         uint256 marketFee = (amount * marketFee) / 100;
         assert(prevAgentBalance - amount == address(agent).balance);
-        assert(prevOwnerBalance + amount - marketFee == address(listing.owner).balance);
+        assert(
+            prevOwnerBalance + amount - marketFee ==
+                address(listing.owner).balance
+        );
         assert(prevMarketBalance + marketFee == address(MARKET).balance);
     }
 
@@ -110,9 +108,9 @@ contract HopperTest is BaseTest {
         setUpMarket();
 
         hevm.prank(user2, user2);
-        HOPPER.mint{value: MINT_COST*10}(10);
+        HOPPER.mint{value: MINT_COST * 10}(10);
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST*10}(10);
+        HOPPER.mint{value: MINT_COST * 10}(10);
 
         addListing(user2, 0, 1 ether);
         addListing(user2, 1, 1 ether);
@@ -183,15 +181,13 @@ contract HopperTest is BaseTest {
 
         assert(prevMarketBalance + prevOwner == user1.balance);
         assert(address(MARKET).balance == 0);
-
     }
 
     function testEmergency() public {
-
         setUpMarket();
 
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST*10}(10);
+        HOPPER.mint{value: MINT_COST * 10}(10);
 
         addListing(user1, 0, 1 ether);
         addListing(user1, 1, 1 ether);
@@ -222,22 +218,21 @@ contract HopperTest is BaseTest {
         MARKET.closeMarket();
         MARKET.allowEmergencyDelisting();
 
-        Market.Listing[] memory beforeListings = MARKET.getListings(0,4);
-        for(uint256 i; i< beforeListings.length; ++i) {
+        Market.Listing[] memory beforeListings = MARKET.getListings(0, 4);
+        for (uint256 i; i < beforeListings.length; ++i) {
             assert(beforeListings[i].active);
         }
-        
+
         // Anyone can delist them, but they go to the original owner.
         hevm.prank(user2);
         MARKET.emergencyDelist(arr);
 
-        Market.Listing[] memory listings = MARKET.getListings(0,4);
-        for(uint256 i; i< listings.length; ++i) {
+        Market.Listing[] memory listings = MARKET.getListings(0, 4);
+        for (uint256 i; i < listings.length; ++i) {
             assert(!listings[i].active);
-            assertTrue(HOPPER.ownerOf(listings[i].tokenId) == listings[i].owner);
-
+            assertTrue(
+                HOPPER.ownerOf(listings[i].tokenId) == listings[i].owner
+            );
         }
     }
-
-
 }
