@@ -5,6 +5,7 @@ import {veFly} from "./veFly.sol";
 import {Fly} from "./Fly.sol";
 import {Ballot} from "./Ballot.sol";
 import {HopperNFT} from "./Hopper.sol";
+import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
 
 abstract contract Zone {
     /*///////////////////////////////////////////////////////////////
@@ -49,6 +50,7 @@ abstract contract Zone {
 
     mapping(address => uint256) public veSharesBalance;
     mapping(address => uint256) public userBonusRewardPerSharePaid;
+    mapping(address => uint256) public veFlyBalance;
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -170,11 +172,13 @@ abstract contract Zone {
     }
 
     function _updateAccountBonusReward(address account) internal {
-        bonusRewardPerShareStored = bonusRewardPerShare();
-        lastBonusUpdatedTime = block.timestamp;
+        if (veSharesBalance[account] > 0) {
+            bonusRewardPerShareStored = bonusRewardPerShare();
+            lastBonusUpdatedTime = block.timestamp;
 
-        rewards[account] = earnedBonus(account);
-        userBonusRewardPerSharePaid[account] = bonusRewardPerShareStored;
+            rewards[account] = earnedBonus(account);
+            userBonusRewardPerSharePaid[account] = bonusRewardPerShareStored;
+        }
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -273,7 +277,7 @@ abstract contract Zone {
             baseSharesBalance[msg.sender] = newBaseShare;
 
             _updateAccountReward(msg.sender);
-            _updateVote(newBaseShare, 0);
+            _updateVeShares(newBaseShare, 0, false);
         }
 
         HopperNFT(HOPPER).levelUp(tokenId);
@@ -315,7 +319,7 @@ abstract contract Zone {
         unchecked {
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
-        _updateVote(_baseShares, 0);
+        _updateVeShares(_baseShares, 0, false);
     }
 
     function exit(uint256[] calldata tokenIds) external {
@@ -353,7 +357,7 @@ abstract contract Zone {
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
 
-        _updateVote(_baseShares, 0);
+        _updateVeShares(_baseShares, 0, false);
     }
 
     function claim() external {
@@ -369,42 +373,60 @@ abstract contract Zone {
                             VOTE veFLY 
     //////////////////////////////////////////////////////////////*/
 
-    function _updateVote(uint256 baseShares, uint256 veFlyAmount) internal {
-        uint256 before = veSharesBalance[msg.sender];
+    function _calcVeShare(uint256 eshares, uint256 vefly)
+        internal
+        pure
+        returns (uint256)
+    {
+        return FixedPointMathLib.sqrt(eshares * vefly);
+    }
 
-        if (before > 0 || veFlyAmount > 0) {
-            uint256 current = Ballot(ballot).vote(
-                msg.sender,
-                baseShares,
-                veFlyAmount
-            );
-            veSharesBalance[msg.sender] = current;
+    function _updateVeShares(
+        uint256 baseShares,
+        uint256 veFlyAmount,
+        bool increment
+    ) internal {
+        uint256 beforeVeShare = veSharesBalance[msg.sender];
+
+        if (beforeVeShare > 0 || veFlyAmount > 0) {
+            uint256 currentVeFly;
+
+            if (veFlyAmount > 0) {
+                if (increment) {
+                    currentVeFly = Ballot(ballot).vote(msg.sender, veFlyAmount);
+                } else {
+                    currentVeFly = Ballot(ballot).unvote(
+                        msg.sender,
+                        veFlyAmount
+                    );
+                }
+                veFlyBalance[msg.sender] = currentVeFly;
+            } else {
+                currentVeFly = veFlyBalance[msg.sender];
+            }
+
+            uint256 currentVeShare = _calcVeShare(baseShares, currentVeFly);
+            veSharesBalance[msg.sender] = currentVeShare;
+
             unchecked {
-                totalVeShare = totalVeShare + current - before;
+                totalVeShare = totalVeShare + currentVeShare - beforeVeShare;
             }
         }
     }
 
     function vote(uint256 veFlyAmount, bool recount) external {
         _updateAccountBonusReward(msg.sender);
-        _updateVote(baseSharesBalance[msg.sender], veFlyAmount);
+
+        _updateVeShares(baseSharesBalance[msg.sender], veFlyAmount, true);
+
         if (recount) Ballot(ballot).count();
     }
 
     function unvote(uint256 veFlyAmount, bool recount) external {
         _updateAccountBonusReward(msg.sender);
 
-        uint256 before = veSharesBalance[msg.sender];
-        uint256 current = Ballot(ballot).unvote(
-            msg.sender,
-            baseSharesBalance[msg.sender],
-            veFlyAmount
-        );
+        _updateVeShares(baseSharesBalance[msg.sender], veFlyAmount, false);
 
-        veSharesBalance[msg.sender] = current;
-        unchecked {
-            totalVeShare = totalVeShare + current - before;
-        }
         if (recount) Ballot(ballot).count();
     }
 
@@ -414,6 +436,7 @@ abstract contract Zone {
         _updateAccountBonusReward(user);
 
         delete veSharesBalance[user];
+        delete veFlyBalance[user];
     }
 
     /*///////////////////////////////////////////////////////////////

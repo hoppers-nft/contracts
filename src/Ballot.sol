@@ -4,7 +4,6 @@ pragma solidity 0.8.11;
 import {Fly} from "./Fly.sol";
 import {Zone} from "./Zone.sol";
 import {veFly} from "./veFly.sol";
-import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
 
 contract Ballot {
     address owner;
@@ -96,28 +95,16 @@ contract Ballot {
         }
     }
 
-    function _calcVeShare(uint256 eshares, uint256 vefly)
-        internal
-        pure
-        returns (uint256)
-    {
-        return FixedPointMathLib.sqrt(eshares * vefly);
-    }
-
-    function _updateVeShare(address user, uint256 veshare) internal {
+    function _updateVotes(address user, uint256 vefly) internal {
         adventuresVotes[msg.sender] =
             adventuresVotes[msg.sender] -
             adventuresUserVotes[msg.sender][user] +
-            veshare;
+            vefly;
 
-        adventuresUserVotes[msg.sender][user] = veshare;
+        adventuresUserVotes[msg.sender][user] = vefly;
     }
 
-    function vote(
-        address user,
-        uint256 eshares,
-        uint256 vefly
-    ) external returns (uint256) {
+    function vote(address user, uint256 vefly) external returns (uint256) {
         if (!adventures[msg.sender]) revert Unauthorized();
 
         // veFly Accounting
@@ -128,18 +115,12 @@ contract Ballot {
 
         if (totalVeFly > 0) veFly(VEFLY).setHasVoted(user);
 
-        // Recalculate veShare
-        uint256 veshare = _calcVeShare(eshares, totalVeFly);
-        _updateVeShare(user, veshare);
+        _updateVotes(user, totalVeFly);
 
-        return veshare;
+        return totalVeFly;
     }
 
-    function unvote(
-        address user,
-        uint256 eshares,
-        uint256 vefly
-    ) external returns (uint256) {
+    function unvote(address user, uint256 vefly) external returns (uint256) {
         if (!adventures[msg.sender]) revert Unauthorized();
 
         // veFly Accounting
@@ -149,11 +130,9 @@ contract Ballot {
 
         if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
 
-        // Recalculate veShare
-        uint256 veshare = _calcVeShare(eshares, remainingVeFly);
-        _updateVeShare(user, veshare);
+        _updateVotes(user, remainingVeFly);
 
-        return veshare;
+        return remainingVeFly;
     }
 
     function setCountRewardRate(uint256 _countRewardRate) external onlyOwner {
