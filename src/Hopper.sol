@@ -24,7 +24,7 @@ contract HopperNFT is ERC721, ERC2981 {
     //////////////////////////////////////////////////////////////*/
 
     struct Hopper {
-        uint208 level;
+        uint208 level; // capped by zone
         uint8 strength;
         uint8 agility;
         uint8 vitality;
