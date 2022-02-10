@@ -3,10 +3,9 @@ pragma solidity 0.8.11;
 
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC721} from "@solmate/tokens/ERC721.sol";
-import {ERC2981} from "./ERC2981.sol";
 
 //slither-disable-next-line locked-ether
-contract HopperNFT is ERC721, ERC2981 {
+contract HopperNFT is ERC721 {
     using SafeTransferLib for address;
 
     address public owner;
@@ -75,11 +74,9 @@ contract HopperNFT is ERC721, ERC2981 {
         uint256 _MINT_COST,
         uint256 _MAX_SUPPLY,
         uint256 _MAX_PER_ADDRESS,
-        address _ROYALTY_ADDRESS,
-        uint256 _ROYALTY_FEE,
         uint256 _SALE_TIME,
         uint256 _NAME_FEE
-    ) ERC721(_NFT_NAME, _NFT_SYMBOL) ERC2981(_ROYALTY_ADDRESS, _ROYALTY_FEE) {
+    ) ERC721(_NFT_NAME, _NFT_SYMBOL) {
         owner = msg.sender;
 
         MINT_COST = _MINT_COST;
@@ -253,7 +250,7 @@ contract HopperNFT is ERC721, ERC2981 {
     function supportsInterface(bytes4 interfaceId)
         public
         pure
-        override(ERC721, ERC2981)
+        override(ERC721)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

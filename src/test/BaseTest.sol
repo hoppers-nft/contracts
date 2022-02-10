@@ -68,8 +68,6 @@ contract BaseTest is DSTest {
             MINT_COST,
             10_000,
             MAX_MINT_PER_CALL,
-            address(0x1337), // royalty address
-            5, // royalty fee
             0, // sale time
             0.01 ether // namefee
         );
