@@ -110,6 +110,10 @@ contract BaseTest is DSTest {
         hevm.deal(user2, 10_000 ether);
         hevm.deal(user3, 10_000 ether);
 
+        // LevelUp && Name Authorization
+        HOPPER.addZone(_adventures[0]);
+        HOPPER.addZone(_adventures[1]);
+
         // Approvals
         hevm.startPrank(user1);
         HOPPER.setApprovalForAll(address(POND), true);

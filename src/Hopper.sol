@@ -34,6 +34,7 @@ contract HopperNFT is ERC721, ERC2981 {
     }
 
     uint256 nameFee;
+    mapping(bytes32 => bool) public takenNames;
     mapping(uint256 => string) public hoppersNames;
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
@@ -61,6 +62,7 @@ contract HopperNFT is ERC721, ERC2981 {
     error MaxLength25();
     error OnlyEOAAllowed();
     error MaxLevelReached();
+    error NameTaken();
 
     constructor(
         string memory _NFT_NAME,
@@ -141,6 +143,12 @@ contract HopperNFT is ERC721, ERC2981 {
         returns (uint256)
     {
         if (bytes(name).length > 25) revert MaxLength25();
+
+        bytes32 nameHash = keccak256(bytes(name));
+        if (takenNames[nameHash]) revert NameTaken();
+
+        takenNames[keccak256(bytes(hoppersNames[tokenId]))] = false;
+        takenNames[nameHash] = true;
 
         hoppersNames[tokenId] = name;
 
