@@ -82,13 +82,13 @@ contract HopperTest is BaseTest {
         assert(HOPPER.ownerOf(listing.tokenId) != listing.owner);
         assert(HOPPER.ownerOf(listing.tokenId) == agent);
 
-        uint256 marketFee = (amount * marketFee) / 100;
+        uint256 _marketFee = (amount * marketFee) / 100;
         assert(prevAgentBalance - amount == address(agent).balance);
         assert(
-            prevOwnerBalance + amount - marketFee ==
+            prevOwnerBalance + amount - _marketFee ==
                 address(listing.owner).balance
         );
-        assert(prevMarketBalance + marketFee == address(MARKET).balance);
+        assert(prevMarketBalance + _marketFee == address(MARKET).balance);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -107,11 +107,15 @@ contract HopperTest is BaseTest {
         HOPPER.mint{value: MINT_COST * 10}(10);
 
         hevm.prank(user1);
-        hevm.expectRevert(abi.encodeWithSelector(Market.InvalidTokenAddress.selector));
+        hevm.expectRevert(
+            abi.encodeWithSelector(Market.InvalidTokenAddress.selector)
+        );
         MARKET.addListing(0, address(HOPPER), 1 ether);
 
         hevm.prank(user2);
-        hevm.expectRevert(abi.encodeWithSelector(Market.InvalidTokenAddress.selector));
+        hevm.expectRevert(
+            abi.encodeWithSelector(Market.InvalidTokenAddress.selector)
+        );
         MARKET.addListing(0, address(TADPOLE), 1 ether);
 
         MARKET.addTokenAddress(address(HOPPER));

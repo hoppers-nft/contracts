@@ -36,7 +36,13 @@ contract HopperNFT is ERC721 {
     uint256 public hoppersLength;
 
     // whitelist for leveling up
-    mapping(address => uint256) public zones;
+    mapping(address => bool) public zones;
+
+    // unlabeled data [key -> tokenid -> data] for potential future adventures
+    mapping(bytes32 => mapping(uint256 => bytes32)) public unlabeledData;
+
+    // unlabeled data [key -> data] for potential future adventures
+    mapping(bytes32 => bytes32) public unlabeledGlobalData;
 
     /*///////////////////////////////////////////////////////////////
                             HOPPER NAMES
@@ -97,6 +103,16 @@ contract HopperNFT is ERC721 {
         _;
     }
 
+    modifier onlyZone() {
+        if (!zones[msg.sender]) revert Unauthorized();
+        _;
+    }
+
+    modifier onlyOwnerOrZone() {
+        if (msg.sender != owner && !zones[msg.sender]) revert Unauthorized();
+        _;
+    }
+
     function setOwner(address newOwner) external onlyOwner {
         //slither-disable-next-line missing-zero-check
         owner = newOwner;
@@ -113,19 +129,71 @@ contract HopperNFT is ERC721 {
     }
 
     /*///////////////////////////////////////////////////////////////
+                            Unlabeled Data
+    //////////////////////////////////////////////////////////////*/
+
+    function setGlobalData(bytes32 _key, bytes32 _data)
+        external
+        onlyOwnerOrZone
+    {
+        unlabeledGlobalData[_key] = _data;
+    }
+
+    function unsetGlobalData(bytes32 _key) external onlyOwnerOrZone {
+        delete unlabeledGlobalData[_key];
+    }
+
+    function getGlobalData(bytes32 _key) external view returns (bytes32) {
+        return unlabeledGlobalData[_key];
+    }
+
+    function setData(
+        bytes32 _key,
+        uint256 _tokenId,
+        bytes32 _data
+    ) external onlyOwnerOrZone {
+        unlabeledData[_key][_tokenId] = _data;
+    }
+
+    function unsetData(bytes32 _key, uint256 _tokenId)
+        external
+        onlyOwnerOrZone
+    {
+        delete unlabeledData[_key][_tokenId];
+    }
+
+    function getData(bytes32 _key, uint256 _tokenId)
+        external
+        view
+        returns (bytes32)
+    {
+        return unlabeledData[_key][_tokenId];
+    }
+
+    function getHopperWithData(bytes32[] calldata _keys, uint256 _tokenId)
+        external
+        view
+        returns (Hopper memory hopper, bytes32[] memory arrData)
+    {
+        hopper = hoppers[_tokenId];
+
+        uint256 length = _keys.length;
+        arrData = new bytes32[](length);
+
+        for (uint256 i; i < length; i++) {
+            arrData[i] = unlabeledData[_keys[i]][_tokenId];
+        }
+    }
+
+    /*///////////////////////////////////////////////////////////////
                         HOPPER LEVEL MECHANICS
             Zones are other authorized contracts that
                 according to their own logic can issue a hopper
                     to level up
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyZone() {
-        if (zones[msg.sender] == 0) revert Unauthorized();
-        _;
-    }
-
     function addZone(address zone) external onlyOwner {
-        zones[zone] = 1;
+        zones[zone] = true;
     }
 
     function removeZone(address zone) external onlyOwner {

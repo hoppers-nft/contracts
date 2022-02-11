@@ -15,12 +15,13 @@ abstract contract Zone {
     address public immutable VE_FLY;
     address public immutable HOPPER;
 
+    bytes32 public immutable LEVEL_GAUGE_KEY;
+
     /*///////////////////////////////////////////////////////////////
                                 HOPPERS
     //////////////////////////////////////////////////////////////*/
 
     mapping(uint256 => address) public hopperOwners;
-    mapping(address => uint256) public numHoppersOfOwner;
     mapping(uint256 => uint256) public hopperBaseShare;
     mapping(address => uint256) public rewards;
 
@@ -38,6 +39,12 @@ abstract contract Zone {
 
     mapping(address => uint256) public baseSharesBalance;
     mapping(address => uint256) public userRewardPerSharePaid;
+    mapping(address => uint256) public userMaxFlyGeneration;
+
+    mapping(address => uint256) public generatedPerShareStored;
+    mapping(uint256 => uint256) public tokenCapFilledPerShare;
+
+    uint256 public flyLevelCapRatio;
 
     /*///////////////////////////////////////////////////////////////
                         Accounting/Rewards veFLY
@@ -81,6 +88,9 @@ abstract contract Zone {
         FLY = fly;
         VE_FLY = vefly;
         HOPPER = hopper;
+
+        flyLevelCapRatio = 3;
+        LEVEL_GAUGE_KEY = keccak256(bytes("LEVEL_GAUGE_KEY"));
     }
 
     modifier onlyOwner() {
@@ -119,6 +129,43 @@ abstract contract Zone {
         bonusEmissionRate = _bonusEmissionRate;
     }
 
+    function setFlyLevelCapRatio(uint256 _flyLevelCapRatio) external onlyOwner {
+        flyLevelCapRatio = _flyLevelCapRatio;
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                        HOPPER GENERATION CAP
+    //////////////////////////////////////////////////////////////*/
+
+    function getUserGeneratedFly(address account, uint256 _totalBaseShares)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        uint256 cappedFly = userMaxFlyGeneration[account];
+        uint256 generatedFly = ((_totalBaseShares *
+            (rewardPerShareStored - userRewardPerSharePaid[account])) / 1e18);
+
+        return (
+            generatedFly > cappedFly ? cappedFly : generatedFly,
+            generatedFly
+        );
+    }
+
+    function _updateHopperGenerationData(
+        address _account,
+        uint256 _totalBaseShares
+    ) internal returns (uint256) {
+        (uint256 cappedFly, uint256 generatedFly) = getUserGeneratedFly(
+            _account,
+            _totalBaseShares
+        );
+
+        // todo scale?
+        generatedPerShareStored[_account] += (generatedFly / _totalBaseShares);
+        return cappedFly;
+    }
+
     /*///////////////////////////////////////////////////////////////
                            REWARDS ACCOUNTING
     //////////////////////////////////////////////////////////////*/
@@ -133,25 +180,29 @@ abstract contract Zone {
                 totalSupply);
     }
 
-    function earned(address account) public view returns (uint256) {
-        return
-            ((baseSharesBalance[account] *
-                (rewardPerShare() - userRewardPerSharePaid[account])) / 1e18) +
-            rewards[account];
-    }
-
     function _updateRewardPerShareStored() internal {
         rewardPerShareStored = rewardPerShare();
         lastUpdatedTime = block.timestamp;
     }
 
-    function _updateAccountReward(address account) internal {
+    function _updateAccountReward(address _account) internal {
         _updateRewardPerShareStored();
 
-        rewards[account] = earned(account);
-        userRewardPerSharePaid[account] = rewardPerShareStored;
+        uint256 totalBaseShares = baseSharesBalance[_account];
+        if (totalBaseShares > 0) {
+            uint256 cappedFly = _updateHopperGenerationData(
+                _account,
+                totalBaseShares
+            );
 
-        _updateAccountBonusReward(account);
+            unchecked {
+                rewards[_account] += cappedFly;
+            }
+        }
+
+        userRewardPerSharePaid[_account] = rewardPerShareStored;
+
+        _updateAccountBonusReward(_account);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -199,13 +250,14 @@ abstract contract Zone {
         if (useOwnRewards) {
             uint256 _rewards = rewards[msg.sender];
 
-            // Pays for level up from the pending rewards
+            // Pays from the pending rewards
             if (_rewards >= flyRequired) {
                 unchecked {
                     rewards[msg.sender] -= flyRequired;
+                    flyRequired = 0;
                 }
             } else if (_rewards > 0) {
-                rewards[msg.sender] = 0;
+                delete rewards[msg.sender];
                 unchecked {
                     flyRequired -= _rewards;
                 }
@@ -275,6 +327,11 @@ abstract contract Zone {
         if (zoneHopperOwner == msg.sender) {
             _updateAccountReward(msg.sender);
 
+            // Resets this hopper generation tracking
+            tokenCapFilledPerShare[tokenId] = generatedPerShareStored[
+                msg.sender
+            ];
+
             uint256 prevHopperShare = _calculateBaseShare(hopper);
             unchecked {
                 ++hopper.level;
@@ -291,11 +348,36 @@ abstract contract Zone {
         }
 
         HopperNFT(HOPPER).levelUp(tokenId);
+
+        // Reset Hopper internal gauge
+        HopperNFT(HOPPER).setData(LEVEL_GAUGE_KEY, tokenId, 0);
     }
 
     /*///////////////////////////////////////////////////////////////
                     STAKE / UNSTAKE NFT && CLAIM FLY
     //////////////////////////////////////////////////////////////*/
+
+    function _getHopperAndGauge(uint256 _tokenId)
+        internal
+        view
+        returns (
+            HopperNFT.Hopper memory,
+            uint256,
+            uint256
+        )
+    {
+        bytes32[] memory arrData = new bytes32[](1);
+        arrData[0] = LEVEL_GAUGE_KEY;
+        (HopperNFT.Hopper memory hopper, bytes32[] memory _data) = HopperNFT(
+            HOPPER
+        ).getHopperWithData(arrData, _tokenId);
+
+        return (
+            hopper,
+            uint256(_data[0]), // hopperGauge
+            flyLevelCapRatio * hopper.level // gaugeLimit
+        );
+    }
 
     function enter(uint256[] calldata tokenIds) external {
         _updateAccountReward(msg.sender);
@@ -304,31 +386,45 @@ abstract contract Zone {
         uint256 _baseShares = prevBaseShares;
         uint256 numTokens = tokenIds.length;
 
+        uint256 flyCapIncrease;
+
         for (uint256 i; i < numTokens; ++i) {
             uint256 tokenId = tokenIds[i];
 
-            // Can the hopper enter this zone?
-            HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(
-                tokenId
-            );
+            // Resets this hopper generation tracking
+            tokenCapFilledPerShare[tokenId] = generatedPerShareStored[
+                msg.sender
+            ];
+
+            (
+                HopperNFT.Hopper memory hopper,
+                uint256 hopperGauge,
+                uint256 gaugeLimit
+            ) = _getHopperAndGauge(tokenId);
+
             if (!canEnter(hopper)) revert UnfitHopper();
 
-            // Increment user shares
-            _baseShares += _calculateBaseShare(hopper);
+            unchecked {
+                // Increment user shares
+                _baseShares += _calculateBaseShare(hopper);
+
+                // Update the maximum FLY this user can generate
+                // todo gaugeLimit should always be less than hopperGauge, should..
+                flyCapIncrease += (gaugeLimit - hopperGauge);
+            }
 
             // Hopper Accounting
             hopperOwners[tokenId] = msg.sender;
-            unchecked {
-                ++numHoppersOfOwner[msg.sender];
-            }
             HopperNFT(HOPPER).transferFrom(msg.sender, address(this), tokenId);
         }
 
-        baseSharesBalance[msg.sender] = _baseShares;
-
         unchecked {
+            baseSharesBalance[msg.sender] = _baseShares;
+            userMaxFlyGeneration[msg.sender] += flyCapIncrease;
+
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
+
         _updateVeShares(_baseShares, 0, false);
     }
 
@@ -339,42 +435,74 @@ abstract contract Zone {
         uint256 _baseShares = prevBaseShares;
         uint256 numTokens = tokenIds.length;
 
+        uint256 flyCapDecrease;
+
         for (uint256 i; i < numTokens; ++i) {
             uint256 tokenId = tokenIds[i];
 
             // Can the user unstake this hopper
             if (hopperOwners[tokenId] != msg.sender) revert WrongTokenID();
-            HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(
-                tokenId
+
+            // Find the amount of uncapped FLY generated by this Hopper
+            uint256 filledCapPerShare = generatedPerShareStored[msg.sender] -
+                tokenCapFilledPerShare[tokenId];
+
+            (
+                HopperNFT.Hopper memory hopper,
+                uint256 prevHopperGauge,
+                uint256 gaugeLimit
+            ) = _getHopperAndGauge(tokenId);
+
+            uint256 _hopperShare = _calculateBaseShare(hopper);
+            uint256 currentGauge = prevHopperGauge +
+                filledCapPerShare *
+                _hopperShare;
+
+            // Update the HOPPER gauge
+            HopperNFT(HOPPER).setData(
+                LEVEL_GAUGE_KEY,
+                tokenId,
+                currentGauge > gaugeLimit
+                    ? bytes32(gaugeLimit)
+                    : bytes32(currentGauge)
             );
 
-            // Decrement user shares
-            _baseShares -= _calculateBaseShare(hopper);
-            // todo would cached hopperBaseShare be cheaper?
+            unchecked {
+                // Decrement user shares
+                _baseShares -= _hopperShare;
+
+                // Update the maximum FLY this user can generate
+                flyCapDecrease += (gaugeLimit - prevHopperGauge);
+            }
 
             // Hopper Accounting
             delete hopperOwners[tokenId];
-            unchecked {
-                --numHoppersOfOwner[msg.sender];
-            }
-
             HopperNFT(HOPPER).transferFrom(address(this), msg.sender, tokenId);
         }
 
-        baseSharesBalance[msg.sender] = _baseShares;
-
         unchecked {
+            baseSharesBalance[msg.sender] = _baseShares;
+            userMaxFlyGeneration[msg.sender] -= flyCapDecrease;
+
             totalSupply = totalSupply + _baseShares - prevBaseShares;
         }
 
         _updateVeShares(_baseShares, 0, false);
     }
 
+    function claimable(address _account) external view returns (uint256) {
+        (uint256 capped, ) = getUserGeneratedFly(
+            _account,
+            baseSharesBalance[_account]
+        );
+        return rewards[msg.sender] + capped;
+    }
+
     function claim() external {
         _updateAccountReward(msg.sender);
 
         uint256 _accountRewards = rewards[msg.sender];
-        rewards[msg.sender] = 0;
+        delete rewards[msg.sender];
 
         Fly(FLY).mint(msg.sender, _accountRewards);
     }
