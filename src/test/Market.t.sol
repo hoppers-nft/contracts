@@ -9,22 +9,30 @@ contract HopperTest is BaseTest {
     uint256 marketFee = 2;
 
     function setUpMarket() public {
-        MARKET = new Market(address(HOPPER), marketFee);
+        MARKET = new Market(marketFee);
 
-        hevm.prank(user1);
+        hevm.startPrank(user1);
         HOPPER.setApprovalForAll(address(MARKET), true);
-        hevm.prank(user2);
+        TADPOLE.setApprovalForAll(address(MARKET), true);
+        hevm.stopPrank();
+
+        hevm.startPrank(user2);
         HOPPER.setApprovalForAll(address(MARKET), true);
+        TADPOLE.setApprovalForAll(address(MARKET), true);
+        hevm.stopPrank();
 
         hevm.prank(user1);
         hevm.expectRevert(abi.encodeWithSelector(Market.ClosedMarket.selector));
-        MARKET.addListing(6, 1 ether);
+        MARKET.addListing(6, address(HOPPER), 1 ether);
 
         hevm.prank(user1);
         hevm.expectRevert(abi.encodeWithSelector(Market.Unauthorized.selector));
         MARKET.openMarket();
 
         MARKET.openMarket();
+
+        MARKET.addTokenAddress(address(HOPPER));
+        MARKET.addTokenAddress(address(TADPOLE));
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -46,7 +54,7 @@ contract HopperTest is BaseTest {
         uint256 amount
     ) public {
         hevm.prank(agent);
-        MARKET.addListing(tokenId, amount);
+        MARKET.addListing(tokenId, address(HOPPER), amount);
         assert(HOPPER.ownerOf(tokenId) == address(MARKET));
     }
 
@@ -86,6 +94,42 @@ contract HopperTest is BaseTest {
     /*///////////////////////////////////////////////////////////////
                              TESTS
     //////////////////////////////////////////////////////////////*/
+
+    function testMultiAssets() public {
+        setUpMarket();
+
+        MARKET.removeTokenAddress(address(HOPPER));
+        MARKET.removeTokenAddress(address(TADPOLE));
+
+        hevm.prank(user2, user2);
+        TADPOLE.mint{value: MINT_COST * 10}(10);
+        hevm.prank(user1, user1);
+        HOPPER.mint{value: MINT_COST * 10}(10);
+
+        hevm.prank(user1);
+        hevm.expectRevert(abi.encodeWithSelector(Market.InvalidTokenAddress.selector));
+        MARKET.addListing(0, address(HOPPER), 1 ether);
+
+        hevm.prank(user2);
+        hevm.expectRevert(abi.encodeWithSelector(Market.InvalidTokenAddress.selector));
+        MARKET.addListing(0, address(TADPOLE), 1 ether);
+
+        MARKET.addTokenAddress(address(HOPPER));
+        MARKET.addTokenAddress(address(TADPOLE));
+
+        hevm.prank(user1);
+        MARKET.addListing(0, address(HOPPER), 1 ether);
+
+        hevm.startPrank(user2);
+        MARKET.addListing(0, address(TADPOLE), 1 ether);
+        MARKET.fulfillListing{value: 1 ether}(0);
+        assert(HOPPER.ownerOf(0) == user2);
+        hevm.stopPrank();
+
+        hevm.prank(user1);
+        MARKET.fulfillListing{value: 1 ether}(1);
+        assert(TADPOLE.ownerOf(0) == user1);
+    }
 
     function testMarketOwnership() public {
         setUpMarket();

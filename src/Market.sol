@@ -10,18 +10,19 @@ contract Market {
     address public owner;
     address public ownerCandidate;
 
-    address public immutable tokenAddress;
-
     struct Listing {
         uint256 id;
         uint256 tokenId;
         uint256 price;
+        address tokenAddress;
         address owner;
         bool active;
     }
 
     mapping(uint256 => Listing) public listings;
     uint256 public listingsLength;
+
+    mapping(address => bool) public validTokenAddresses;
 
     /*///////////////////////////////////////////////////////////////
                        MARKET MANAGEMENT SETTINGS
@@ -38,6 +39,7 @@ contract Market {
     event OwnerUpdated(address indexed newOwner);
     event AddListingEv(
         uint256 listingId,
+        address indexed tokenAddress,
         uint256 indexed tokenId,
         uint256 price
     );
@@ -57,19 +59,19 @@ contract Market {
     error InvalidOwner();
     error OnlyEmergency();
     error Unauthorized();
+    error InvalidTokenAddress();
 
     /*///////////////////////////////////////////////////////////////
                     CONTRACT MANAGEMENT OPERATIONS
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _tokenAddress, uint256 _marketFee) {
+    constructor(uint256 _marketFee) {
         owner = msg.sender;
 
         if (_marketFee > 100) {
             revert Percentage0to100();
         }
 
-        tokenAddress = _tokenAddress;
         marketFee = _marketFee;
     }
 
@@ -81,6 +83,14 @@ contract Market {
     function setOwner(address _newOwner) external onlyOwner {
         owner = _newOwner;
         emit OwnerUpdated(_newOwner);
+    }
+
+    function addTokenAddress(address _tokenAddress) external onlyOwner {
+        validTokenAddresses[_tokenAddress] = true;
+    }
+
+    function removeTokenAddress(address _tokenAddress) external onlyOwner {
+        validTokenAddresses[_tokenAddress] = false;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -123,7 +133,7 @@ contract Market {
             Listing memory listing = listings[id];
             if (listing.active) {
                 listings[id].active = false;
-                ERC721(tokenAddress).transferFrom(
+                ERC721(listing.tokenAddress).transferFrom(
                     address(this),
                     listing.owner,
                     listing.tokenId
@@ -140,21 +150,33 @@ contract Market {
                         LISTINGS WRITE OPERATIONS
     //////////////////////////////////////////////////////////////*/
 
-    function addListing(uint256 tokenId, uint256 price) external {
+    function addListing(
+        uint256 _tokenId,
+        address _tokenAddress,
+        uint256 _price
+    ) external {
         if (!isMarketOpen) revert ClosedMarket();
+        if (!validTokenAddresses[_tokenAddress]) revert InvalidTokenAddress();
 
         // overflow is unrealistic
         unchecked {
             uint256 id = listingsLength++;
 
-            listings[id] = Listing(id, tokenId, price, msg.sender, true);
+            listings[id] = Listing(
+                id,
+                _tokenId,
+                _price,
+                _tokenAddress,
+                msg.sender,
+                true
+            );
 
-            emit AddListingEv(id, tokenId, price);
+            emit AddListingEv(id, _tokenAddress, _tokenId, _price);
 
-            ERC721(tokenAddress).transferFrom(
+            ERC721(_tokenAddress).transferFrom(
                 msg.sender,
                 address(this),
-                tokenId
+                _tokenId
             );
         }
     }
@@ -180,7 +202,7 @@ contract Market {
 
         emit CancelListingEv(id);
 
-        ERC721(tokenAddress).transferFrom(
+        ERC721(listing.tokenAddress).transferFrom(
             address(this),
             listing.owner,
             listing.tokenId
@@ -203,7 +225,7 @@ contract Market {
 
         emit FulfillListingEv(id);
 
-        ERC721(tokenAddress).transferFrom(
+        ERC721(listing.tokenAddress).transferFrom(
             address(this),
             msg.sender,
             listing.tokenId

@@ -44,6 +44,7 @@ contract BaseTest is DSTest {
     uint256 public MINT_COST = 1 ether;
 
     // Deployments
+    HopperNFT public TADPOLE;
     HopperNFT public HOPPER;
     Fly public FLY;
     veFly public VEFLY;
@@ -60,6 +61,17 @@ contract BaseTest is DSTest {
 
     function setUp() public {
         owner = msg.sender;
+
+        // PLACEHOLDR FOR NFT
+        TADPOLE = new HopperNFT(
+            "TADPOLE",
+            "TADPOLE",
+            MINT_COST,
+            10_000,
+            MAX_MINT_PER_CALL,
+            0, // sale time
+            0.01 ether // namefee
+        );
 
         // NFT
         HOPPER = new HopperNFT(
