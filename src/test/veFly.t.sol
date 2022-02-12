@@ -3,7 +3,6 @@ import "ds-test/test.sol";
 import {BaseTest, HEVM, HopperNFT, veFly} from "./BaseTest.sol";
 
 contract veFlyTest is BaseTest {
-
     function faucet() internal {
         hevm.startPrank(address(POND));
         FLY.mint(user1, 10_000 ether);
@@ -111,7 +110,6 @@ contract veFlyTest is BaseTest {
     }
 
     function testGenerationRate() public {
-
         faucet();
 
         (
@@ -145,7 +143,7 @@ contract veFlyTest is BaseTest {
         faucet();
 
         hevm.startPrank(user1);
-        
+
         VEFLY.deposit(1 ether);
         hevm.warp(1 days); // capped veFLY
         assert(VEFLY.balanceOf(user1) > 0);
@@ -161,5 +159,5 @@ contract veFlyTest is BaseTest {
         assert(VEFLY.balanceOf(user1) > 0);
 
         hevm.stopPrank();
-    }  
+    }
 }

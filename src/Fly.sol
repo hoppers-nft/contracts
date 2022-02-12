@@ -8,7 +8,7 @@ contract Fly is ERC20 {
     address public owner;
 
     // whitelist for minting mechanisms
-    mapping(address => uint256) public zones;
+    mapping(address => bool) public zones;
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -44,19 +44,16 @@ contract Fly is ERC20 {
     }
 
     /*///////////////////////////////////////////////////////////////
-                            Zones - mint ERC20
-
-                            TODO: // should we set a delay
-                            on a new zone being able to mint stuff?
+                            Zones - can mint
     //////////////////////////////////////////////////////////////*/
 
     modifier onlyZone() {
-        if (zones[msg.sender] == 0) revert Unauthorized();
+        if (!zones[msg.sender]) revert Unauthorized();
         _;
     }
 
     function addZone(address zone) external onlyOwner {
-        zones[zone] = 1;
+        zones[zone] = true;
     }
 
     function removeZone(address zone) external onlyOwner {
