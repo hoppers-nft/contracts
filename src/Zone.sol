@@ -299,7 +299,7 @@ abstract contract Zone {
             unchecked {
                 return (currentLevel + 1) * (10**18);
             }
-        } else if (currentLevel == 99) {
+        } else if (currentLevel == 100) {
             return type(uint256).max;
         } else {
             // todo (currentLevel + 1) $FLY **1.43522

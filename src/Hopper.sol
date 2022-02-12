@@ -30,6 +30,7 @@ contract HopperNFT is ERC721 {
         uint8 intelligence;
         uint8 fertility;
         uint8 category;
+        // name ?
     }
 
     mapping(uint256 => Hopper) public hoppers;
@@ -71,8 +72,8 @@ contract HopperNFT is ERC721 {
     error InvalidTokenID();
     error MaxLength25();
     error OnlyEOAAllowed();
-    error MaxLevelReached();
     error NameTaken();
+    error OnlyLvL100();
 
     constructor(
         string memory _NFT_NAME,
@@ -119,13 +120,25 @@ contract HopperNFT is ERC721 {
         emit OwnerUpdated(newOwner);
     }
 
+    function setNameChangeFee(uint256 _nameFee) external onlyOwner {
+        nameFee = _nameFee;
+        emit UpdatedNameFee(_nameFee);
+    }
+
     function withdraw() external onlyOwner {
         owner.safeTransferETH(address(this).balance);
     }
 
-    function setNameChangeFee(uint256 _nameFee) external onlyOwner {
-        nameFee = _nameFee;
-        emit UpdatedNameFee(_nameFee);
+    /*///////////////////////////////////////////////////////////////
+                    HOPPER VALID ZONES/ADVENTURES
+    //////////////////////////////////////////////////////////////*/
+
+    function addZone(address _zone) external onlyOwner {
+        zones[_zone] = true;
+    }
+
+    function removeZone(address _zone) external onlyOwner {
+        delete zones[_zone];
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -186,18 +199,25 @@ contract HopperNFT is ERC721 {
     }
 
     /*///////////////////////////////////////////////////////////////
-                        HOPPER LEVEL MECHANICS
-            Zones are other authorized contracts that
-                according to their own logic can issue a hopper
-                    to level up
+                        HOPPER LEVEL SYSTEM
     //////////////////////////////////////////////////////////////*/
 
-    function addZone(address zone) external onlyOwner {
-        zones[zone] = true;
+    function _ascend(uint256 attribute) internal pure returns (uint256) {
+        return attribute == 10 ? 10 : (attribute + 1);
     }
 
-    function removeZone(address zone) external onlyOwner {
-        delete zones[zone];
+    function rebirth(uint256 tokenId) external {
+        Hopper memory hopper = hoppers[tokenId];
+
+        if (ownerOf[tokenId] != msg.sender) revert Unauthorized();
+        if (hopper.level != 100) revert OnlyLvL100();
+
+        hoppers[tokenId].agility = uint8(_ascend(hopper.agility));
+        hoppers[tokenId].intelligence = uint8(_ascend(hopper.intelligence));
+        hoppers[tokenId].strength = uint8(_ascend(hopper.strength));
+        hoppers[tokenId].vitality = uint8(_ascend(hopper.vitality));
+        hoppers[tokenId].fertility = uint8(_ascend(hopper.fertility));
+        hoppers[tokenId].level = 1;
     }
 
     function levelUp(uint256 tokenId) external onlyZone {
@@ -207,22 +227,26 @@ contract HopperNFT is ERC721 {
         }
     }
 
-    function changeHopperName(uint256 tokenId, string calldata name)
+    function changeHopperName(uint256 tokenId, string calldata newName)
         external
         onlyZone
         returns (uint256)
     {
-        if (bytes(name).length > 25) revert MaxLength25();
+        if (bytes(newName).length > 25) revert MaxLength25();
 
-        bytes32 nameHash = keccak256(bytes(name));
+        // Checks new name uniqueness
+        bytes32 nameHash = keccak256(bytes(newName));
         if (takenNames[nameHash]) revert NameTaken();
 
+        // Free previous name
         takenNames[keccak256(bytes(hoppersNames[tokenId]))] = false;
-        takenNames[nameHash] = true;
 
-        hoppersNames[tokenId] = name;
+        // Reserve name
+        takenNames[nameHash] = true;
+        hoppersNames[tokenId] = newName;
 
         emit NameChange(tokenId);
+
         return nameFee;
     }
 

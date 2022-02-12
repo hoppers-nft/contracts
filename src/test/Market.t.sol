@@ -4,7 +4,7 @@ import {BaseTest, HEVM, HopperNFT} from "./BaseTest.sol";
 
 import {Market} from "../Market.sol";
 
-contract HopperTest is BaseTest {
+contract MarketTest is BaseTest {
     Market MARKET;
     uint256 marketFee = 2;
 
