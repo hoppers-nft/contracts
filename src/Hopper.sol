@@ -210,7 +210,7 @@ contract HopperNFT is ERC721 {
         Hopper memory hopper = hoppers[tokenId];
 
         if (ownerOf[tokenId] != msg.sender) revert Unauthorized();
-        if (hopper.level != 100) revert OnlyLvL100();
+        if (hopper.level < 100) revert OnlyLvL100();
 
         hoppers[tokenId].agility = uint8(_ascend(hopper.agility));
         hoppers[tokenId].intelligence = uint8(_ascend(hopper.intelligence));
