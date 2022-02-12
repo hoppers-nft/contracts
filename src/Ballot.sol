@@ -6,28 +6,42 @@ import {Zone} from "./Zone.sol";
 import {veFly} from "./veFly.sol";
 
 contract Ballot {
-    address owner;
-    address[] validZones;
+    address public owner;
+    address[] public validZones;
 
-    bool enabled;
-    uint256 rewardSnapshot;
-    uint256 bonusEmissionRate;
-    uint256 countRewardRate;
-
-    ///
+    bool public enabled;
+    
 
     address immutable VEFLY;
     address immutable FLY;
 
-    address[] public arrAdventures;
-    mapping(address => bool) adventures;
-    mapping(address => uint256) adventuresVotes;
-    mapping(address => mapping(address => uint256)) adventuresUserVotes;
+    address[] public arrZones;
+    mapping(address => bool) zones;
+    mapping(address => uint256) zonesVotes;
+    mapping(address => mapping(address => uint256)) zonesUserVotes;
     mapping(address => uint256) userVeFlyUsed;
 
-    //
+    /*///////////////////////////////////////////////////////////////
+                              EMISSIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /*///////////////////////////////////////////////////////////////
+                              EMISSIONS
+    //////////////////////////////////////////////////////////////*/
+    
+    uint256 public rewardSnapshot;
+    uint256 public bonusEmissionRate;
+    uint256 public countRewardRate;
+
+    /*///////////////////////////////////////////////////////////////
+                              EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     event UpdatedOwner(address indexed owner);
+
+    /*///////////////////////////////////////////////////////////////
+                              ERRORS
+    //////////////////////////////////////////////////////////////*/
 
     error Unauthorized();
     error TooSoon();
@@ -58,20 +72,20 @@ contract Ballot {
         rewardSnapshot = type(uint256).max;
     }
 
-    function addAdventures(address[] calldata _adventures) external onlyOwner {
-        uint256 length = _adventures.length;
+    function addZones(address[] calldata _zones) external onlyOwner {
+        uint256 length = _zones.length;
         for (uint256 i; i < length; ++i) {
-            address adventure = _adventures[i];
-            arrAdventures.push(_adventures[i]);
-            adventures[adventure] = true;
+            address zone = _zones[i];
+            arrZones.push(_zones[i]);
+            zones[zone] = true;
         }
     }
 
-    function removeAdventure(uint256 index) external onlyOwner {
-        address removed = arrAdventures[index];
-        arrAdventures[index] = arrAdventures[arrAdventures.length - 1];
-        arrAdventures.pop();
-        delete adventures[removed];
+    function removeZone(uint256 index) external onlyOwner {
+        address removed = arrZones[index];
+        arrZones[index] = arrZones[arrZones.length - 1];
+        arrZones.pop();
+        delete zones[removed];
     }
 
     function setBonusEmissionRate(uint256 _bonusEmissionRate)
@@ -84,28 +98,28 @@ contract Ballot {
     function forceUnvote(address user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
 
-        uint256 length = arrAdventures.length;
+        uint256 length = arrZones.length;
         for (uint256 i; i < length; ++i) {
-            address adventure = arrAdventures[i];
-            uint256 userVotes = adventuresUserVotes[adventure][user];
+            address zone = arrZones[i];
+            uint256 userVotes = zonesUserVotes[zone][user];
 
             delete userVeFlyUsed[user];
-            delete adventuresUserVotes[adventure][user];
-            adventuresVotes[adventure] -= userVotes;
+            delete zonesUserVotes[zone][user];
+            zonesVotes[zone] -= userVotes;
         }
     }
 
     function _updateVotes(address user, uint256 vefly) internal {
-        adventuresVotes[msg.sender] =
-            adventuresVotes[msg.sender] -
-            adventuresUserVotes[msg.sender][user] +
+        zonesVotes[msg.sender] =
+            zonesVotes[msg.sender] -
+            zonesUserVotes[msg.sender][user] +
             vefly;
 
-        adventuresUserVotes[msg.sender][user] = vefly;
+        zonesUserVotes[msg.sender][user] = vefly;
     }
 
     function vote(address user, uint256 vefly) external returns (uint256) {
-        if (!adventures[msg.sender]) revert Unauthorized();
+        if (!zones[msg.sender]) revert Unauthorized();
 
         // veFly Accounting
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
@@ -121,7 +135,7 @@ contract Ballot {
     }
 
     function unvote(address user, uint256 vefly) external returns (uint256) {
-        if (!adventures[msg.sender]) revert Unauthorized();
+        if (!zones[msg.sender]) revert Unauthorized();
 
         // veFly Accounting
         if (userVeFlyUsed[user] < vefly) revert NotEnoughVeFly();
@@ -154,16 +168,16 @@ contract Ballot {
         if (reward == 0) revert TooSoon();
 
         uint256 totalVotes;
-        address[] memory _arrAdventures = arrAdventures;
-        uint256 length = _arrAdventures.length;
+        address[] memory _arrZones = arrZones;
+        uint256 length = _arrZones.length;
 
         for (uint256 i; i < length; ++i) {
-            totalVotes += adventuresVotes[_arrAdventures[i]];
+            totalVotes += zonesVotes[_arrZones[i]];
         }
 
         for (uint256 i; i < length; ++i) {
-            Zone(_arrAdventures[i]).setBonusEmissionRate(
-                (bonusEmissionRate * adventuresVotes[_arrAdventures[i]]) /
+            Zone(_arrZones[i]).setBonusEmissionRate(
+                (bonusEmissionRate * zonesVotes[_arrZones[i]]) /
                     totalVotes
             );
         }

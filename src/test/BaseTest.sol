@@ -117,10 +117,10 @@ contract BaseTest is DSTest {
         STREAM = new Stream(address(FLY), address(VEFLY), address(HOPPER));
         BALLOT = new Ballot(address(FLY), address(VEFLY));
 
-        // Setting up adventures
-        address[] memory _adventures = new address[](2);
-        _adventures[0] = address(POND);
-        _adventures[1] = address(STREAM);
+        // Setting up zones
+        address[] memory _zones = new address[](2);
+        _zones[0] = address(POND);
+        _zones[1] = address(STREAM);
 
         POND.setEmissionRate(ZONE_EMISSION_RATE);
         POND.setBallot(address(BALLOT));
@@ -128,12 +128,12 @@ contract BaseTest is DSTest {
         STREAM.setBallot(address(BALLOT));
 
         // FLY minters
-        FLY.addZone(_adventures[0]);
-        FLY.addZone(_adventures[1]);
+        FLY.addZone(_zones[0]);
+        FLY.addZone(_zones[1]);
         FLY.addZone(address(BALLOT)); // for reward
 
         // BALLOT
-        BALLOT.addAdventures(_adventures);
+        BALLOT.addZones(_zones);
         BALLOT.setBonusEmissionRate(BONUS_EMISSION_RATE);
         BALLOT.setCountRewardRate(REWARD_EMISSION_RATE);
         BALLOT.openBallot();
@@ -147,8 +147,8 @@ contract BaseTest is DSTest {
         hevm.deal(user3, 10_000 ether);
 
         // LevelUp && Name Authorization
-        HOPPER.addZone(_adventures[0]);
-        HOPPER.addZone(_adventures[1]);
+        HOPPER.addZone(_zones[0]);
+        HOPPER.addZone(_zones[1]);
 
         // Approvals
         hevm.startPrank(user1);

@@ -39,10 +39,10 @@ contract HopperNFT is ERC721 {
     // whitelist for leveling up
     mapping(address => bool) public zones;
 
-    // unlabeled data [key -> tokenid -> data] for potential future adventures
+    // unlabeled data [key -> tokenid -> data] for potential future zones
     mapping(bytes32 => mapping(uint256 => bytes32)) public unlabeledData;
 
-    // unlabeled data [key -> data] for potential future adventures
+    // unlabeled data [key -> data] for potential future zones
     mapping(bytes32 => bytes32) public unlabeledGlobalData;
 
     /*///////////////////////////////////////////////////////////////
