@@ -89,6 +89,11 @@ contract Ballot {
                                 ZONES
     //////////////////////////////////////////////////////////////*/
 
+    modifier onlyZone() {
+        if (!zones[msg.sender]) revert Unauthorized();
+        _;
+    }
+
     function addZones(address[] calldata _zones) external onlyOwner {
         uint256 length = _zones.length;
         for (uint256 i; i < length; ++i) {
@@ -132,8 +137,7 @@ contract Ballot {
         zonesUserVotes[msg.sender][user] = vefly;
     }
 
-    function vote(address user, uint256 vefly) external returns (uint256) {
-        if (!zones[msg.sender]) revert Unauthorized();
+    function vote(address user, uint256 vefly) external onlyZone returns (uint256) {
 
         // veFly Accounting
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
@@ -148,8 +152,7 @@ contract Ballot {
         return totalVeFly;
     }
 
-    function unvote(address user, uint256 vefly) external returns (uint256) {
-        if (!zones[msg.sender]) revert Unauthorized();
+    function unvote(address user, uint256 vefly) external onlyZone returns (uint256) {
 
         // veFly Accounting
         if (userVeFlyUsed[user] < vefly) revert NotEnoughVeFly();

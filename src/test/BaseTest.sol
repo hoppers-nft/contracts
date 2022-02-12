@@ -79,6 +79,13 @@ contract BaseTest is DSTest {
         assert(success);
     }
 
+    function getZones() internal returns (address[] memory) {
+        address[] memory _zones = new address[](2);
+        _zones[0] = address(POND);
+        _zones[1] = address(STREAM);
+        return _zones;
+    }
+
     function setUp() public {
         owner = address(0x13371337);
 
@@ -118,9 +125,7 @@ contract BaseTest is DSTest {
         BALLOT = new Ballot(address(FLY), address(VEFLY));
 
         // Setting up zones
-        address[] memory _zones = new address[](2);
-        _zones[0] = address(POND);
-        _zones[1] = address(STREAM);
+        address[] memory _zones = getZones();
 
         POND.setEmissionRate(ZONE_EMISSION_RATE);
         POND.setBallot(address(BALLOT));
