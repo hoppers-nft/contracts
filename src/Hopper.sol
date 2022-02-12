@@ -206,18 +206,20 @@ contract HopperNFT is ERC721 {
         return attribute == 10 ? 10 : (attribute + 1);
     }
 
-    function rebirth(uint256 tokenId) external {
-        Hopper memory hopper = hoppers[tokenId];
+    function rebirth(uint256 _tokenId) external {
+        Hopper memory hopper = hoppers[_tokenId];
 
-        if (ownerOf[tokenId] != msg.sender) revert Unauthorized();
+        if (ownerOf[_tokenId] != msg.sender) revert Unauthorized();
         if (hopper.level < 100) revert OnlyLvL100();
 
-        hoppers[tokenId].agility = uint8(_ascend(hopper.agility));
-        hoppers[tokenId].intelligence = uint8(_ascend(hopper.intelligence));
-        hoppers[tokenId].strength = uint8(_ascend(hopper.strength));
-        hoppers[tokenId].vitality = uint8(_ascend(hopper.vitality));
-        hoppers[tokenId].fertility = uint8(_ascend(hopper.fertility));
-        hoppers[tokenId].level = 1;
+        hoppers[_tokenId].agility = uint8(_ascend(hopper.agility));
+        hoppers[_tokenId].intelligence = uint8(_ascend(hopper.intelligence));
+        hoppers[_tokenId].strength = uint8(_ascend(hopper.strength));
+        hoppers[_tokenId].vitality = uint8(_ascend(hopper.vitality));
+        hoppers[_tokenId].fertility = uint8(_ascend(hopper.fertility));
+        hoppers[_tokenId].level = 1;
+
+        unlabeledData[keccak256(bytes("LEVEL_GAUGE_KEY"))][_tokenId] = bytes32(0);
     }
 
     function levelUp(uint256 tokenId) external onlyZone {
