@@ -3,6 +3,13 @@ import "ds-test/test.sol";
 import {BaseTest, HEVM, HopperNFT, veFly} from "./BaseTest.sol";
 
 contract veFlyTest is BaseTest {
+
+    function faucet() internal {
+        hevm.startPrank(address(POND));
+        FLY.mint(user1, 10_000 ether);
+        hevm.stopPrank();
+    }
+
     function testOwnerShip() public {
         expectErrorAndSuccess(
             address(VEFLY),
@@ -104,17 +111,15 @@ contract veFlyTest is BaseTest {
     }
 
     function testGenerationRate() public {
+
+        faucet();
+
         (
             uint128 _maxRatio,
             uint32 _generationRateNumerator,
             uint32 _generationRateDenominator,
 
         ) = VEFLY.genDetails();
-
-        // Faucet
-        hevm.startPrank(address(POND));
-        FLY.mint(user1, 10_000 ether);
-        hevm.stopPrank();
 
         hevm.prank(user1);
         VEFLY.deposit(1 ether);
@@ -135,4 +140,26 @@ contract veFlyTest is BaseTest {
         hevm.warp(125000 days);
         assertEq(VEFLY.balanceOf(user1), _maxRatio * 1 ether);
     }
+
+    function testDepositAndWithdrawals() public {
+        faucet();
+
+        hevm.startPrank(user1);
+        
+        VEFLY.deposit(1 ether);
+        hevm.warp(1 days); // capped veFLY
+        assert(VEFLY.balanceOf(user1) > 0);
+
+        // todo withdrawal with votes casted
+        // Any withdrawal triggers the veFLY reset
+        assert(VEFLY.canWithdraw(user1));
+        VEFLY.withdraw(0.001 ether);
+        assert(VEFLY.balanceOf(user1) == 0);
+
+        VEFLY.deposit(1 ether);
+        hevm.warp(2 days); // capped veFLY
+        assert(VEFLY.balanceOf(user1) > 0);
+
+        hevm.stopPrank();
+    }  
 }
