@@ -22,7 +22,8 @@ contract veFly {
 
     struct GenerationDetails {
         uint128 maxRatio;
-        uint64 generationRate;
+        uint32 generationRateNumerator;
+        uint32 generationRateDenominator;
         uint64 lastUpdatedTime;
     }
 
@@ -60,7 +61,8 @@ contract veFly {
 
     constructor(
         address _flyAddress,
-        uint256 _generationRate,
+        uint256 _generationRateNumerator,
+        uint256 _generationRateDenominator,
         uint256 _maxRatio
     ) {
         owner = msg.sender;
@@ -69,7 +71,8 @@ contract veFly {
 
         genDetails = GenerationDetails({
             maxRatio: uint128(_maxRatio),
-            generationRate: uint64(_generationRate),
+            generationRateNumerator: uint32(_generationRateNumerator),
+            generationRateDenominator: uint32(_generationRateDenominator),
             lastUpdatedTime: uint64(block.timestamp)
         });
     }
@@ -84,13 +87,14 @@ contract veFly {
         emit UpdatedOwner(_owner);
     }
 
-    function setGenerationDetails(uint256 _maxRatio, uint256 _generationRate)
+    function setGenerationDetails(uint256 _maxRatio, uint256 _generationRateNumerator, uint256 _generationRateDenominator)
         external
         onlyOwner
     {
         GenerationDetails storage gen = genDetails;
         gen.maxRatio = uint128(_maxRatio);
-        gen.generationRate = uint64(_generationRate);
+        gen.generationRateNumerator = uint32(_generationRateNumerator);
+        gen.generationRateDenominator = uint32(_generationRateDenominator);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -179,9 +183,9 @@ contract veFly {
         uint256 flyBalance = flyBalanceOf[account];
 
         uint256 veBalance = veFlyBalance[account] +
-            flyBalance *
+            (flyBalance / gen.generationRateDenominator) *
             (block.timestamp - userSnapshot[account]) *
-            gen.generationRate;
+            gen.generationRateNumerator;
 
         uint256 maxVe = gen.maxRatio * flyBalance;
         if (veBalance > maxVe) {

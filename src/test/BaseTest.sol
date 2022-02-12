@@ -57,7 +57,8 @@ contract BaseTest is DSTest {
     uint256 public ZONE_EMISSION_RATE = 3;
     uint256 public BONUS_EMISSION_RATE = 2;
     uint256 public REWARD_EMISSION_RATE = 1;
-    uint256 public VEFLY_RATE = 2;
+    uint256 public VEFLY_NUM_RATE = 1;
+    uint256 public VEFLY_DENOM_RATE = 1;
     uint256 public VEFLY_CAP = 100;
 
     function expectErrorAndSuccess(
@@ -107,7 +108,7 @@ contract BaseTest is DSTest {
 
         // Initiate Contracts
         FLY = new Fly("FLY", "FLY");
-        VEFLY = new veFly(address(FLY), VEFLY_RATE, VEFLY_CAP);
+        VEFLY = new veFly(address(FLY), VEFLY_NUM_RATE, VEFLY_DENOM_RATE, VEFLY_CAP);
         POND = new Pond(address(FLY), address(VEFLY), address(HOPPER));
         STREAM = new Stream(address(FLY), address(VEFLY), address(HOPPER));
         BALLOT = new Ballot(address(FLY), address(VEFLY));

@@ -15,7 +15,6 @@ contract Fly is ERC20 {
     //////////////////////////////////////////////////////////////*/
 
     error Unauthorized();
-    error InvalidZone();
 
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
@@ -50,6 +49,12 @@ contract Fly is ERC20 {
                             TODO: // should we set a delay
                             on a new zone being able to mint stuff?
     //////////////////////////////////////////////////////////////*/
+
+    modifier onlyZone() {
+        if (zones[msg.sender] == 0) revert Unauthorized();
+        _;
+    }
+
     function addZone(address zone) external onlyOwner {
         zones[zone] = 1;
     }
@@ -58,13 +63,15 @@ contract Fly is ERC20 {
         delete zones[zone];
     }
 
-    function mint(address receiver, uint256 amount) external {
-        if (zones[msg.sender] == 0) revert InvalidZone();
+    /*///////////////////////////////////////////////////////////////
+                                MINT / BURN
+    //////////////////////////////////////////////////////////////*/
+
+    function mint(address receiver, uint256 amount) external onlyZone {
         _mint(receiver, amount);
     }
 
-    function burn(address from, uint256 amount) external {
-        if (zones[msg.sender] == 0) revert InvalidZone();
+    function burn(address from, uint256 amount) external onlyZone {
         _burn(from, amount);
     }
 }
