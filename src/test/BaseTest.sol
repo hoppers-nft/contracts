@@ -30,7 +30,6 @@ interface HEVM {
 }
 
 contract BaseTest is DSTest {
-    
     // Cheatcodes
     HEVM public hevm = HEVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -108,7 +107,12 @@ contract BaseTest is DSTest {
 
         // Initiate Contracts
         FLY = new Fly("FLY", "FLY");
-        VEFLY = new veFly(address(FLY), VEFLY_NUM_RATE, VEFLY_DENOM_RATE, VEFLY_CAP);
+        VEFLY = new veFly(
+            address(FLY),
+            VEFLY_NUM_RATE,
+            VEFLY_DENOM_RATE,
+            VEFLY_CAP
+        );
         POND = new Pond(address(FLY), address(VEFLY), address(HOPPER));
         STREAM = new Stream(address(FLY), address(VEFLY), address(HOPPER));
         BALLOT = new Ballot(address(FLY), address(VEFLY));

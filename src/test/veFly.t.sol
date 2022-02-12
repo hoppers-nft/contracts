@@ -14,7 +14,12 @@ contract veFlyTest is BaseTest {
     }
 
     function testGenDetails() public {
-        (uint128 maxRatio, uint32 generationRateNumerator, uint32 generationRateDenominator, ) = VEFLY.genDetails();
+        (
+            uint128 maxRatio,
+            uint32 generationRateNumerator,
+            uint32 generationRateDenominator,
+
+        ) = VEFLY.genDetails();
 
         expectErrorAndSuccess(
             address(VEFLY),
@@ -29,16 +34,25 @@ contract veFlyTest is BaseTest {
             owner
         );
 
-        (uint128 _maxRatio, uint32 _generationRateNumerator, uint32 _generationRateDenominator, ) = VEFLY.genDetails();
+        (
+            uint128 _maxRatio,
+            uint32 _generationRateNumerator,
+            uint32 _generationRateDenominator,
+
+        ) = VEFLY.genDetails();
         assertEq(maxRatio + 1, _maxRatio);
         assertEq(generationRateNumerator + 1, _generationRateNumerator);
         assertEq(generationRateDenominator + 1, _generationRateDenominator);
     }
 
     function testBallots() public {
-
         hevm.prank(owner);
-        veFly _VEFLY = new veFly(address(FLY), VEFLY_NUM_RATE, VEFLY_DENOM_RATE, VEFLY_CAP);
+        veFly _VEFLY = new veFly(
+            address(FLY),
+            VEFLY_NUM_RATE,
+            VEFLY_DENOM_RATE,
+            VEFLY_CAP
+        );
 
         address ballot1 = address(0xf2f2);
         address ballot2 = address(0xf1f1);
@@ -46,10 +60,7 @@ contract veFlyTest is BaseTest {
         expectErrorAndSuccess(
             address(_VEFLY),
             veFly.Unauthorized.selector,
-            abi.encodeWithSelector(
-                veFly.addBallot.selector,
-                ballot1
-            ),
+            abi.encodeWithSelector(veFly.addBallot.selector, ballot1),
             user1,
             owner
         );
@@ -61,14 +72,11 @@ contract veFlyTest is BaseTest {
         assertEq(_VEFLY.arrValidBallots(1), ballot2);
         assert(_VEFLY.validBallots(ballot1));
         assert(_VEFLY.validBallots(ballot2));
-        
+
         expectErrorAndSuccess(
             address(_VEFLY),
             veFly.Unauthorized.selector,
-            abi.encodeWithSelector(
-                veFly.removeBallot.selector,
-                0
-            ),
+            abi.encodeWithSelector(veFly.removeBallot.selector, 0),
             user1,
             owner
         );
@@ -77,10 +85,7 @@ contract veFlyTest is BaseTest {
         expectErrorAndSuccess(
             address(_VEFLY),
             veFly.Unauthorized.selector,
-            abi.encodeWithSelector(
-                veFly.setHasVoted.selector,
-                user1
-            ),
+            abi.encodeWithSelector(veFly.setHasVoted.selector, user1),
             user1,
             ballot2
         );
@@ -90,20 +95,21 @@ contract veFlyTest is BaseTest {
         expectErrorAndSuccess(
             address(_VEFLY),
             veFly.Unauthorized.selector,
-            abi.encodeWithSelector(
-                veFly.unsetHasVoted.selector,
-                user1
-            ),
+            abi.encodeWithSelector(veFly.unsetHasVoted.selector, user1),
             user1,
             ballot2
         );
 
         assert(!_VEFLY.hasUserVoted(ballot2, user1));
-
     }
 
     function testGenerationRate() public {
-        (uint128 _maxRatio, uint32 _generationRateNumerator, uint32 _generationRateDenominator, ) = VEFLY.genDetails();
+        (
+            uint128 _maxRatio,
+            uint32 _generationRateNumerator,
+            uint32 _generationRateDenominator,
+
+        ) = VEFLY.genDetails();
 
         // Faucet
         hevm.startPrank(address(POND));
@@ -128,6 +134,5 @@ contract veFlyTest is BaseTest {
 
         hevm.warp(125000 days);
         assertEq(VEFLY.balanceOf(user1), _maxRatio * 1 ether);
-
     }
 }

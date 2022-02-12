@@ -87,10 +87,11 @@ contract veFly {
         emit UpdatedOwner(_owner);
     }
 
-    function setGenerationDetails(uint256 _maxRatio, uint256 _generationRateNumerator, uint256 _generationRateDenominator)
-        external
-        onlyOwner
-    {
+    function setGenerationDetails(
+        uint256 _maxRatio,
+        uint256 _generationRateNumerator,
+        uint256 _generationRateDenominator
+    ) external onlyOwner {
         GenerationDetails storage gen = genDetails;
         gen.maxRatio = uint128(_maxRatio);
         gen.generationRateNumerator = uint32(_generationRateNumerator);
