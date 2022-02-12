@@ -220,7 +220,9 @@ contract HopperNFT is ERC721 {
         hoppers[_tokenId].level = 1;
 
         // todo hardcode it
-        unlabeledData[keccak256(bytes("LEVEL_GAUGE_KEY"))][_tokenId] = bytes32(0);
+        unlabeledData[keccak256(bytes("LEVEL_GAUGE_KEY"))][_tokenId] = bytes32(
+            0
+        );
     }
 
     function levelUp(uint256 tokenId) external onlyZone {
@@ -289,6 +291,7 @@ contract HopperNFT is ERC721 {
 
     function mint(uint256 numberOfMints) external payable {
         if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
+        // solhint-disable-next-line
         if (msg.sender != tx.origin) revert OnlyEOAAllowed();
 
         uint256 hopperID = hoppersLength;

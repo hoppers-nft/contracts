@@ -19,7 +19,9 @@ contract HopperTest is BaseTest {
         HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
 
         // Withdraw
-        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.Unauthorized.selector));
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
         HOPPER.withdraw();
 
         hevm.stopPrank();
@@ -79,12 +81,13 @@ contract HopperTest is BaseTest {
 
         // Name Fee
         hevm.prank(user1);
-        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.Unauthorized.selector));
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
         HOPPER.setNameChangeFee(2);
 
         HOPPER.setNameChangeFee(1337);
         assertEq(HOPPER.nameFee(), 1337);
-        
     }
 
     function increaseLevels(uint256 tokenId, uint256 num) internal {

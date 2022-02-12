@@ -5,24 +5,14 @@ import {Fly} from "./Fly.sol";
 import {Ballot} from "./Ballot.sol";
 
 contract veFly {
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 amount
-    );
-
     /*///////////////////////////////////////////////////////////////
                              METADATA STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    string public name = "veFLY";
-
-    string public symbol = "veFLY";
-
     address public owner;
 
-    uint8 public immutable decimals = 18;
+    string public name = "veFLY";
+    string public symbol = "veFLY";
 
     address public immutable FLY;
 
