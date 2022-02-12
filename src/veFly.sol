@@ -17,7 +17,7 @@ contract veFly {
     address public immutable FLY;
 
     /*///////////////////////////////////////////////////////////////
-                              ERC20 STORAGE
+                           FLY/VEFLY GENERATION
     //////////////////////////////////////////////////////////////*/
 
     struct GenerationDetails {
@@ -97,6 +97,11 @@ contract veFly {
                                BALLOTS
     //////////////////////////////////////////////////////////////*/
 
+    modifier onlyBallot() {
+        if (!validBallots[msg.sender]) revert Unauthorized();
+        _;
+    }
+
     function addBallot(address ballot) external onlyOwner {
         if (!validBallots[ballot]) {
             arrValidBallots.push(ballot);
@@ -126,13 +131,11 @@ contract veFly {
         }
     }
 
-    function setHasVoted(address user) external {
-        if (!validBallots[msg.sender]) revert Unauthorized();
+    function setHasVoted(address user) external onlyBallot {
         hasUserVoted[msg.sender][user] = true;
     }
 
-    function unsetHasVoted(address user) external {
-        if (!validBallots[msg.sender]) revert Unauthorized();
+    function unsetHasVoted(address user) external onlyBallot {
         delete hasUserVoted[msg.sender][user];
     }
 

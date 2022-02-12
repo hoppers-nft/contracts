@@ -26,6 +26,7 @@ contract HopperTest is BaseTest {
 
         hevm.stopPrank();
 
+        hevm.prank(owner);
         HOPPER.setOwner(user1);
         hevm.startPrank(user1, user1);
         uint256 before = user1.balance;
@@ -86,6 +87,7 @@ contract HopperTest is BaseTest {
         );
         HOPPER.setNameChangeFee(2);
 
+        hevm.prank(owner);
         HOPPER.setNameChangeFee(1337);
         assertEq(HOPPER.nameFee(), 1337);
     }

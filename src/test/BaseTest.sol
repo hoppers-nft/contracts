@@ -30,6 +30,7 @@ interface HEVM {
 }
 
 contract BaseTest is DSTest {
+    
     // Cheatcodes
     HEVM public hevm = HEVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -59,9 +60,29 @@ contract BaseTest is DSTest {
     uint256 public VEFLY_RATE = 2;
     uint256 public VEFLY_CAP = 100;
 
-    function setUp() public {
-        owner = msg.sender;
+    function expectErrorAndSuccess(
+        address addr,
+        bytes4 errorSelector,
+        bytes memory _callData,
+        address firstUser,
+        address secondUser
+    ) internal {
+        // Call expecting Failure
+        hevm.prank(firstUser);
+        (bool success, bytes memory data) = addr.call(_callData);
+        assert(!success);
+        assertEq(bytes4(data), errorSelector);
 
+        // Call expecting Success
+        hevm.prank(secondUser);
+        (success, data) = addr.call(_callData);
+        assert(success);
+    }
+
+    function setUp() public {
+        owner = address(0x13371337);
+
+        hevm.startPrank(owner);
         // PLACEHOLDR FOR NFT
         TADPOLE = new HopperNFT(
             "TADPOLE",
@@ -130,6 +151,7 @@ contract BaseTest is DSTest {
         HOPPER.setApprovalForAll(address(STREAM), true);
 
         FLY.approve(address(VEFLY), type(uint256).max);
+        hevm.stopPrank();
         hevm.stopPrank();
     }
 
