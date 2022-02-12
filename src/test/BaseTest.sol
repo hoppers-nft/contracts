@@ -132,4 +132,6 @@ contract BaseTest is DSTest {
         FLY.approve(address(VEFLY), type(uint256).max);
         hevm.stopPrank();
     }
+
+    fallback() external payable {}
 }

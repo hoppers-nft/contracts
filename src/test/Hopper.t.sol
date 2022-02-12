@@ -18,6 +18,18 @@ contract HopperTest is BaseTest {
 
         HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
 
+        // Withdraw
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.Unauthorized.selector));
+        HOPPER.withdraw();
+
+        hevm.stopPrank();
+
+        HOPPER.setOwner(user1);
+        hevm.startPrank(user1, user1);
+        uint256 before = user1.balance;
+        assertEq(address(HOPPER).balance, MINT_COST * MAX_MINT_PER_CALL);
+        HOPPER.withdraw();
+        assertEq(user1.balance, before + MINT_COST * MAX_MINT_PER_CALL);
         hevm.stopPrank();
     }
 
@@ -64,6 +76,15 @@ contract HopperTest is BaseTest {
             keccak256(bytes("hopper")) ==
                 keccak256(bytes(HOPPER.getHopperName(0)))
         );
+
+        // Name Fee
+        hevm.prank(user1);
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.Unauthorized.selector));
+        HOPPER.setNameChangeFee(2);
+
+        HOPPER.setNameChangeFee(1337);
+        assertEq(HOPPER.nameFee(), 1337);
+        
     }
 
     function increaseLevels(uint256 tokenId, uint256 num) internal {

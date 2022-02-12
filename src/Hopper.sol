@@ -49,7 +49,7 @@ contract HopperNFT is ERC721 {
                             HOPPER NAMES
     //////////////////////////////////////////////////////////////*/
 
-    uint256 nameFee;
+    uint256 public nameFee;
     mapping(bytes32 => bool) public takenNames;
     mapping(uint256 => string) public hoppersNames;
 
@@ -219,6 +219,7 @@ contract HopperNFT is ERC721 {
         hoppers[_tokenId].fertility = uint8(_ascend(hopper.fertility));
         hoppers[_tokenId].level = 1;
 
+        // todo hardcode it
         unlabeledData[keccak256(bytes("LEVEL_GAUGE_KEY"))][_tokenId] = bytes32(0);
     }
 
