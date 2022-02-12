@@ -56,7 +56,7 @@ contract veFly {
     event RemovedBallot(address indexed ballot);
 
     /*///////////////////////////////////////////////////////////////
-                               CONSTRUCTOR
+                            CONTRACT MANAGEMENT
     //////////////////////////////////////////////////////////////*/
 
     constructor(

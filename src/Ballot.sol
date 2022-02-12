@@ -7,30 +7,32 @@ import {veFly} from "./veFly.sol";
 
 contract Ballot {
     address public owner;
-    address[] public validZones;
-
     bool public enabled;
     
+    /*///////////////////////////////////////////////////////////////
+                            IMMUTABLES
+    //////////////////////////////////////////////////////////////*/
 
     address immutable VEFLY;
     address immutable FLY;
 
-    address[] public arrZones;
-    mapping(address => bool) zones;
-    mapping(address => uint256) zonesVotes;
-    mapping(address => mapping(address => uint256)) zonesUserVotes;
-    mapping(address => uint256) userVeFlyUsed;
-
     /*///////////////////////////////////////////////////////////////
-                              EMISSIONS
+                              ZONES
     //////////////////////////////////////////////////////////////*/
+
+    address[] public arrZones;
+    mapping(address => bool) public zones;
+    mapping(address => uint256) public zonesVotes;
+
+    mapping(address => mapping(address => uint256)) public zonesUserVotes;
+    mapping(address => uint256) public userVeFlyUsed;
 
     /*///////////////////////////////////////////////////////////////
                               EMISSIONS
     //////////////////////////////////////////////////////////////*/
     
-    uint256 public rewardSnapshot;
     uint256 public bonusEmissionRate;
+    uint256 public rewardSnapshot;
     uint256 public countRewardRate;
 
     /*///////////////////////////////////////////////////////////////
@@ -46,6 +48,10 @@ contract Ballot {
     error Unauthorized();
     error TooSoon();
     error NotEnoughVeFly();
+
+    /*///////////////////////////////////////////////////////////////
+                            CONTRACT MANAGEMENT
+    //////////////////////////////////////////////////////////////*/
 
     constructor(address _flyAddress, address _veFlyAddress) {
         owner = msg.sender;
@@ -72,6 +78,17 @@ contract Ballot {
         rewardSnapshot = type(uint256).max;
     }
 
+    function setBonusEmissionRate(uint256 _bonusEmissionRate)
+        external
+        onlyOwner
+    {
+        bonusEmissionRate = _bonusEmissionRate;
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                ZONES
+    //////////////////////////////////////////////////////////////*/
+
     function addZones(address[] calldata _zones) external onlyOwner {
         uint256 length = _zones.length;
         for (uint256 i; i < length; ++i) {
@@ -88,12 +105,9 @@ contract Ballot {
         delete zones[removed];
     }
 
-    function setBonusEmissionRate(uint256 _bonusEmissionRate)
-        external
-        onlyOwner
-    {
-        bonusEmissionRate = _bonusEmissionRate;
-    }
+    /*///////////////////////////////////////////////////////////////
+                            VOTING
+    //////////////////////////////////////////////////////////////*/
 
     function forceUnvote(address user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
@@ -148,6 +162,10 @@ contract Ballot {
 
         return remainingVeFly;
     }
+
+    /*///////////////////////////////////////////////////////////////
+                            COUNTING
+    //////////////////////////////////////////////////////////////*/
 
     function setCountRewardRate(uint256 _countRewardRate) external onlyOwner {
         countRewardRate = _countRewardRate;
