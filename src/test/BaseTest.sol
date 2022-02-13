@@ -11,6 +11,9 @@ import "../Ballot.sol";
 import "../zones/Pond.sol";
 import "../zones/Stream.sol";
 
+import "../zones/Breeding.sol";
+import "../Tadpole.sol";
+
 interface HEVM {
     function warp(uint256 time) external;
 
@@ -42,9 +45,12 @@ contract BaseTest is DSTest {
     // Settings
     uint256 public MAX_MINT_PER_CALL = 10;
     uint256 public MINT_COST = 1 ether;
+    uint256 public BREEDING_COST = 1.5 ether;
 
     // Deployments
-    HopperNFT public TADPOLE;
+    address public EXCHANGER = address(0xabab);
+    Tadpole public TADPOLE;
+    Breeding public BREEDING;
     HopperNFT public HOPPER;
     Fly public FLY;
     veFly public VEFLY;
@@ -99,16 +105,6 @@ contract BaseTest is DSTest {
         owner = address(0x13371337);
 
         hevm.startPrank(owner);
-        // PLACEHOLDR FOR NFT
-        TADPOLE = new HopperNFT(
-            "TADPOLE",
-            "TADPOLE",
-            MINT_COST,
-            10_000,
-            MAX_MINT_PER_CALL,
-            0, // sale time
-            0.01 ether // namefee
-        );
 
         // NFT
         HOPPER = new HopperNFT(
@@ -132,6 +128,18 @@ contract BaseTest is DSTest {
         POND = new Pond(address(FLY), address(VEFLY), address(HOPPER));
         STREAM = new Stream(address(FLY), address(VEFLY), address(HOPPER));
         BALLOT = new Ballot(address(FLY), address(VEFLY));
+
+        TADPOLE = new Tadpole("TADP", "TADP");
+        BREEDING = new Breeding(
+            address(FLY),
+            address(HOPPER),
+            address(TADPOLE),
+            BREEDING_COST
+        );
+
+        TADPOLE.setBreedingSpot(address(BREEDING));
+        TADPOLE.setExchanger(address(EXCHANGER));
+        TADPOLE.setBaseURI("tadpole.io/id/");
 
         // Setting up zones
         address[] memory _zones = getZones();

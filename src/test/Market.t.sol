@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Unlicense
+pragma solidity 0.8.11;
+
 import "ds-test/test.sol";
 
 import {BaseTest, HEVM, HopperNFT} from "./BaseTest.sol";
@@ -98,11 +101,21 @@ contract MarketTest is BaseTest {
     function testMultiAssets() public {
         setUpMarket();
 
+        HopperNFT ANOTHER_NFT = new HopperNFT(
+            "ANOTHER_NFT",
+            "ANOTHER_NFT",
+            MINT_COST,
+            10_000,
+            MAX_MINT_PER_CALL,
+            0, // sale time
+            0.01 ether // namefee
+        );
+
         MARKET.removeTokenAddress(address(HOPPER));
-        MARKET.removeTokenAddress(address(TADPOLE));
+        MARKET.removeTokenAddress(address(ANOTHER_NFT));
 
         hevm.prank(user2, user2);
-        TADPOLE.mint{value: MINT_COST * 10}(10);
+        ANOTHER_NFT.mint{value: MINT_COST * 10}(10);
         hevm.prank(user1, user1);
         HOPPER.mint{value: MINT_COST * 10}(10);
 
@@ -116,23 +129,23 @@ contract MarketTest is BaseTest {
         hevm.expectRevert(
             abi.encodeWithSelector(Market.InvalidTokenAddress.selector)
         );
-        MARKET.addListing(0, address(TADPOLE), 1 ether);
+        MARKET.addListing(0, address(ANOTHER_NFT), 1 ether);
 
         MARKET.addTokenAddress(address(HOPPER));
-        MARKET.addTokenAddress(address(TADPOLE));
+        MARKET.addTokenAddress(address(ANOTHER_NFT));
 
         hevm.prank(user1);
         MARKET.addListing(0, address(HOPPER), 1 ether);
 
         hevm.startPrank(user2);
-        MARKET.addListing(0, address(TADPOLE), 1 ether);
+        MARKET.addListing(0, address(ANOTHER_NFT), 1 ether);
         MARKET.fulfillListing{value: 1 ether}(0);
         assert(HOPPER.ownerOf(0) == user2);
         hevm.stopPrank();
 
         hevm.prank(user1);
         MARKET.fulfillListing{value: 1 ether}(1);
-        assert(TADPOLE.ownerOf(0) == user1);
+        assert(ANOTHER_NFT.ownerOf(0) == user1);
     }
 
     function testMarketOwnership() public {

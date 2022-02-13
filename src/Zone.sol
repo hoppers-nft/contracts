@@ -137,11 +137,10 @@ abstract contract Zone {
                         HOPPER GENERATION CAP
     //////////////////////////////////////////////////////////////*/
 
-    function getUserBonusGeneratedFly(address account, uint256 _totalAccountShares)
-        public
-        view
-        returns (uint256, uint256)
-    {
+    function getUserBonusGeneratedFly(
+        address account,
+        uint256 _totalAccountShares
+    ) public view returns (uint256, uint256) {
         uint256 cappedFly = userMaxFlyGeneration[account];
         uint256 generatedFly = ((_totalAccountShares *
             (bonusRewardPerShare() - userBonusRewardPerSharePaid[account])) /
@@ -189,7 +188,8 @@ abstract contract Zone {
         }
 
         // todo scale?
-        generatedPerShareStored[_account] += (generatedFly / _totalAccountShares);
+        generatedPerShareStored[_account] += (generatedFly /
+            _totalAccountShares);
         return cappedFly;
     }
 
@@ -221,9 +221,10 @@ abstract contract Zone {
         lastUpdatedTime = block.timestamp;
     }
 
-    function _updateAccountBaseReward(address _account, uint256 _totalAccountShares)
-        internal
-    {
+    function _updateAccountBaseReward(
+        address _account,
+        uint256 _totalAccountShares
+    ) internal {
         _updateBaseRewardPerShareStored();
 
         if (_totalAccountShares > 0) {
