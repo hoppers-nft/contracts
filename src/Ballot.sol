@@ -114,6 +114,7 @@ contract Ballot {
                             VOTING
     //////////////////////////////////////////////////////////////*/
 
+    // todo test
     function forceUnvote(address user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
 
@@ -128,6 +129,8 @@ contract Ballot {
         }
     }
 
+
+    // todo test
     function _updateVotes(address user, uint256 vefly) internal {
         zonesVotes[msg.sender] =
             zonesVotes[msg.sender] -
@@ -137,6 +140,7 @@ contract Ballot {
         zonesUserVotes[msg.sender][user] = vefly;
     }
 
+    // todo test
     function vote(address user, uint256 vefly) external onlyZone returns (uint256) {
 
         // veFly Accounting
@@ -152,6 +156,7 @@ contract Ballot {
         return totalVeFly;
     }
 
+    // todo test
     function unvote(address user, uint256 vefly) external onlyZone returns (uint256) {
 
         // veFly Accounting
@@ -182,6 +187,7 @@ contract Ballot {
         return countRewardRate * (block.timestamp - _rewardSnapshot);
     }
 
+    // todo test
     function count() external {
         uint256 reward = countReward();
         rewardSnapshot = block.timestamp;

@@ -16,10 +16,18 @@ contract BallotTest is BaseTest {
             address(BALLOT),
             Ballot.Unauthorized.selector,
             abi.encodeWithSelector(Ballot.setBonusEmissionRate.selector, 0x1337),
-            owner, // it changed on the previous call
+            owner, // it changed on the first call
             user1
         );
         assertEq(BALLOT.bonusEmissionRate(), 0x1337);
+
+        expectErrorAndSuccess(
+            address(BALLOT),
+            Ballot.Unauthorized.selector,
+            abi.encodeWithSelector(Ballot.setCountRewardRate.selector, 0x1338),
+            owner, // it changed on the first call
+            user1
+        );
     }
 
     function testOpenClose() public {
