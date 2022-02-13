@@ -3,12 +3,6 @@ pragma solidity 0.8.11;
 
 import "ds-test/test.sol";
 
-// import "../veFly.sol";
-// import "../Fly.sol";
-// import "../Hopper.sol";
-// import "../Ballot.sol";
-// import "../zones/Pond.sol";
-// import "../zones/Stream.sol";
 import {BaseTest, HEVM} from "./BaseTest.sol";
 
 contract HopperWorld is BaseTest {

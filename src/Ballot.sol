@@ -8,7 +8,7 @@ import {veFly} from "./veFly.sol";
 contract Ballot {
     address public owner;
     bool public enabled;
-    
+
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLES
     //////////////////////////////////////////////////////////////*/
@@ -30,7 +30,7 @@ contract Ballot {
     /*///////////////////////////////////////////////////////////////
                               EMISSIONS
     //////////////////////////////////////////////////////////////*/
-    
+
     uint256 public bonusEmissionRate;
     uint256 public rewardSnapshot;
     uint256 public countRewardRate;
@@ -129,7 +129,6 @@ contract Ballot {
         }
     }
 
-
     // todo test
     function _updateVotes(address user, uint256 vefly) internal {
         zonesVotes[msg.sender] =
@@ -141,8 +140,11 @@ contract Ballot {
     }
 
     // todo test
-    function vote(address user, uint256 vefly) external onlyZone returns (uint256) {
-
+    function vote(address user, uint256 vefly)
+        external
+        onlyZone
+        returns (uint256)
+    {
         // veFly Accounting
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
         if (totalVeFly > veFly(VEFLY).balanceOf(user)) revert NotEnoughVeFly();
@@ -157,8 +159,11 @@ contract Ballot {
     }
 
     // todo test
-    function unvote(address user, uint256 vefly) external onlyZone returns (uint256) {
-
+    function unvote(address user, uint256 vefly)
+        external
+        onlyZone
+        returns (uint256)
+    {
         // veFly Accounting
         if (userVeFlyUsed[user] < vefly) revert NotEnoughVeFly();
         uint256 remainingVeFly = userVeFlyUsed[user] - vefly;
@@ -204,8 +209,7 @@ contract Ballot {
 
         for (uint256 i; i < length; ++i) {
             Zone(_arrZones[i]).setBonusEmissionRate(
-                (bonusEmissionRate * zonesVotes[_arrZones[i]]) /
-                    totalVotes
+                (bonusEmissionRate * zonesVotes[_arrZones[i]]) / totalVotes
             );
         }
 

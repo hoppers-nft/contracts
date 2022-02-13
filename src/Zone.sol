@@ -114,7 +114,7 @@ abstract contract Zone {
     }
 
     function setEmissionRate(uint256 _emissionRate) external onlyOwner {
-        _updateRewardPerShareStored();
+        _updateBaseRewardPerShareStored();
 
         emissionRate = _emissionRate;
         emit UpdatedEmission(_emissionRate);
@@ -137,6 +137,22 @@ abstract contract Zone {
                         HOPPER GENERATION CAP
     //////////////////////////////////////////////////////////////*/
 
+    function getUserBonusGeneratedFly(address account, uint256 _totalAccountShares)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        uint256 cappedFly = userMaxFlyGeneration[account];
+        uint256 generatedFly = ((_totalAccountShares *
+            (bonusRewardPerShare() - userBonusRewardPerSharePaid[account])) /
+            1e18);
+
+        return (
+            generatedFly > cappedFly ? cappedFly : generatedFly,
+            generatedFly
+        );
+    }
+
     function getUserGeneratedFly(address account, uint256 _totalBaseShares)
         public
         view
@@ -154,15 +170,26 @@ abstract contract Zone {
 
     function _updateHopperGenerationData(
         address _account,
-        uint256 _totalBaseShares
+        uint256 _totalAccountShares,
+        bool isBonus
     ) internal returns (uint256) {
-        (uint256 cappedFly, uint256 generatedFly) = getUserGeneratedFly(
-            _account,
-            _totalBaseShares
-        );
+        uint256 cappedFly;
+        uint256 generatedFly;
+
+        if (isBonus) {
+            (cappedFly, generatedFly) = getUserBonusGeneratedFly(
+                _account,
+                _totalAccountShares
+            );
+        } else {
+            (cappedFly, generatedFly) = getUserGeneratedFly(
+                _account,
+                _totalAccountShares
+            );
+        }
 
         // todo scale?
-        generatedPerShareStored[_account] += (generatedFly / _totalBaseShares);
+        generatedPerShareStored[_account] += (generatedFly / _totalAccountShares);
         return cappedFly;
     }
 
@@ -170,7 +197,16 @@ abstract contract Zone {
                            REWARDS ACCOUNTING
     //////////////////////////////////////////////////////////////*/
 
-    function rewardPerShare() public view returns (uint256) {
+    function _updateAccountRewards(address _account) internal {
+        _updateAccountBaseReward(_account, baseSharesBalance[_account]);
+        _updateAccountBonusReward(_account, veSharesBalance[_account]);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                           BASE REWARDS
+    //////////////////////////////////////////////////////////////*/
+
+    function baseRewardPerShare() public view returns (uint256) {
         if (totalSupply == 0) {
             return 0;
         }
@@ -180,33 +216,34 @@ abstract contract Zone {
                 totalSupply);
     }
 
-    function _updateRewardPerShareStored() internal {
-        rewardPerShareStored = rewardPerShare();
+    function _updateBaseRewardPerShareStored() internal {
+        rewardPerShareStored = baseRewardPerShare();
         lastUpdatedTime = block.timestamp;
     }
 
-    function _updateAccountReward(address _account) internal {
-        _updateRewardPerShareStored();
+    function _updateAccountBaseReward(address _account, uint256 _totalAccountShares)
+        internal
+    {
+        _updateBaseRewardPerShareStored();
 
-        uint256 totalBaseShares = baseSharesBalance[_account];
-        if (totalBaseShares > 0) {
+        if (_totalAccountShares > 0) {
             uint256 cappedFly = _updateHopperGenerationData(
                 _account,
-                totalBaseShares
+                _totalAccountShares,
+                false
             );
 
             unchecked {
                 rewards[_account] += cappedFly;
+                userMaxFlyGeneration[_account] -= cappedFly;
             }
         }
 
         userRewardPerSharePaid[_account] = rewardPerShareStored;
-
-        _updateAccountBonusReward(_account);
     }
 
     /*///////////////////////////////////////////////////////////////
-                           BONUS REWARDS ACCOUNTING
+                           BONUS REWARDS
     //////////////////////////////////////////////////////////////*/
 
     function bonusRewardPerShare() public view returns (uint256) {
@@ -220,26 +257,31 @@ abstract contract Zone {
                 1e18) / totalVeShare);
     }
 
-    function earnedBonus(address account) public view returns (uint256) {
-        return
-            ((veSharesBalance[account] *
-                (bonusRewardPerShare() -
-                    userBonusRewardPerSharePaid[account])) / 1e18) +
-            rewards[account];
-    }
-
     function _updateBonusRewardPerShareStored() internal {
         bonusRewardPerShareStored = bonusRewardPerShare();
         lastBonusUpdatedTime = block.timestamp;
     }
 
-    function _updateAccountBonusReward(address account) internal {
-        if (veSharesBalance[account] > 0) {
-            _updateBonusRewardPerShareStored();
+    function _updateAccountBonusReward(
+        address _account,
+        uint256 _totalAccountShares
+    ) internal {
+        _updateBonusRewardPerShareStored();
 
-            rewards[account] = earnedBonus(account);
-            userBonusRewardPerSharePaid[account] = bonusRewardPerShareStored;
+        if (veSharesBalance[_account] > 0) {
+            uint256 cappedFly = _updateHopperGenerationData(
+                _account,
+                _totalAccountShares,
+                true
+            );
+
+            unchecked {
+                rewards[_account] += cappedFly;
+                userMaxFlyGeneration[_account] -= cappedFly;
+            }
         }
+
+        userBonusRewardPerSharePaid[_account] = bonusRewardPerShareStored;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -325,7 +367,7 @@ abstract contract Zone {
 
         // Update owners shares if hopper is staked
         if (zoneHopperOwner == msg.sender) {
-            _updateAccountReward(msg.sender);
+            _updateAccountRewards(msg.sender);
 
             // Resets this hopper generation tracking
             tokenCapFilledPerShare[tokenId] = generatedPerShareStored[
@@ -343,7 +385,7 @@ abstract contract Zone {
                 hopperShare;
             baseSharesBalance[msg.sender] = newBaseShare;
 
-            _updateAccountReward(msg.sender);
+            _updateAccountRewards(msg.sender);
             _updateVeShares(newBaseShare, 0, false);
         }
 
@@ -382,7 +424,7 @@ abstract contract Zone {
     }
 
     function enter(uint256[] calldata tokenIds) external {
-        _updateAccountReward(msg.sender);
+        _updateAccountRewards(msg.sender);
 
         uint256 prevBaseShares = baseSharesBalance[msg.sender];
         uint256 _baseShares = prevBaseShares;
@@ -431,7 +473,7 @@ abstract contract Zone {
     }
 
     function exit(uint256[] calldata tokenIds) external {
-        _updateAccountReward(msg.sender);
+        _updateAccountRewards(msg.sender);
 
         uint256 prevBaseShares = baseSharesBalance[msg.sender];
         uint256 _baseShares = prevBaseShares;
@@ -501,7 +543,7 @@ abstract contract Zone {
     }
 
     function claim() external {
-        _updateAccountReward(msg.sender);
+        _updateAccountRewards(msg.sender);
 
         uint256 _accountRewards = rewards[msg.sender];
         delete rewards[msg.sender];
@@ -555,7 +597,7 @@ abstract contract Zone {
     }
 
     function vote(uint256 veFlyAmount, bool recount) external {
-        _updateAccountBonusReward(msg.sender);
+        _updateAccountBonusReward(msg.sender, veSharesBalance[msg.sender]);
 
         _updateVeShares(baseSharesBalance[msg.sender], veFlyAmount, true);
 
@@ -563,7 +605,7 @@ abstract contract Zone {
     }
 
     function unvote(uint256 veFlyAmount, bool recount) external {
-        _updateAccountBonusReward(msg.sender);
+        _updateAccountBonusReward(msg.sender, veSharesBalance[msg.sender]);
 
         _updateVeShares(baseSharesBalance[msg.sender], veFlyAmount, false);
 
@@ -573,7 +615,7 @@ abstract contract Zone {
     function forceUnvote(address user) external {
         if (msg.sender != ballot) revert Unauthorized();
 
-        _updateAccountBonusReward(user);
+        _updateAccountBonusReward(user, veSharesBalance[user]);
 
         delete veSharesBalance[user];
         delete veFlyBalance[user];

@@ -15,7 +15,10 @@ contract BallotTest is BaseTest {
         expectErrorAndSuccess(
             address(BALLOT),
             Ballot.Unauthorized.selector,
-            abi.encodeWithSelector(Ballot.setBonusEmissionRate.selector, 0x1337),
+            abi.encodeWithSelector(
+                Ballot.setBonusEmissionRate.selector,
+                0x1337
+            ),
             owner, // it changed on the first call
             user1
         );
@@ -55,7 +58,6 @@ contract BallotTest is BaseTest {
     }
 
     function testZones() public {
-
         address[] memory zones = getZones();
 
         expectErrorAndSuccess(
@@ -76,7 +78,6 @@ contract BallotTest is BaseTest {
         );
 
         // swapped last 4th element to first position
-        assertEq(BALLOT.arrZones(0), zones[1]); 
-
+        assertEq(BALLOT.arrZones(0), zones[1]);
     }
 }
