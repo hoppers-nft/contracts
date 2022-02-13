@@ -116,6 +116,8 @@ contract MarketTest is BaseTest {
 
         hevm.prank(user2, user2);
         ANOTHER_NFT.mint{value: MINT_COST * 10}(10);
+        hevm.prank(user2, user2);
+        ANOTHER_NFT.setApprovalForAll(address(MARKET), true);
         hevm.prank(user1, user1);
         HOPPER.mint{value: MINT_COST * 10}(10);
 
