@@ -41,8 +41,6 @@ contract HopperWorld is BaseTest {
         hevm.warp(300 days);
         POND.claim();
         assert(FLY.balanceOf(user1) > 2 * earn100days);
-        emit log_uint(FLY.balanceOf(user1));
-        emit log_uint(2 * earn100days);
 
         hevm.stopPrank();
     }

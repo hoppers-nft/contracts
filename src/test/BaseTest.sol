@@ -86,6 +86,15 @@ contract BaseTest is DSTest {
         return _zones;
     }
 
+    function increaseLevels(uint256 tokenId, uint256 num) internal {
+        // Only Zones can level an hopper up
+        hevm.startPrank(address(POND));
+        for (uint256 i; i < num; ++i) {
+            HOPPER.levelUp(tokenId);
+        }
+        hevm.stopPrank();
+    }
+
     function setUp() public {
         owner = address(0x13371337);
 

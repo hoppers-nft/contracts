@@ -92,15 +92,6 @@ contract HopperTest is BaseTest {
         assertEq(HOPPER.nameFee(), 1337);
     }
 
-    function increaseLevels(uint256 tokenId, uint256 num) internal {
-        // Only Zones can level an hopper up
-        hevm.startPrank(address(POND));
-        for (uint256 i; i < num; ++i) {
-            HOPPER.levelUp(tokenId);
-        }
-        hevm.stopPrank();
-    }
-
     function testLevels() public {
         hevm.prank(user1, user1);
         HOPPER.mint{value: MINT_COST}(1);
