@@ -230,6 +230,7 @@ contract HopperNFT is ERC721 {
         unchecked {
             ++(hoppers[tokenId].level);
         }
+        emit LevelUp(hoppers[tokenId].level);
     }
 
     function changeHopperName(uint256 tokenId, string calldata newName)
@@ -333,6 +334,10 @@ contract HopperNFT is ERC721 {
             name = "Unnamed";
         }
     }
+
+    function _jsonString(uint256 tokenId) public returns (string memory) {
+        return "todo";
+    } 
 
     function tokenURI(uint256 tokenId)
         public

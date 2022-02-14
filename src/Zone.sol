@@ -535,12 +535,21 @@ abstract contract Zone {
         _updateVeShares(_baseShares, 0, false);
     }
 
+    // todo test
     function claimable(address _account) external view returns (uint256) {
-        (uint256 capped, ) = getUserGeneratedFly(
+        uint256 cappedFly = userMaxFlyGeneration[_account];
+
+        (uint256 capped1, ) = getUserGeneratedFly(
             _account,
             baseSharesBalance[_account]
         );
-        return rewards[msg.sender] + capped;
+        (uint256 capped2, ) = getUserGeneratedFly(
+            _account,
+            veSharesBalance[_account]
+        );
+
+        cappedFly = capped1 + capped2 > cappedFly ? cappedFly : capped1 + capped2;
+        return rewards[msg.sender] + cappedFly;
     }
 
     function claim() external {
