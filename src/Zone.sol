@@ -543,7 +543,7 @@ abstract contract Zone {
             _account,
             baseSharesBalance[_account]
         );
-        (uint256 bonusGen, ) = getUserGeneratedFly(
+        (uint256 bonusGen, ) = getUserBonusGeneratedFly(
             _account,
             veSharesBalance[_account]
         );
