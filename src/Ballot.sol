@@ -144,11 +144,7 @@ contract Ballot {
     }
 
     // todo test
-    function vote(address user, uint256 vefly)
-        external
-        onlyZone
-        returns (uint256)
-    {
+    function vote(address user, uint256 vefly) external onlyZone {
         // veFly Accounting
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
         if (totalVeFly > veFly(VEFLY).balanceOf(user)) revert NotEnoughVeFly();
@@ -158,16 +154,10 @@ contract Ballot {
         if (totalVeFly > 0) veFly(VEFLY).setHasVoted(user);
 
         _updateVotes(user, totalVeFly);
-
-        return totalVeFly;
     }
 
     // todo test
-    function unvote(address user, uint256 vefly)
-        external
-        onlyZone
-        returns (uint256)
-    {
+    function unvote(address user, uint256 vefly) external onlyZone {
         // veFly Accounting
         if (userVeFlyUsed[user] < vefly) revert NotEnoughVeFly();
         uint256 remainingVeFly = userVeFlyUsed[user] - vefly;
@@ -176,8 +166,6 @@ contract Ballot {
         if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
 
         _updateVotes(user, remainingVeFly);
-
-        return remainingVeFly;
     }
 
     /*///////////////////////////////////////////////////////////////

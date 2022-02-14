@@ -572,23 +572,20 @@ abstract contract Zone {
         uint256 beforeVeShare = veSharesBalance[msg.sender];
 
         if (beforeVeShare > 0 || veFlyAmount > 0) {
-            uint256 currentVeFly;
-
             if (veFlyAmount > 0) {
                 if (increment) {
-                    currentVeFly = Ballot(ballot).vote(msg.sender, veFlyAmount);
+                    Ballot(ballot).vote(msg.sender, veFlyAmount);
+                    veFlyBalance[msg.sender] += veFlyAmount;
                 } else {
-                    currentVeFly = Ballot(ballot).unvote(
-                        msg.sender,
-                        veFlyAmount
-                    );
+                    Ballot(ballot).unvote(msg.sender, veFlyAmount);
+                    veFlyBalance[msg.sender] -= veFlyAmount;
                 }
-                veFlyBalance[msg.sender] = currentVeFly;
-            } else {
-                currentVeFly = veFlyBalance[msg.sender];
             }
 
-            uint256 currentVeShare = _calcVeShare(baseShares, currentVeFly);
+            uint256 currentVeShare = _calcVeShare(
+                baseShares,
+                veFlyBalance[msg.sender]
+            );
             veSharesBalance[msg.sender] = currentVeShare;
 
             unchecked {
