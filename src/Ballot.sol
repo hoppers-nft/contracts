@@ -115,17 +115,21 @@ contract Ballot {
     //////////////////////////////////////////////////////////////*/
 
     // todo test
-    function forceUnvote(address user) external {
+    function forceUnvote(address _user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
 
         uint256 length = arrZones.length;
+        assert(length == 2);
+
         for (uint256 i; i < length; ++i) {
             address zone = arrZones[i];
-            uint256 userVotes = zonesUserVotes[zone][user];
+            uint256 userVotes = zonesUserVotes[zone][_user];
 
-            delete userVeFlyUsed[user];
-            delete zonesUserVotes[zone][user];
+            delete userVeFlyUsed[_user];
+            delete zonesUserVotes[zone][_user];
             zonesVotes[zone] -= userVotes;
+
+            Zone(zone).forceUnvote(_user);
         }
     }
 
