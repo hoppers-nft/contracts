@@ -631,7 +631,7 @@ abstract contract Zone {
         pure
         virtual
         returns (bool)
-    {}
+    {} // solhint-disable-line
 
     function _calculateBaseShare(HopperNFT.Hopper memory hopper)
         internal

@@ -13,8 +13,8 @@ contract Ballot {
                             IMMUTABLES
     //////////////////////////////////////////////////////////////*/
 
-    address immutable VEFLY;
-    address immutable FLY;
+    address public immutable VEFLY;
+    address public immutable FLY;
 
     /*///////////////////////////////////////////////////////////////
                               ZONES
