@@ -3,12 +3,16 @@ pragma solidity 0.8.11;
 
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC721} from "@solmate/tokens/ERC721.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 //slither-disable-next-line locked-ether
 contract HopperNFT is ERC721 {
     using SafeTransferLib for address;
 
     address public owner;
+
+    uint256 public preSaleOpenTime;
+    bytes32 public merkleRoot;
 
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLE STORAGE
@@ -80,6 +84,7 @@ contract HopperNFT is ERC721 {
     error OnlyEOAAllowed();
     error NameTaken();
     error OnlyLvL100();
+    error TooSoon();
 
     constructor(
         string memory _NFT_NAME,
@@ -99,6 +104,7 @@ contract HopperNFT is ERC721 {
         MAX_PER_ADDRESS = _MAX_PER_ADDRESS;
 
         nameFee = _NAME_FEE;
+        preSaleOpenTime = type(uint256).max - 30 minutes;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -129,6 +135,14 @@ contract HopperNFT is ERC721 {
     function setNameChangeFee(uint256 _nameFee) external onlyOwner {
         nameFee = _nameFee;
         emit UpdatedNameFee(_nameFee);
+    }
+
+    function setPreSale(uint256 _preSaleOpenTime, bytes32 _merkleRoot)
+        external
+        onlyOwner
+    {
+        preSaleOpenTime = _preSaleOpenTime;
+        merkleRoot = _merkleRoot;
     }
 
     function withdraw() external onlyOwner {
@@ -323,8 +337,11 @@ contract HopperNFT is ERC721 {
         }
     }
 
-    function mint(uint256 numberOfMints) external payable {
-        if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
+    /*///////////////////////////////////////////////////////////////
+                            HOPPER MINTING
+    //////////////////////////////////////////////////////////////*/
+
+    function _handleMint(uint256 numberOfMints) internal {
         // solhint-disable-next-line
         if (msg.sender != tx.origin) revert OnlyEOAAllowed();
 
@@ -337,6 +354,35 @@ contract HopperNFT is ERC721 {
             _mintHoppers(numberOfMints, totalHoppers - numberOfMints);
             hoppersLength = totalHoppers;
         }
+    }
+
+    function whitelistMint(uint256 numberOfMints, bytes32[] memory proof)
+        external
+        payable
+    {
+        if (block.timestamp < preSaleOpenTime) revert TooSoon();
+        if (((MINT_COST * 70) / 10) * numberOfMints > msg.value)
+            revert InsufficientAmount();
+
+        if (
+            !MerkleProof.verify(
+                proof,
+                merkleRoot,
+                keccak256(abi.encodePacked(msg.sender))
+            )
+        ) revert Unauthorized();
+
+        _handleMint(numberOfMints);
+    }
+
+    function normalMint(uint256 numberOfMints) external payable {
+        unchecked {
+            if (block.timestamp < preSaleOpenTime + 30 minutes)
+                revert TooSoon();
+        }
+        if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
+
+        _handleMint(numberOfMints);
     }
 
     /*///////////////////////////////////////////////////////////////

@@ -81,7 +81,7 @@ contract BreedingTest is BaseTest {
         hevm.startPrank(user1, user1);
 
         // Set up
-        HOPPER.mint{value: MINT_COST * 10}(10);
+        HOPPER.normalMint{value: MINT_COST * 10}(10);
         FLY.approve(address(BREEDING), 100 ether);
         HOPPER.setApprovalForAll(address(BREEDING), true);
 

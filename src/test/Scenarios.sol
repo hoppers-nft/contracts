@@ -23,7 +23,7 @@ contract HopperWorld is BaseTest {
 
         // Mint 2 hoppers
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST * numHoppers}(numHoppers);
+        HOPPER.normalMint{value: MINT_COST * numHoppers}(numHoppers);
 
         return (numHoppers, tokenIds);
     }

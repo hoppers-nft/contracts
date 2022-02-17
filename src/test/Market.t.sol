@@ -110,16 +110,17 @@ contract MarketTest is BaseTest {
             0, // sale time
             0.01 ether // namefee
         );
+        ANOTHER_NFT.setPreSale(type(uint256).max - 30 minutes + 1, bytes32(0));
 
         MARKET.removeTokenAddress(address(HOPPER));
         MARKET.removeTokenAddress(address(ANOTHER_NFT));
 
         hevm.prank(user2, user2);
-        ANOTHER_NFT.mint{value: MINT_COST * 10}(10);
+        ANOTHER_NFT.normalMint{value: MINT_COST * 10}(10);
         hevm.prank(user2, user2);
         ANOTHER_NFT.setApprovalForAll(address(MARKET), true);
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST * 10}(10);
+        HOPPER.normalMint{value: MINT_COST * 10}(10);
 
         hevm.prank(user1);
         hevm.expectRevert(
@@ -171,9 +172,9 @@ contract MarketTest is BaseTest {
         setUpMarket();
 
         hevm.prank(user2, user2);
-        HOPPER.mint{value: MINT_COST * 10}(10);
+        HOPPER.normalMint{value: MINT_COST * 10}(10);
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST * 10}(10);
+        HOPPER.normalMint{value: MINT_COST * 10}(10);
 
         addListing(user2, 1450, 1 ether);
         addListing(user2, 504, 1 ether);
@@ -250,7 +251,7 @@ contract MarketTest is BaseTest {
         setUpMarket();
 
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST * 10}(10);
+        HOPPER.normalMint{value: MINT_COST * 10}(10);
 
         addListing(user1, 4142, 1 ether);
         addListing(user1, 2738, 1 ether);

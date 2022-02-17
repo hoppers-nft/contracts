@@ -9,14 +9,16 @@ contract HopperTest is BaseTest {
         hevm.expectRevert(
             abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
         );
-        HOPPER.mint(1);
+        HOPPER.normalMint(1);
 
         hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
-        HOPPER.mint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(
+        HOPPER.normalMint{value: MINT_COST * (MAX_MINT_PER_CALL + 1)}(
             MAX_MINT_PER_CALL + 1
         );
 
-        HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
+        HOPPER.normalMint{value: MINT_COST * MAX_MINT_PER_CALL}(
+            MAX_MINT_PER_CALL
+        );
 
         // Withdraw
         hevm.expectRevert(
@@ -38,7 +40,7 @@ contract HopperTest is BaseTest {
 
     function testNames() public {
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST}(1);
+        HOPPER.normalMint{value: MINT_COST}(1);
         uint256 tokenId = 4142;
 
         // Default name is "Unnamed"
@@ -95,7 +97,7 @@ contract HopperTest is BaseTest {
 
     function testLevels() public {
         hevm.prank(user1, user1);
-        HOPPER.mint{value: MINT_COST}(1);
+        HOPPER.normalMint{value: MINT_COST}(1);
         uint256 tokenId = 4142;
 
         // Users cannot call the contract directly to level up
@@ -161,14 +163,16 @@ contract HopperTest is BaseTest {
         hevm.startPrank(user1, user1);
 
         for (uint256 i; i < MAX_HOPPER_SUPPLY / MAX_MINT_PER_CALL; ++i) {
-            HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(
+            HOPPER.normalMint{value: MINT_COST * MAX_MINT_PER_CALL}(
                 MAX_MINT_PER_CALL
             );
         }
         assertEq(HOPPER.hoppersLength(), MAX_HOPPER_SUPPLY);
 
         hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
-        HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
+        HOPPER.normalMint{value: MINT_COST * MAX_MINT_PER_CALL}(
+            MAX_MINT_PER_CALL
+        );
 
         hevm.stopPrank();
     }
