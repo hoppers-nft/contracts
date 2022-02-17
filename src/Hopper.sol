@@ -36,6 +36,12 @@ contract HopperNFT is ERC721 {
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
 
+    mapping(uint256 => uint256) indexer;
+
+    /*///////////////////////////////////////////////////////////////
+                             
+    //////////////////////////////////////////////////////////////*/
+
     // whitelist for leveling up
     mapping(address => bool) public zones;
 
@@ -290,27 +296,51 @@ contract HopperNFT is ERC721 {
         }
     }
 
+    function _mintHoppers(uint256 numberOfMints, uint256 preTotalHoppers)
+        internal
+    {
+        uint256 seed = enoughRandom();
+
+        uint256 _indexerLength = MAX_SUPPLY - preTotalHoppers;
+        for (uint256 i; i < numberOfMints; ++i) {
+            seed >>= i;
+
+            // Find the next available tokenID
+            uint256 index = seed % _indexerLength;
+            uint256 tokenId = indexer[index];
+
+            if (tokenId == 0) {
+                tokenId = index;
+            }
+
+            // Swapped the picked tokenId for the last element
+            uint256 last = indexer[_indexerLength - 1];
+            if (last == 0) {
+                indexer[index] = _indexerLength - 1;
+            } else {
+                indexer[index] = last;
+            }
+            _indexerLength -= 1;
+
+            // Mint Hopper and generate its attributes
+            _mint(msg.sender, tokenId);
+            hoppers[tokenId] = generate(seed);
+        }
+    }
+
     function mint(uint256 numberOfMints) external payable {
         if (MINT_COST * numberOfMints > msg.value) revert InsufficientAmount();
         // solhint-disable-next-line
         if (msg.sender != tx.origin) revert OnlyEOAAllowed();
 
-        uint256 hopperID = hoppersLength;
-
-        if (
-            numberOfMints > MAX_PER_ADDRESS ||
-            hopperID + numberOfMints > MAX_SUPPLY
-        ) revert MintLimit();
-
-        // overflow is unrealistic
         unchecked {
-            hoppersLength += numberOfMints;
+            uint256 totalHoppers = hoppersLength + numberOfMints;
 
-            uint256 seed = enoughRandom();
-            for (uint256 i; i < numberOfMints; ++i) {
-                _mint(msg.sender, hopperID + i);
-                hoppers[hopperID + i] = generate(seed >> i);
-            }
+            if (numberOfMints > MAX_PER_ADDRESS || totalHoppers > MAX_SUPPLY)
+                revert MintLimit();
+
+            _mintHoppers(numberOfMints, totalHoppers - numberOfMints);
+            hoppersLength = totalHoppers;
         }
     }
 
@@ -337,7 +367,7 @@ contract HopperNFT is ERC721 {
 
     function _jsonString(uint256 tokenId) public returns (string memory) {
         return "todo";
-    } 
+    }
 
     function tokenURI(uint256 tokenId)
         public

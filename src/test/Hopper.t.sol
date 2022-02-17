@@ -39,11 +39,12 @@ contract HopperTest is BaseTest {
     function testNames() public {
         hevm.prank(user1, user1);
         HOPPER.mint{value: MINT_COST}(1);
+        uint256 tokenId = 4142;
 
         // Default name is "Unnamed"
         assert(
             keccak256(bytes("Unnamed")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
+                keccak256(bytes(HOPPER.getHopperName(tokenId)))
         );
 
         // Users cannot call the contract directly to change the name
@@ -51,33 +52,33 @@ contract HopperTest is BaseTest {
         hevm.expectRevert(
             abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
         );
-        HOPPER.changeHopperName(0, "hopper");
+        HOPPER.changeHopperName(tokenId, "hopper");
 
         // Only Zones can change the name of an hopper
         hevm.prank(address(POND));
-        HOPPER.changeHopperName(0, "hopper");
+        HOPPER.changeHopperName(tokenId, "hopper");
         assert(
             keccak256(bytes("hopper")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
+                keccak256(bytes(HOPPER.getHopperName(tokenId)))
         );
 
         // Names are unique
         hevm.prank(address(POND));
         hevm.expectRevert(abi.encodeWithSelector(HopperNFT.NameTaken.selector));
-        HOPPER.changeHopperName(0, "hopper");
+        HOPPER.changeHopperName(tokenId, "hopper");
 
         hevm.prank(address(POND));
-        HOPPER.changeHopperName(0, "hopper1");
+        HOPPER.changeHopperName(tokenId, "hopper1");
 
         hevm.prank(address(POND));
-        HOPPER.changeHopperName(0, "hopper");
+        HOPPER.changeHopperName(tokenId, "hopper");
 
         // Names are tied to the hopper not user
         hevm.prank(user1);
-        HOPPER.transferFrom(user1, user2, 0);
+        HOPPER.transferFrom(user1, user2, tokenId);
         assert(
             keccak256(bytes("hopper")) ==
-                keccak256(bytes(HOPPER.getHopperName(0)))
+                keccak256(bytes(HOPPER.getHopperName(tokenId)))
         );
 
         // Name Fee
@@ -95,7 +96,7 @@ contract HopperTest is BaseTest {
     function testLevels() public {
         hevm.prank(user1, user1);
         HOPPER.mint{value: MINT_COST}(1);
-        uint256 tokenId = 0;
+        uint256 tokenId = 4142;
 
         // Users cannot call the contract directly to level up
         hevm.prank(user1);
@@ -154,5 +155,21 @@ contract HopperTest is BaseTest {
         assertEq(currentHopper.intelligence, 10);
         assertEq(currentHopper.fertility, 10);
         assertEq(currentHopper.level, 1);
+    }
+
+    function testHopperMintAll() public {
+        hevm.startPrank(user1, user1);
+
+        for (uint256 i; i < MAX_HOPPER_SUPPLY / MAX_MINT_PER_CALL; ++i) {
+            HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(
+                MAX_MINT_PER_CALL
+            );
+        }
+        assertEq(HOPPER.hoppersLength(), MAX_HOPPER_SUPPLY);
+
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
+        HOPPER.mint{value: MINT_COST * MAX_MINT_PER_CALL}(MAX_MINT_PER_CALL);
+
+        hevm.stopPrank();
     }
 }

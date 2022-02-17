@@ -43,6 +43,7 @@ contract BaseTest is DSTest {
     address public user3 = address(0x1339);
 
     // Settings
+    uint256 public MAX_HOPPER_SUPPLY = 10_000;
     uint256 public MAX_MINT_PER_CALL = 10;
     uint256 public MINT_COST = 1 ether;
     uint256 public BREEDING_COST = 1.5 ether;
@@ -164,9 +165,9 @@ contract BaseTest is DSTest {
         VEFLY.addBallot(address(BALLOT));
 
         // Add funds
-        hevm.deal(user1, 10_000 ether);
-        hevm.deal(user2, 10_000 ether);
-        hevm.deal(user3, 10_000 ether);
+        hevm.deal(user1, 100_000 ether);
+        hevm.deal(user2, 100_000 ether);
+        hevm.deal(user3, 100_000 ether);
 
         // LevelUp && Name Authorization
         HOPPER.addZone(_zones[0]);

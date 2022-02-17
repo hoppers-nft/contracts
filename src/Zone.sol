@@ -159,7 +159,7 @@ abstract contract Zone {
     {
         uint256 cappedFly = userMaxFlyGeneration[account];
         uint256 generatedFly = ((_totalBaseShares *
-            (rewardPerShareStored - userRewardPerSharePaid[account])) / 1e18);
+            (baseRewardPerShare() - userRewardPerSharePaid[account])) / 1e18);
 
         return (
             generatedFly > cappedFly ? cappedFly : generatedFly,

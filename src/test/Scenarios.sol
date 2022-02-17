@@ -6,15 +6,19 @@ import "ds-test/test.sol";
 import {BaseTest, HEVM, ERC721} from "./BaseTest.sol";
 
 contract HopperWorld is BaseTest {
-    function getHoppers(uint256 numHoppers)
+    function getHoppers(uint256 numHoppers, bool firstBatch)
         public
         returns (uint256, uint256[] memory)
     {
         // Setting up
         uint256[] memory tokenIds = new uint256[](numHoppers);
 
-        for (uint256 i; i < numHoppers; ++i) {
-            tokenIds[i] = i + HOPPER.hoppersLength();
+        if (firstBatch) {
+            tokenIds[0] = 4142;
+            tokenIds[1] = 2738;
+        } else {
+            tokenIds[0] = 144;
+            tokenIds[1] = 3093;
         }
 
         // Mint 2 hoppers
@@ -25,8 +29,8 @@ contract HopperWorld is BaseTest {
     }
 
     function setVotingScenario() public returns (uint256 earnIn1Hour) {
-        (, uint256[] memory tokenIds0_1) = getHoppers(2);
-        (, uint256[] memory tokenIds2_3) = getHoppers(2);
+        (, uint256[] memory tokenIds0_1) = getHoppers(2, true);
+        (, uint256[] memory tokenIds2_3) = getHoppers(2, false);
 
         hevm.startPrank(user1, user1);
 

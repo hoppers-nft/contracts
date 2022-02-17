@@ -86,7 +86,7 @@ contract BreedingTest is BaseTest {
         HOPPER.setApprovalForAll(address(BREEDING), true);
 
         // Stake Hopper
-        uint256 tokenId = 1;
+        uint256 tokenId = 4142;
         uint256 beforeBalance = FLY.balanceOf(user1);
         uint256 beforeSupply = FLY.totalSupply();
         BREEDING.enter(tokenId);
