@@ -178,7 +178,6 @@ contract HopperTest is BaseTest {
     }
 
     function testHopperWhiteList() public {
-
         bytes32 l1 = keccak256(abi.encodePacked(user1));
         bytes32 l2 = keccak256(abi.encodePacked(user2));
 
@@ -193,12 +192,13 @@ contract HopperTest is BaseTest {
         hevm.prank(owner);
         HOPPER.setPreSale(0, root);
 
-        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector));
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
+        );
         HOPPER.whitelistMint{value: ((MINT_COST * 70) / 100) - 1}(1, proof);
 
         HOPPER.whitelistMint{value: ((MINT_COST * 70) / 100)}(1, proof);
 
         hevm.stopPrank();
-
     }
 }

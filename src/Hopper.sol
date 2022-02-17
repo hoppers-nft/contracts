@@ -40,7 +40,7 @@ contract HopperNFT is ERC721 {
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
 
-    mapping(uint256 => uint256) indexer;
+    mapping(uint256 => uint256) public indexer;
 
     /*///////////////////////////////////////////////////////////////
                              
