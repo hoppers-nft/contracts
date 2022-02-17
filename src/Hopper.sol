@@ -361,7 +361,7 @@ contract HopperNFT is ERC721 {
         payable
     {
         if (block.timestamp < preSaleOpenTime) revert TooSoon();
-        if (((MINT_COST * 70) / 10) * numberOfMints > msg.value)
+        if (((MINT_COST * 70) / 100) * numberOfMints > msg.value)
             revert InsufficientAmount();
 
         if (

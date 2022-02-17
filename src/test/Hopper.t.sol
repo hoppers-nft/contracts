@@ -176,4 +176,29 @@ contract HopperTest is BaseTest {
 
         hevm.stopPrank();
     }
+
+    function testHopperWhiteList() public {
+
+        bytes32 l1 = keccak256(abi.encodePacked(user1));
+        bytes32 l2 = keccak256(abi.encodePacked(user2));
+
+        bytes32 root = keccak256(abi.encodePacked(l1, l2));
+        bytes32[] memory proof = new bytes32[](1);
+        proof[0] = l2;
+
+        hevm.startPrank(user1, user1);
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.TooSoon.selector));
+        HOPPER.whitelistMint{value: MINT_COST}(1, proof);
+
+        hevm.prank(owner);
+        HOPPER.setPreSale(0, root);
+
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector));
+        HOPPER.whitelistMint{value: ((MINT_COST * 70) / 100) - 1}(1, proof);
+
+        HOPPER.whitelistMint{value: ((MINT_COST * 70) / 100)}(1, proof);
+
+        hevm.stopPrank();
+
+    }
 }
