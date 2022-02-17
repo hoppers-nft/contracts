@@ -224,11 +224,6 @@ contract HopperNFT is ERC721 {
         hoppers[_tokenId].vitality = uint8(_ascend(hopper.vitality));
         hoppers[_tokenId].fertility = uint8(_ascend(hopper.fertility));
         hoppers[_tokenId].level = 1;
-
-        // todo hardcode it
-        unlabeledData[keccak256(bytes("LEVEL_GAUGE_KEY"))][_tokenId] = bytes32(
-            0
-        );
     }
 
     function levelUp(uint256 tokenId) external onlyZone {
