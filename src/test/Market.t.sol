@@ -106,7 +106,13 @@ contract MarketTest is BaseTest {
             "ANOTHER_NFT",
             0.01 ether // namefee
         );
-        ANOTHER_NFT.setPreSale(type(uint256).max - 30 minutes + 1, bytes32(0));
+
+        ANOTHER_NFT.setSaleDetails(
+            type(uint256).max - 30 minutes + 1,
+            bytes32(0),
+            bytes32(0),
+            0
+        );
 
         MARKET.removeTokenAddress(address(HOPPER));
         MARKET.removeTokenAddress(address(ANOTHER_NFT));

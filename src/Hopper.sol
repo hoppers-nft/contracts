@@ -24,9 +24,12 @@ contract HopperNFT is ERC721 {
                               SALE DETAILS
     //////////////////////////////////////////////////////////////*/
 
+    uint256 public reserved;
     uint256 public preSaleOpenTime;
-    bytes32 public merkleRoot;
-    mapping(address => uint256) public redeemed;
+    bytes32 public freeMerkleRoot;
+    bytes32 public wlMerkleRoot;
+    mapping(address => uint256) public freeRedeemed;
+    mapping(address => uint256) public wlRedeemed;
 
     /*///////////////////////////////////////////////////////////////
                                 HOPPERS
@@ -90,6 +93,7 @@ contract HopperNFT is ERC721 {
     error NameTaken();
     error OnlyLvL100();
     error TooSoon();
+    error RootNotSet();
 
     constructor(
         string memory _NFT_NAME,
@@ -138,12 +142,18 @@ contract HopperNFT is ERC721 {
         emit UpdatedNameFee(_nameFee);
     }
 
-    function setPreSale(uint256 _preSaleOpenTime, bytes32 _merkleRoot)
-        external
-        onlyOwner
-    {
+    function setSaleDetails(
+        uint256 _preSaleOpenTime,
+        bytes32 _wlMerkleRoot,
+        bytes32 _freeMerkleRoot,
+        uint256 _reserved
+    ) external onlyOwner {
         preSaleOpenTime = _preSaleOpenTime;
-        merkleRoot = _merkleRoot;
+
+        freeMerkleRoot = _freeMerkleRoot;
+        wlMerkleRoot = _wlMerkleRoot;
+
+        reserved = _reserved;
     }
 
     function withdraw() external onlyOwner {
@@ -367,28 +377,60 @@ contract HopperNFT is ERC721 {
         unchecked {
             uint256 totalHoppers = hoppersLength + numberOfMints;
 
-            if (numberOfMints > MAX_PER_ADDRESS || totalHoppers > MAX_SUPPLY)
-                revert MintLimit();
+            if (
+                numberOfMints > MAX_PER_ADDRESS ||
+                totalHoppers > (MAX_SUPPLY - reserved)
+            ) revert MintLimit();
 
             _mintHoppers(numberOfMints, totalHoppers - numberOfMints);
             hoppersLength = totalHoppers;
         }
     }
 
+    // todo test
+    function freeMint(
+        uint256 numberOfMints,
+        uint256 totalGiven,
+        bytes32[] memory proof
+    ) external payable {
+        if (freeRedeemed[msg.sender] == totalGiven) revert Unauthorized();
+        if (reserved < numberOfMints) revert RootNotSet();
+
+        unchecked {
+            if (block.timestamp < preSaleOpenTime + 30 minutes)
+                revert TooSoon();
+        }
+
+        if (
+            !MerkleProof.verify(
+                proof,
+                freeMerkleRoot,
+                keccak256(abi.encodePacked(msg.sender, totalGiven))
+            )
+        ) revert Unauthorized();
+
+        unchecked {
+            freeRedeemed[msg.sender] += numberOfMints;
+            reserved -= numberOfMints;
+        }
+
+        _handleMint(numberOfMints);
+    }
+
     function whitelistMint(bytes32[] memory proof) external payable {
-        if (redeemed[msg.sender] == 1) revert Unauthorized();
+        if (wlRedeemed[msg.sender] == 1) revert Unauthorized();
         if (block.timestamp < preSaleOpenTime) revert TooSoon();
         if (WL_MINT_COST > msg.value) revert InsufficientAmount();
 
         if (
             !MerkleProof.verify(
                 proof,
-                merkleRoot,
+                wlMerkleRoot,
                 keccak256(abi.encodePacked(msg.sender))
             )
         ) revert Unauthorized();
 
-        redeemed[msg.sender] = 1;
+        wlRedeemed[msg.sender] = 1;
 
         _handleMint(1);
     }

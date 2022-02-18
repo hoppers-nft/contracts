@@ -115,7 +115,12 @@ contract BaseTest is DSTest {
             0.01 ether // namefee
         );
 
-        HOPPER.setPreSale(type(uint256).max - 30 minutes + 1, bytes32(0));
+        HOPPER.setSaleDetails(
+            type(uint256).max - 30 minutes + 1,
+            bytes32(0),
+            bytes32(0),
+            0
+        );
 
         // Initiate Contracts
         FLY = new Fly("FLY", "FLY");

@@ -204,7 +204,7 @@ contract HopperTest is BaseTest {
         HOPPER.whitelistMint{value: WL_MINT_COST}(proof);
 
         hevm.prank(owner);
-        HOPPER.setPreSale(0, root);
+        HOPPER.setSaleDetails(0, root, bytes32(0), 0);
 
         hevm.expectRevert(
             abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
