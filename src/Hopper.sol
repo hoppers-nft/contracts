@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC721} from "@solmate/tokens/ERC721.sol";
