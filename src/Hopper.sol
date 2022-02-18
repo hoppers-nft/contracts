@@ -11,16 +11,21 @@ contract HopperNFT is ERC721 {
 
     address public owner;
 
-    uint256 public preSaleOpenTime;
-    bytes32 public merkleRoot;
-
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLE STORAGE
     //////////////////////////////////////////////////////////////*/
     uint256 public immutable MAX_PER_ADDRESS;
     uint256 public immutable MAX_SUPPLY;
     uint256 public immutable MINT_COST;
-    uint256 public immutable SALE_TIME;
+    uint256 public immutable WL_MINT_COST;
+
+    /*///////////////////////////////////////////////////////////////
+                              SALE DETAILS
+    //////////////////////////////////////////////////////////////*/
+
+    uint256 public preSaleOpenTime;
+    bytes32 public merkleRoot;
+    mapping(address => uint256) public redeemed;
 
     /*///////////////////////////////////////////////////////////////
                                 HOPPERS
@@ -89,19 +94,14 @@ contract HopperNFT is ERC721 {
     constructor(
         string memory _NFT_NAME,
         string memory _NFT_SYMBOL,
-        uint256 _MINT_COST,
-        uint256 _MAX_SUPPLY,
-        uint256 _MAX_PER_ADDRESS,
-        uint256 _SALE_TIME,
         uint256 _NAME_FEE
     ) ERC721(_NFT_NAME, _NFT_SYMBOL) {
         owner = msg.sender;
 
-        MINT_COST = _MINT_COST;
-        MAX_SUPPLY = _MAX_SUPPLY;
-        SALE_TIME = _SALE_TIME;
-        //slither-disable-next-line missing-zero-check
-        MAX_PER_ADDRESS = _MAX_PER_ADDRESS;
+        MINT_COST = 1.75 ether;
+        WL_MINT_COST = 1.2 ether;
+        MAX_SUPPLY = 10_000;
+        MAX_PER_ADDRESS = 10;
 
         nameFee = _NAME_FEE;
         preSaleOpenTime = type(uint256).max - 30 minutes;
@@ -356,13 +356,10 @@ contract HopperNFT is ERC721 {
         }
     }
 
-    function whitelistMint(uint256 numberOfMints, bytes32[] memory proof)
-        external
-        payable
-    {
+    function whitelistMint(bytes32[] memory proof) external payable {
+        if (redeemed[msg.sender] == 1) revert Unauthorized();
         if (block.timestamp < preSaleOpenTime) revert TooSoon();
-        if (((MINT_COST * 70) / 100) * numberOfMints > msg.value)
-            revert InsufficientAmount();
+        if (WL_MINT_COST > msg.value) revert InsufficientAmount();
 
         if (
             !MerkleProof.verify(
@@ -372,7 +369,9 @@ contract HopperNFT is ERC721 {
             )
         ) revert Unauthorized();
 
-        _handleMint(numberOfMints);
+        redeemed[msg.sender] = 1;
+
+        _handleMint(1);
     }
 
     function normalMint(uint256 numberOfMints) external payable {

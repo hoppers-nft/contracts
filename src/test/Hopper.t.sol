@@ -187,7 +187,7 @@ contract HopperTest is BaseTest {
 
         hevm.startPrank(user1, user1);
         hevm.expectRevert(abi.encodeWithSelector(HopperNFT.TooSoon.selector));
-        HOPPER.whitelistMint{value: MINT_COST}(1, proof);
+        HOPPER.whitelistMint{value: WL_MINT_COST}(proof);
 
         hevm.prank(owner);
         HOPPER.setPreSale(0, root);
@@ -195,9 +195,14 @@ contract HopperTest is BaseTest {
         hevm.expectRevert(
             abi.encodeWithSelector(HopperNFT.InsufficientAmount.selector)
         );
-        HOPPER.whitelistMint{value: ((MINT_COST * 70) / 100) - 1}(1, proof);
+        HOPPER.whitelistMint{value: WL_MINT_COST - 1}(proof);
 
-        HOPPER.whitelistMint{value: ((MINT_COST * 70) / 100)}(1, proof);
+        HOPPER.whitelistMint{value: WL_MINT_COST}(proof);
+
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
+        HOPPER.whitelistMint{value: WL_MINT_COST}(proof);
 
         hevm.stopPrank();
     }

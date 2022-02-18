@@ -45,7 +45,8 @@ contract BaseTest is DSTest {
     // Settings
     uint256 public MAX_HOPPER_SUPPLY = 10_000;
     uint256 public MAX_MINT_PER_CALL = 10;
-    uint256 public MINT_COST = 1 ether;
+    uint256 public MINT_COST = 1.75 ether;
+    uint256 public WL_MINT_COST = 1.2 ether;
     uint256 public BREEDING_COST = 1.5 ether;
 
     // Deployments
@@ -111,10 +112,6 @@ contract BaseTest is DSTest {
         HOPPER = new HopperNFT(
             "Hopper",
             "Hopper",
-            MINT_COST,
-            10_000,
-            MAX_MINT_PER_CALL,
-            0, // sale time
             0.01 ether // namefee
         );
 

@@ -104,10 +104,6 @@ contract MarketTest is BaseTest {
         HopperNFT ANOTHER_NFT = new HopperNFT(
             "ANOTHER_NFT",
             "ANOTHER_NFT",
-            MINT_COST,
-            10_000,
-            MAX_MINT_PER_CALL,
-            0, // sale time
             0.01 ether // namefee
         );
         ANOTHER_NFT.setPreSale(type(uint256).max - 30 minutes + 1, bytes32(0));
