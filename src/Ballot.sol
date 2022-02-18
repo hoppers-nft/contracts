@@ -7,7 +7,6 @@ import {veFly} from "./veFly.sol";
 
 contract Ballot {
     address public owner;
-    bool public enabled;
 
     /*///////////////////////////////////////////////////////////////
                             IMMUTABLES
