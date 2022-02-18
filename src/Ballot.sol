@@ -119,7 +119,6 @@ contract Ballot {
         if (msg.sender != VEFLY) revert Unauthorized();
 
         uint256 length = arrZones.length;
-        assert(length == 2);
 
         for (uint256 i; i < length; ++i) {
             address zone = arrZones[i];
