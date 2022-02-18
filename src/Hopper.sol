@@ -18,6 +18,7 @@ contract HopperNFT is ERC721 {
     uint256 public immutable MAX_SUPPLY;
     uint256 public immutable MINT_COST;
     uint256 public immutable WL_MINT_COST;
+    uint256 public immutable LEGENDARY_ID_START;
 
     /*///////////////////////////////////////////////////////////////
                               SALE DETAILS
@@ -38,7 +39,6 @@ contract HopperNFT is ERC721 {
         uint8 vitality;
         uint8 intelligence;
         uint8 fertility;
-        uint8 category;
         // name ?
     }
 
@@ -102,6 +102,7 @@ contract HopperNFT is ERC721 {
         WL_MINT_COST = 1.2 ether;
         MAX_SUPPLY = 10_000;
         MAX_PER_ADDRESS = 10;
+        LEGENDARY_ID_START = 9970;
 
         nameFee = _NAME_FEE;
         preSaleOpenTime = type(uint256).max - 30 minutes;
@@ -290,17 +291,30 @@ contract HopperNFT is ERC721 {
     }
 
     //slither-disable-next-line weak-prng
-    function generate(uint256 seed) internal pure returns (Hopper memory) {
+    function generate(
+        uint256 seed,
+        uint256 minAttributeValue,
+        uint256 randCap
+    ) internal pure returns (Hopper memory) {
         unchecked {
             return
                 Hopper({
-                    strength: uint8((seed >> (8 * 1)) % 10) + 1,
-                    agility: uint8((seed >> (8 * 2)) % 10) + 1,
-                    vitality: uint8((seed >> (8 * 3)) % 10) + 1,
-                    intelligence: uint8((seed >> (8 * 4)) % 10) + 1,
-                    fertility: uint8((seed >> (8 * 5)) % 10) + 1,
-                    level: 1,
-                    category: 0
+                    strength: uint8(
+                        ((seed >> (8 * 1)) % randCap) + minAttributeValue
+                    ),
+                    agility: uint8(
+                        ((seed >> (8 * 2)) % randCap) + minAttributeValue
+                    ),
+                    vitality: uint8(
+                        ((seed >> (8 * 3)) % randCap) + minAttributeValue
+                    ),
+                    intelligence: uint8(
+                        ((seed >> (8 * 4)) % randCap) + minAttributeValue
+                    ),
+                    fertility: uint8(
+                        ((seed >> (8 * 5)) % randCap) + minAttributeValue
+                    ),
+                    level: 1
                 });
         }
     }
@@ -333,7 +347,12 @@ contract HopperNFT is ERC721 {
 
             // Mint Hopper and generate its attributes
             _mint(msg.sender, tokenId);
-            hoppers[tokenId] = generate(seed);
+
+            if (tokenId >= LEGENDARY_ID_START) {
+                hoppers[tokenId] = generate(seed, 5, 6);
+            } else {
+                hoppers[tokenId] = generate(seed, 1, 10);
+            }
         }
     }
 

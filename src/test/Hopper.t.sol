@@ -122,11 +122,11 @@ contract HopperTest is BaseTest {
         HOPPER.rebirth(tokenId);
 
         increaseLevels(tokenId, 1);
-        (uint208 level, , , , , , ) = HOPPER.hoppers(tokenId);
+        (uint208 level, , , , , ) = HOPPER.hoppers(tokenId);
         assert(level == 2);
 
         increaseLevels(tokenId, 98);
-        (level, , , , , , ) = HOPPER.hoppers(tokenId);
+        (level, , , , , ) = HOPPER.hoppers(tokenId);
         assert(level == 100); // CAP CHECK IS DONE ON THE ZONE
 
         // Rebirth Basic
@@ -173,6 +173,20 @@ contract HopperTest is BaseTest {
         HOPPER.normalMint{value: MINT_COST * MAX_MINT_PER_CALL}(
             MAX_MINT_PER_CALL
         );
+
+        for (
+            uint256 i = HOPPER.LEGENDARY_ID_START();
+            i < MAX_HOPPER_SUPPLY;
+            ++i
+        ) {
+            HopperNFT.Hopper memory hopper = HOPPER.getHopper(i);
+            assertGe(hopper.strength, 5);
+            assertGe(hopper.agility, 5);
+            assertGe(hopper.vitality, 5);
+            assertGe(hopper.intelligence, 5);
+            assertGe(hopper.fertility, 5);
+            assertEq(hopper.level, 1);
+        }
 
         hevm.stopPrank();
     }
