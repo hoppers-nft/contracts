@@ -47,6 +47,7 @@ contract HopperNFT is ERC721 {
 
     mapping(uint256 => Hopper) public hoppers;
     uint256 public hoppersLength;
+    uint256 public hopperMaxAttributeValue;
 
     mapping(uint256 => uint256) public indexer;
 
@@ -109,6 +110,7 @@ contract HopperNFT is ERC721 {
         LEGENDARY_ID_START = 9970;
 
         nameFee = _NAME_FEE;
+        hopperMaxAttributeValue = 10;
         preSaleOpenTime = type(uint256).max - 30 minutes;
     }
 
@@ -135,6 +137,11 @@ contract HopperNFT is ERC721 {
         //slither-disable-next-line missing-zero-check
         owner = newOwner;
         emit OwnerUpdated(newOwner);
+    }
+
+    // todo test
+    function setHopperMaxAttributeValue(uint256 _hopperMaxAttributeValue) external onlyOwner {
+        hopperMaxAttributeValue = _hopperMaxAttributeValue;
     }
 
     function setNameChangeFee(uint256 _nameFee) external onlyOwner {
@@ -233,21 +240,36 @@ contract HopperNFT is ERC721 {
                         HOPPER LEVEL SYSTEM
     //////////////////////////////////////////////////////////////*/
 
-    function _ascend(uint256 attribute) internal pure returns (uint256) {
-        return attribute == 10 ? 10 : (attribute + 1);
-    }
-
     function rebirth(uint256 _tokenId) external {
         Hopper memory hopper = hoppers[_tokenId];
 
         if (ownerOf[_tokenId] != msg.sender) revert Unauthorized();
         if (hopper.level < 100) revert OnlyLvL100();
 
-        hoppers[_tokenId].agility = uint8(_ascend(hopper.agility));
-        hoppers[_tokenId].intelligence = uint8(_ascend(hopper.intelligence));
-        hoppers[_tokenId].strength = uint8(_ascend(hopper.strength));
-        hoppers[_tokenId].vitality = uint8(_ascend(hopper.vitality));
-        hoppers[_tokenId].fertility = uint8(_ascend(hopper.fertility));
+        uint256 _hopperMaxAttributeValue = hopperMaxAttributeValue;
+
+        unchecked {
+            if (hopper.strength < _hopperMaxAttributeValue) {
+                hoppers[_tokenId].strength = uint8(hopper.strength + 1);
+            }
+
+            if (hopper.intelligence < _hopperMaxAttributeValue) {
+                hoppers[_tokenId].intelligence = uint8(hopper.intelligence + 1);
+            }
+
+            if (hopper.agility < _hopperMaxAttributeValue) {
+                hoppers[_tokenId].agility = uint8(hopper.agility + 1);
+            }
+
+            if (hopper.vitality < _hopperMaxAttributeValue) {
+                hoppers[_tokenId].vitality = uint8(hopper.vitality + 1);
+            }
+
+            if (hopper.fertility < _hopperMaxAttributeValue) {
+                hoppers[_tokenId].fertility = uint8(hopper.fertility + 1);
+            }
+        }
+
         hoppers[_tokenId].level = 1;
     }
 
