@@ -318,6 +318,10 @@ abstract contract Zone {
         string calldata name,
         bool useOwnRewards
     ) external {
+        if (useOwnRewards) {
+            _updateAccountRewards(msg.sender);
+        }
+
         // Check hopper ownership
         address zoneHopperOwner = hopperOwners[tokenId];
         if (zoneHopperOwner != msg.sender) {
@@ -353,6 +357,10 @@ abstract contract Zone {
     }
 
     function levelUp(uint256 tokenId, bool useOwnRewards) external {
+        if (useOwnRewards) {
+            _updateAccountRewards(msg.sender);
+        }
+
         // Check hopper ownership
         address zoneHopperOwner = hopperOwners[tokenId];
         if (zoneHopperOwner != msg.sender) {
@@ -362,14 +370,10 @@ abstract contract Zone {
             }
         }
 
-        // Check if there's enough FLY (balance + pending rewards) to level up hopper
         HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(tokenId);
-        payAction(getLevelUpCost(hopper.level), useOwnRewards);
 
         // Update owners shares if hopper is staked
         if (zoneHopperOwner == msg.sender) {
-            _updateAccountRewards(msg.sender);
-
             // Resets this hopper generation tracking
             tokenCapFilledPerShare[tokenId] = generatedPerShareStored[
                 msg.sender
@@ -389,6 +393,8 @@ abstract contract Zone {
             _updateAccountRewards(msg.sender);
             _updateVeShares(newBaseShare, 0, false);
         }
+
+        payAction(getLevelUpCost(hopper.level), useOwnRewards);
 
         HopperNFT(HOPPER).levelUp(tokenId);
 
