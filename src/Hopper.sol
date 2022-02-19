@@ -36,13 +36,13 @@ contract HopperNFT is ERC721 {
     //////////////////////////////////////////////////////////////*/
 
     struct Hopper {
-        uint208 level; // capped by zone
+        uint200 level; // capped by zone
+        uint16 rebirths;
         uint8 strength;
         uint8 agility;
         uint8 vitality;
         uint8 intelligence;
         uint8 fertility;
-        // name ?
     }
 
     mapping(uint256 => Hopper) public hoppers;
@@ -271,6 +271,8 @@ contract HopperNFT is ERC721 {
             if (hopper.fertility < _hopperMaxAttributeValue) {
                 hoppers[_tokenId].fertility = uint8(hopper.fertility + 1);
             }
+
+            ++hoppers[_tokenId].rebirths;
         }
 
         hoppers[_tokenId].level = 1;
@@ -349,7 +351,8 @@ contract HopperNFT is ERC721 {
                     fertility: uint8(
                         ((seed >> (8 * 5)) % randCap) + minAttributeValue
                     ),
-                    level: 1
+                    level: 1,
+                    rebirths: 0
                 });
         }
     }
