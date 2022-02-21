@@ -28,7 +28,10 @@ contract HopperWorld is BaseTest {
         return (numHoppers, tokenIds);
     }
 
-    function setVotingScenario() public returns (uint256 earnIn1Hour) {
+    function setVotingScenario()
+        public
+        returns (uint256 earnIn1Hour)
+    {
         (, uint256[] memory tokenIds0_1) = getHoppers(2, true);
         (, uint256[] memory tokenIds2_3) = getHoppers(2, false);
 
@@ -53,8 +56,18 @@ contract HopperWorld is BaseTest {
 
         // Vote with veFly
         uint256 amountveFLY = VEFLY.balanceOf(user1);
+        uint256 countReward = BALLOT.countReward();
+
+        assertGt(countReward, 0);
+
         POND.vote(amountveFLY / 2, false);
         STREAM.vote(amountveFLY / 2, true);
+
+        // User should have received the voting count reward
+        assertEq(FLY.balanceOf(user1), earnIn1Hour + countReward);
+
+        // Get rid of reward it, to have cleaner scenarios
+        FLY.transfer(address(0), countReward);
 
         assertGt(POND.veSharesBalance(user1), 0);
         assertGt(STREAM.veSharesBalance(user1), 0);

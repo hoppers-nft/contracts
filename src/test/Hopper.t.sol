@@ -122,11 +122,11 @@ contract HopperTest is BaseTest {
         HOPPER.rebirth(tokenId);
 
         increaseLevels(tokenId, 1);
-        (uint200 level, , , , , ,) = HOPPER.hoppers(tokenId);
+        (uint200 level, , , , , , ) = HOPPER.hoppers(tokenId);
         assert(level == 2);
 
         increaseLevels(tokenId, 98);
-        (level, , , , , ,) = HOPPER.hoppers(tokenId);
+        (level, , , , , , ) = HOPPER.hoppers(tokenId);
         assert(level == 100); // CAP CHECK IS DONE ON THE ZONE
 
         // Rebirth Basic

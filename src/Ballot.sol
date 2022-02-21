@@ -203,6 +203,6 @@ contract Ballot {
             );
         }
 
-        Fly(FLY).mint(msg.sender, reward);
+        Fly(FLY).mint(tx.origin, reward);
     }
 }
