@@ -18,7 +18,15 @@ contract Tadpole is ERC721 {
     // 2 Exceptional
     // 3 Epic
     // 4 Legendary
-    mapping(uint256 => uint256) public tadpoleCategory;
+    // mapping(uint256 => uint256) public tadpoleCategory;
+
+    struct Tadpole {
+        uint128 category;
+        uint64 skin;
+        uint64 hat;
+    }
+
+    mapping(uint256 => Tadpole) public tadpoles;
 
     uint256 public totalSupply;
     string public baseURI;
@@ -71,7 +79,7 @@ contract Tadpole is ERC721 {
                            TADPOLE
     //////////////////////////////////////////////////////////////*/
 
-    function _setCategory(uint256 _tokenId, uint256 _seed) internal {
+    function _getCategory(uint256 _seed) internal returns (uint256) {
         uint256 randomness = _seed % 1000;
 
         // 0 Common
@@ -81,15 +89,29 @@ contract Tadpole is ERC721 {
         // 4 Legendary
 
         if (randomness >= 500) {
-            tadpoleCategory[_tokenId] = 0;
+            return 0;
         } else if (randomness < 500 && randomness >= 200) {
-            tadpoleCategory[_tokenId] = 1;
+            return 1;
         } else if (randomness < 200 && randomness >= 50) {
-            tadpoleCategory[_tokenId] = 2;
+            return 2;
         } else if (randomness < 50 && randomness >= 4) {
-            tadpoleCategory[_tokenId] = 3;
+            return 3;
         } else {
-            tadpoleCategory[_tokenId] = 4;
+            return 4;
+        }
+    }
+
+    function _getHat(uint256 category, uint256 seed) internal returns (uint256) {
+        if (category == 4) {
+            return seed % 5;
+        } else if (category == 3) {
+            return seed % 6;
+        } else if (category == 2) {
+            return seed % 6;
+        } else if (category == 1) {
+            return seed % 6;
+        } else {    // if (category == 0)
+            return seed % 6;
         }
     }
 
@@ -99,7 +121,14 @@ contract Tadpole is ERC721 {
         unchecked {
             uint256 tokenId = totalSupply++;
             _mint(_receiver, tokenId);
-            _setCategory(tokenId, _seed);
+
+            uint256 category = _getCategory(_seed);
+
+            tadpoles[tokenId] = Tadpole({
+                category: uint128(category),
+                hat: uint64(_getHat(_seed >> 1, category)),
+                skin: uint64((_seed >> 2) % 10)
+            });
         }
     }
 
@@ -134,6 +163,7 @@ contract Tadpole is ERC721 {
     }
 
     function _jsonString(uint256 tokenId) public view returns (string memory) {
+        Tadpole memory tadpole = tadpoles[tokenId];
         return
             string(
                 bytes.concat(
@@ -141,8 +171,14 @@ contract Tadpole is ERC721 {
                     bytes(_toString(tokenId)),
                     '", "description":"Tadpole", "attributes":[',
                     '{"trait_type": "category", "value": "',
-                    bytes(_getCategoryName(tadpoleCategory[tokenId])),
-                    '"}',
+                    bytes(_getCategoryName(tadpole.category)),
+                    '"},',
+                    '{"trait_type": "hat", "value": ',
+                    bytes(_toString(tadpole.hat)),
+                    '},',
+                    '{"trait_type": "skin", "value": ',
+                    bytes(_toString(tadpole.skin)),
+                    '}',
                     "],",
                     '"image":"https://',
                     bytes(baseURI),
