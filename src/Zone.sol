@@ -15,11 +15,10 @@ abstract contract Zone {
     address public immutable VE_FLY;
     address public immutable HOPPER;
 
-    bytes32 public immutable LEVEL_GAUGE_KEY;
-
     /*///////////////////////////////////////////////////////////////
                                 HOPPERS
     //////////////////////////////////////////////////////////////*/
+    string public LEVEL_GAUGE_KEY;
 
     mapping(uint256 => address) public hopperOwners;
     mapping(uint256 => uint256) public hopperBaseShare;
@@ -90,7 +89,7 @@ abstract contract Zone {
         HOPPER = hopper;
 
         flyLevelCapRatio = 3;
-        LEVEL_GAUGE_KEY = keccak256(bytes("LEVEL_GAUGE_KEY"));
+        LEVEL_GAUGE_KEY = "LEVEL_GAUGE_KEY";
     }
 
     modifier onlyOwner() {
@@ -415,7 +414,7 @@ abstract contract Zone {
             uint256
         )
     {
-        bytes32[] memory arrData = new bytes32[](1);
+        string[] memory arrData = new string[](1);
         arrData[0] = LEVEL_GAUGE_KEY;
         (HopperNFT.Hopper memory hopper, bytes32[] memory _data) = HopperNFT(
             HOPPER

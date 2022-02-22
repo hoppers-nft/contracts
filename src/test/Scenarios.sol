@@ -28,10 +28,7 @@ contract HopperWorld is BaseTest {
         return (numHoppers, tokenIds);
     }
 
-    function setVotingScenario()
-        public
-        returns (uint256 earnIn1Hour)
-    {
+    function setVotingScenario() public returns (uint256 earnIn1Hour) {
         (, uint256[] memory tokenIds0_1) = getHoppers(2, true);
         (, uint256[] memory tokenIds2_3) = getHoppers(2, false);
 

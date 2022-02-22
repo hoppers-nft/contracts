@@ -59,10 +59,10 @@ contract HopperNFT is ERC721 {
     mapping(address => bool) public zones;
 
     // unlabeled data [key -> tokenid -> data] for potential future zones
-    mapping(bytes32 => mapping(uint256 => bytes32)) public unlabeledData;
+    mapping(string => mapping(uint256 => bytes32)) public unlabeledData;
 
     // unlabeled data [key -> data] for potential future zones
-    mapping(bytes32 => bytes32) public unlabeledGlobalData;
+    mapping(string => bytes32) public unlabeledGlobalData;
 
     /*///////////////////////////////////////////////////////////////
                             HOPPER NAMES
@@ -186,37 +186,41 @@ contract HopperNFT is ERC721 {
                             Unlabeled Data
     //////////////////////////////////////////////////////////////*/
 
-    function setGlobalData(bytes32 _key, bytes32 _data)
+    function setGlobalData(string calldata _key, bytes32 _data)
         external
         onlyOwnerOrZone
     {
         unlabeledGlobalData[_key] = _data;
     }
 
-    function unsetGlobalData(bytes32 _key) external onlyOwnerOrZone {
+    function unsetGlobalData(string calldata _key) external onlyOwnerOrZone {
         delete unlabeledGlobalData[_key];
     }
 
-    function getGlobalData(bytes32 _key) external view returns (bytes32) {
+    function getGlobalData(string calldata _key)
+        external
+        view
+        returns (bytes32)
+    {
         return unlabeledGlobalData[_key];
     }
 
     function setData(
-        bytes32 _key,
+        string calldata _key,
         uint256 _tokenId,
         bytes32 _data
     ) external onlyOwnerOrZone {
         unlabeledData[_key][_tokenId] = _data;
     }
 
-    function unsetData(bytes32 _key, uint256 _tokenId)
+    function unsetData(string calldata _key, uint256 _tokenId)
         external
         onlyOwnerOrZone
     {
         delete unlabeledData[_key][_tokenId];
     }
 
-    function getData(bytes32 _key, uint256 _tokenId)
+    function getData(string calldata _key, uint256 _tokenId)
         external
         view
         returns (bytes32)
@@ -224,7 +228,7 @@ contract HopperNFT is ERC721 {
         return unlabeledData[_key][_tokenId];
     }
 
-    function getHopperWithData(bytes32[] calldata _keys, uint256 _tokenId)
+    function getHopperWithData(string[] calldata _keys, uint256 _tokenId)
         external
         view
         returns (Hopper memory hopper, bytes32[] memory arrData)
