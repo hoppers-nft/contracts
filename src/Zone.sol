@@ -423,9 +423,9 @@ abstract contract Zone {
         return (
             hopper,
             uint256(_data[0]), // hopperGauge
-            hopper.level == 100
+            uint256(hopper.level) == 100
                 ? type(uint256).max
-                : flyLevelCapRatio * hopper.level * 1e18 // gaugeLimit
+                : flyLevelCapRatio * uint256(hopper.level) * 1e18 // gaugeLimit
         );
     }
 
