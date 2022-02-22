@@ -88,13 +88,13 @@ contract Tadpole is ERC721 {
         // 3 Epic
         // 4 Legendary
 
-        if (randomness >= 500) {
+        if (randomness >= 600) {
             return 0;
-        } else if (randomness < 500 && randomness >= 200) {
+        } else if (randomness < 600 && randomness >= 300) {
             return 1;
-        } else if (randomness < 200 && randomness >= 50) {
+        } else if (randomness < 300 && randomness >= 100) {
             return 2;
-        } else if (randomness < 50 && randomness >= 4) {
+        } else if (randomness < 100 && randomness >= 10) {
             return 3;
         } else {
             return 4;
