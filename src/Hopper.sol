@@ -81,6 +81,7 @@ contract HopperNFT is ERC721 {
     event NameChange(uint256 tokenId);
     event UpdatedNameFee(uint256 namefee);
     event Rebirth(uint256 tokenId);
+    event UnlabeledData(string key, uint256 tokenId);
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -212,6 +213,8 @@ contract HopperNFT is ERC721 {
         bytes32 _data
     ) external onlyOwnerOrZone {
         unlabeledData[_key][_tokenId] = _data;
+
+        emit UnlabeledData(_key, _tokenId);
     }
 
     function unsetData(string calldata _key, uint256 _tokenId)
@@ -281,6 +284,8 @@ contract HopperNFT is ERC721 {
         }
 
         hoppers[_tokenId].level = 1;
+
+        delete unlabeledData["LEVEL_GAUGE_KEY"][_tokenId];
 
         emit Rebirth(_tokenId);
     }
