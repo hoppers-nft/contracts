@@ -80,6 +80,7 @@ contract HopperNFT is ERC721 {
     event LevelUp(uint256 tokenId);
     event NameChange(uint256 tokenId);
     event UpdatedNameFee(uint256 namefee);
+    event Rebirth(uint256 tokenId);
 
     /*///////////////////////////////////////////////////////////////
                                 ERRORS
@@ -280,6 +281,8 @@ contract HopperNFT is ERC721 {
         }
 
         hoppers[_tokenId].level = 1;
+
+        emit Rebirth(_tokenId);
     }
 
     function levelUp(uint256 tokenId) external onlyZone {
