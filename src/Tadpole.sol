@@ -105,17 +105,23 @@ contract Tadpole is ERC721 {
         internal
         returns (uint256)
     {
+        // 0 Common
+        // 1 Rare
+        // 2 Exceptional
+        // 3 Epic
+        // 4 Legendary
+
         if (category == 4) {
             return seed % 5;
         } else if (category == 3) {
             return seed % 6;
         } else if (category == 2) {
-            return seed % 6;
+            return seed % 8;
         } else if (category == 1) {
-            return seed % 6;
+            return seed % 10;
         } else {
             // if (category == 0)
-            return seed % 6;
+            return seed % 15;
         }
     }
 
@@ -131,7 +137,7 @@ contract Tadpole is ERC721 {
             tadpoles[tokenId] = Tadpole({
                 category: uint128(category),
                 hat: uint64(_getHat(_seed >> 1, category)),
-                skin: uint64((_seed >> 2) % 10)
+                skin: uint64((_seed >> 2) % 8)
             });
         }
     }
