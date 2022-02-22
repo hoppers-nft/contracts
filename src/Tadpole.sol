@@ -101,7 +101,10 @@ contract Tadpole is ERC721 {
         }
     }
 
-    function _getHat(uint256 category, uint256 seed) internal returns (uint256) {
+    function _getHat(uint256 category, uint256 seed)
+        internal
+        returns (uint256)
+    {
         if (category == 4) {
             return seed % 5;
         } else if (category == 3) {
@@ -110,7 +113,8 @@ contract Tadpole is ERC721 {
             return seed % 6;
         } else if (category == 1) {
             return seed % 6;
-        } else {    // if (category == 0)
+        } else {
+            // if (category == 0)
             return seed % 6;
         }
     }
@@ -175,10 +179,10 @@ contract Tadpole is ERC721 {
                     '"},',
                     '{"trait_type": "hat", "value": ',
                     bytes(_toString(tadpole.hat)),
-                    '},',
+                    "},",
                     '{"trait_type": "skin", "value": ',
                     bytes(_toString(tadpole.skin)),
-                    '}',
+                    "}",
                     "],",
                     '"image":"https://',
                     bytes(baseURI),

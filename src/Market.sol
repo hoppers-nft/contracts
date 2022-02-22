@@ -200,6 +200,8 @@ contract Market {
 
         listings[id].active = false;
 
+        delete listings[id];
+
         emit CancelListingEv(id);
 
         ERC721(listing.tokenAddress).transferFrom(
@@ -222,6 +224,8 @@ contract Market {
         listing.owner.safeTransferETH(
             listing.price - (listing.price * marketFee) / 100
         );
+
+        delete listings[id];
 
         emit FulfillListingEv(id);
 
