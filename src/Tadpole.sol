@@ -23,7 +23,8 @@ contract Tadpole is ERC721 {
     struct Tadpole {
         uint128 category;
         uint64 skin;
-        uint64 hat;
+        uint56 hat;
+        uint8 background;
     }
 
     mapping(uint256 => Tadpole) public tadpoles;
@@ -136,8 +137,9 @@ contract Tadpole is ERC721 {
 
             tadpoles[tokenId] = Tadpole({
                 category: uint128(category),
-                hat: uint64(_getHat(_seed >> 1, category)),
-                skin: uint64((_seed >> 2) % 8)
+                skin: uint64((_seed >> 1) % 8),
+                hat: uint56(_getHat(_seed >> 2, category)),
+                background: uint8((_seed >> 3) % 9)
             });
         }
     }
@@ -183,6 +185,9 @@ contract Tadpole is ERC721 {
                     '{"trait_type": "category", "value": "',
                     bytes(_getCategoryName(tadpole.category)),
                     '"},',
+                    '{"trait_type": "background", "value": ',
+                    bytes(_toString(tadpole.background)),
+                    "},",
                     '{"trait_type": "hat", "value": ',
                     bytes(_toString(tadpole.hat)),
                     "},",
