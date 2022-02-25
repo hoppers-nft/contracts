@@ -3,22 +3,43 @@
 .declare
     EMPTY_BYTES_32 00*32
 
+    # URLS
+
     HOPPER_IMAGE_URL "https://ipfs.io/ipfs/QmPaq4Gh7sXsQ2W8wxZxFXs6fihiZgs7KsQUEe2FYj8AtS/"
     HOPPER_URI "https://hoppersgame.io/api/uri/hopper/"
     TADPOLE_URI "https://hoppersgame.io/api/tadpole/"
 
-    # todo
-    POND_EMISSION_RATE 0.0001ether
-    STREAM_EMISSION_RATE 0.0001ether
-    SWAMP_EMISSION_RATE 0.0001ether
-    RIVER_EMISSION_RATE 0.0001ether
-    FOREST_EMISSION_RATE 0.0001ether
-    LAKE_EMISSION_RATE 0.0001ether
+    # EMISSION RATES
     
-    BONUS_EMISSION_RATE 0.0001ether
+    # 30 % From eShare per second
+    POND_EMISSION_RATE 0.11574ether
+    STREAM_EMISSION_RATE 0.11574ether
+    SWAMP_EMISSION_RATE 0.11574ether
 
+    # 30 % From eShare per second
+    RIVER_EMISSION_RATE 0.3472ether
+    
+    # 25 % From eShare per second
+    FOREST_EMISSION_RATE 0.23148ether
+    
+    # 15 % From eShare per second
+    LAKE_EMISSION_RATE 0.173611ether
 
-    REWARD_EMISSION_RATE 0.0001ether
+    # From veShare per second
+    BONUS_EMISSION_RATE 0.5787ether
+
+    # To whoever recounts the votes per second
+    REWARD_EMISSION_RATE 0.00007ether
+
+    # veFLY generation per second
+    VEFLY_NUMERATOR 14
+    VEFLY_DENOMINATOR 3600000
+    VEFLY_RATIO_CAP 100
+
+    # Payable Actions
+    
+    BREEDING_COST 10ether
+    NAME_CHANGE_COST 100ether
 
     # %
     MARKET_FEE 2
@@ -58,18 +79,18 @@
     # Deployments
     ##
 
-    deploy HOPPER (Hopper, hopper, 11ether)
+    deploy HOPPER (Hopper, hopper, @NAME_CHANGE_COST)
     deploy TADPOLE (Tad, Tad)
 
     deploy FLY (FLY, FLY)
 
-    deploy VEFLY ($FLY, 14, 3600000, 100)
+    deploy VEFLY ($FLY, @VEFLY_NUMERATOR, @VEFLY_DENOMINATOR, @VEFLY_RATIO_CAP)
 
     deploy POND ($FLY, $VEFLY, $HOPPER)
     deploy STREAM ($FLY, $VEFLY, $HOPPER)
     deploy BALLOT ($FLY, $VEFLY)
 
-    deploy BREEDING ($FLY, $HOPPER, $TADPOLE, 0.1ether)
+    deploy BREEDING ($FLY, $HOPPER, $TADPOLE, @BREEDING_COST)
 
     deploy MARKET (@MARKET_FEE)
 
