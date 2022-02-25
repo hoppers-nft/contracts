@@ -35,11 +35,10 @@ contract Lake is Zone {
         returns (uint256)
     {
         return
-            (uint256(hopper.agility) *
+            uint256(hopper.agility) *
                 uint256(hopper.vitality) *
                 uint256(hopper.intelligence) *
                 uint256(hopper.strength) *
-                uint256(hopper.level) *
-                10e8) / (10 * 10 * 10 * 10 * 100);
+                uint256(hopper.level);
     }
 }

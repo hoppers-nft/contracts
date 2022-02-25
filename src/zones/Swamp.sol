@@ -28,7 +28,6 @@ contract Swamp is Zone {
         returns (uint256)
     {
         return
-            (uint256(hopper.vitality) * uint256(hopper.level) * 10e8) /
-            (10 * 100);
+            uint256(hopper.vitality) * uint256(hopper.level);
     }
 }
