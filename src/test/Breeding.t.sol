@@ -3,14 +3,14 @@ pragma solidity 0.8.12;
 
 import "ds-test/test.sol";
 
-import {BaseTest, HEVM, Tadpole, Breeding} from "./BaseTest.sol";
+import {BaseTest, HEVM, TadpoleNFT, Breeding} from "./BaseTest.sol";
 
 contract BreedingTest is BaseTest {
     function testOwnerShip() public {
         expectErrorAndSuccess(
             address(TADPOLE),
-            Tadpole.Unauthorized.selector,
-            abi.encodeWithSelector(Tadpole.setOwner.selector, user1),
+            TadpoleNFT.Unauthorized.selector,
+            abi.encodeWithSelector(TadpoleNFT.setOwner.selector, user1),
             user1,
             owner
         );
@@ -24,12 +24,12 @@ contract BreedingTest is BaseTest {
         );
     }
 
-    function testTadpoleParameterChange() public {
+    function testTadpoleNFTParameterChange() public {
         assertEq(TADPOLE.breedingSpot(), address(BREEDING));
         expectErrorAndSuccess(
             address(TADPOLE),
-            Tadpole.Unauthorized.selector,
-            abi.encodeWithSelector(Tadpole.setBreedingSpot.selector, user1),
+            TadpoleNFT.Unauthorized.selector,
+            abi.encodeWithSelector(TadpoleNFT.setBreedingSpot.selector, user1),
             user1,
             owner
         );
@@ -38,8 +38,8 @@ contract BreedingTest is BaseTest {
         assertEq(TADPOLE.exchanger(), address(EXCHANGER));
         expectErrorAndSuccess(
             address(TADPOLE),
-            Tadpole.Unauthorized.selector,
-            abi.encodeWithSelector(Tadpole.setExchanger.selector, user1),
+            TadpoleNFT.Unauthorized.selector,
+            abi.encodeWithSelector(TadpoleNFT.setExchanger.selector, user1),
             user1,
             owner
         );
@@ -48,8 +48,8 @@ contract BreedingTest is BaseTest {
         assertEq(TADPOLE.baseURI(), "tadpole.io/id/");
         expectErrorAndSuccess(
             address(TADPOLE),
-            Tadpole.Unauthorized.selector,
-            abi.encodeWithSelector(Tadpole.setBaseURI.selector, "no"),
+            TadpoleNFT.Unauthorized.selector,
+            abi.encodeWithSelector(TadpoleNFT.setBaseURI.selector, "no"),
             user1,
             owner
         );
@@ -136,8 +136,8 @@ contract BreedingTest is BaseTest {
 
         expectErrorAndSuccess(
             address(TADPOLE),
-            Tadpole.Unauthorized.selector,
-            abi.encodeWithSelector(Tadpole.burn.selector, user1, 0),
+            TadpoleNFT.Unauthorized.selector,
+            abi.encodeWithSelector(TadpoleNFT.burn.selector, user1, 0),
             user1,
             EXCHANGER
         );

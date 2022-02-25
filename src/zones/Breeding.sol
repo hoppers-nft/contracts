@@ -3,7 +3,7 @@ pragma solidity 0.8.12;
 
 import {HopperNFT} from "../Hopper.sol";
 import {Fly} from "../Fly.sol";
-import {Tadpole} from "../Tadpole.sol";
+import {TadpoleNFT} from "../Tadpole.sol";
 
 import {ERC721} from "@solmate/tokens/ERC721.sol";
 
@@ -98,7 +98,7 @@ contract Breeding {
             (((50 * uint256(hopper.fertility)) / 10) +
                 ((150 * uint256(hopper.level)) / 100));
 
-        if (rand < chance) Tadpole(TADPOLE).mint(msg.sender, rand >> 8);
+        if (rand < chance) TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
     }
 
     /*///////////////////////////////////////////////////////////////

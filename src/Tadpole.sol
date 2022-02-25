@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 import {ERC721} from "@solmate/tokens/ERC721.sol";
 
 //slither-disable-next-line locked-ether
-contract Tadpole is ERC721 {
+contract TadpoleNFT is ERC721 {
     address public owner;
     address public breedingSpot;
     address public exchanger;

@@ -51,7 +51,7 @@ contract BaseTest is DSTest {
 
     // Deployments
     address public EXCHANGER = address(0xabab);
-    Tadpole public TADPOLE;
+    TadpoleNFT public TADPOLE;
     Breeding public BREEDING;
     HopperNFT public HOPPER;
     Fly public FLY;
@@ -134,7 +134,7 @@ contract BaseTest is DSTest {
         STREAM = new Stream(address(FLY), address(VEFLY), address(HOPPER));
         BALLOT = new Ballot(address(FLY), address(VEFLY));
 
-        TADPOLE = new Tadpole("TADP", "TADP");
+        TADPOLE = new TadpoleNFT("TADP", "TADP");
         BREEDING = new Breeding(
             address(FLY),
             address(HOPPER),
