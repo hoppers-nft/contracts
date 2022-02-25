@@ -102,8 +102,8 @@
     ####
     # Setting Parameters
     ####
-    send HOPPER setBaseURI (...)
-    send HOPPER setImageURL (...)
+    send HOPPER setBaseURI (@HOPPER_URI)
+    send HOPPER setImageURL (@HOPPER_IMAGE_URL)
     send HOPPER setSaleDetails(1, @EMPTY_BYTES_32, @EMPTY_BYTES_32, 0)
 
     send TADPOLE setBreedingSpot ($BREEDING)
