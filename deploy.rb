@@ -88,6 +88,11 @@
 
     deploy POND ($FLY, $VEFLY, $HOPPER)
     deploy STREAM ($FLY, $VEFLY, $HOPPER)
+    deploy SWAMP ($FLY, $VEFLY, $HOPPER)
+    deploy RIVER ($FLY, $VEFLY, $HOPPER)
+    deploy FOREST ($FLY, $VEFLY, $HOPPER)
+    deploy LAKE ($FLY, $VEFLY, $HOPPER)
+
     deploy BALLOT ($FLY, $VEFLY)
 
     deploy BREEDING ($FLY, $HOPPER, $TADPOLE, @BREEDING_COST)
