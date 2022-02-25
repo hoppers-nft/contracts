@@ -134,7 +134,7 @@
     send FLY addZone($BALLOT)
 
     # Ballots
-    send BALLOT addZones([$POND,$STREAM])
+    send BALLOT addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE])
     send BALLOT setBonusEmissionRate(@BONUS_EMISSION_RATE)
     send BALLOT setCountRewardRate(@REWARD_EMISSION_RATE)
     send BALLOT openBallot()
