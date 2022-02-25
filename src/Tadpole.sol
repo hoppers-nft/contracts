@@ -81,7 +81,7 @@ contract TadpoleNFT is ERC721 {
                            TADPOLE
     //////////////////////////////////////////////////////////////*/
 
-    function _getCategory(uint256 _seed) internal returns (uint256) {
+    function _getCategory(uint256 _seed) internal pure returns (uint256) {
         uint256 randomness = _seed % 1000;
 
         // 0 Common
@@ -105,6 +105,7 @@ contract TadpoleNFT is ERC721 {
 
     function _getHat(uint256 category, uint256 seed)
         internal
+        pure
         returns (uint256)
     {
         // 0 Common
@@ -139,7 +140,7 @@ contract TadpoleNFT is ERC721 {
             tadpoles[tokenId] = Tadpole({
                 category: uint128(category),
                 skin: uint64((_seed >> 1) % 8),
-                hat: uint56(_getHat(_seed >> 2, category)),
+                hat: uint56(_getHat(category, _seed >> 2)),
                 background: uint8((_seed >> 3) % 9)
             });
         }
@@ -163,13 +164,13 @@ contract TadpoleNFT is ERC721 {
     {
         if (category == 0) {
             return "Common";
-        } else if (category == 0) {
+        } else if (category == 1) {
             return "Rare";
-        } else if (category == 0) {
+        } else if (category == 2) {
             return "Exceptional";
-        } else if (category == 0) {
+        } else if (category == 3) {
             return "Epic";
-        } else if (category == 0) {
+        } else if (category == 4) {
             return "Legendary";
         }
         return "Undefined";
