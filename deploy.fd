@@ -3,9 +3,9 @@
 .declare
     EMPTY_BYTES_32 00*32
 
-    HOPPER_IMAGE_URL "uri"
-    HOPPER_URI "uri"
-    TADPOLE_URI "uri"
+    HOPPER_IMAGE_URL "https://ipfs.io/ipfs/QmPaq4Gh7sXsQ2W8wxZxFXs6fihiZgs7KsQUEe2FYj8AtS/"
+    HOPPER_URI "https://hoppersgame.io/api/uri/hopper/"
+    TADPOLE_URI "https://hoppersgame.io/api/tadpole/"
 
     # todo
     POND_EMISSION_RATE 0.0001ether
