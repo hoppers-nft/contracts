@@ -22,9 +22,8 @@ contract veFlyTest is BaseTest {
     function testGenDetails() public {
         (
             uint128 maxRatio,
-            uint32 generationRateNumerator,
-            uint32 generationRateDenominator,
-
+            uint64 generationRateNumerator,
+            uint64 generationRateDenominator
         ) = VEFLY.genDetails();
 
         expectErrorAndSuccess(
@@ -42,9 +41,8 @@ contract veFlyTest is BaseTest {
 
         (
             uint128 _maxRatio,
-            uint32 _generationRateNumerator,
-            uint32 _generationRateDenominator,
-
+            uint64 _generationRateNumerator,
+            uint64 _generationRateDenominator
         ) = VEFLY.genDetails();
         assertEq(maxRatio + 1, _maxRatio);
         assertEq(generationRateNumerator + 1, _generationRateNumerator);
@@ -114,9 +112,8 @@ contract veFlyTest is BaseTest {
 
         (
             uint128 _maxRatio,
-            uint32 _generationRateNumerator,
-            uint32 _generationRateDenominator,
-
+            uint64 _generationRateNumerator,
+            uint64 _generationRateDenominator
         ) = VEFLY.genDetails();
 
         hevm.prank(user1);
@@ -124,13 +121,13 @@ contract veFlyTest is BaseTest {
         assertEq(VEFLY.balanceOf(user1), 0);
 
         // Current rate is 1 veFly per FLY per second, so we cap at maxRatio 1:100
-        hevm.warp(1 days);
+        hevm.warp(1000 days);
         assertEq(VEFLY.balanceOf(user1), _maxRatio * 1 ether);
 
         // Current rate is 1/1e8 veFly per FLY per second
         hevm.prank(owner);
         VEFLY.setGenerationDetails(_maxRatio, 1, 1e8);
-        assertEq(VEFLY.balanceOf(user1), 0.000864 ether);
+        assertEq(VEFLY.balanceOf(user1), 0.864 ether);
 
         hevm.warp(115000 days);
         assertEq(VEFLY.balanceOf(user1), 99.36 ether);
@@ -145,18 +142,23 @@ contract veFlyTest is BaseTest {
         hevm.startPrank(user1);
 
         VEFLY.deposit(1 ether);
-        hevm.warp(1 days); // capped veFLY
+        hevm.warp(1 hours); // capped veFLY
         assert(VEFLY.balanceOf(user1) > 0);
 
         // todo withdrawal with votes casted
         // Any withdrawal triggers the veFLY reset
         assert(VEFLY.canWithdraw(user1));
+        assert(VEFLY.balanceOf(user1) == 0.014 ether);
         VEFLY.withdraw(0.001 ether);
+        assert(VEFLY.flyBalanceOf(user1) == 1 ether - 0.001 ether);
+
         assert(VEFLY.balanceOf(user1) == 0);
+        VEFLY.withdraw(VEFLY.flyBalanceOf(user1));
+        assert(VEFLY.flyBalanceOf(user1) == 0);
 
         VEFLY.deposit(1 ether);
-        hevm.warp(2 days); // capped veFLY
-        assert(VEFLY.balanceOf(user1) > 0);
+        hevm.warp(2 days + 1 hours); // capped veFLY
+        assert(VEFLY.balanceOf(user1) == (0.014 ether) * 24 * 2);
 
         hevm.stopPrank();
     }

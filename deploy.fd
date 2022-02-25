@@ -62,7 +62,8 @@
     deploy TADPOLE (Tad, Tad)
 
     deploy FLY (FLY, FLY)
-    deploy VEFLY ($FLY, 1, 1, 100)
+
+    deploy VEFLY ($FLY, 14, 3600000, 100)
 
     deploy POND ($FLY, $VEFLY, $HOPPER)
     deploy STREAM ($FLY, $VEFLY, $HOPPER)

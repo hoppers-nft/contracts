@@ -64,8 +64,8 @@ contract BaseTest is DSTest {
     uint256 public ZONE_EMISSION_RATE = 3;
     uint256 public BONUS_EMISSION_RATE = 2;
     uint256 public REWARD_EMISSION_RATE = 1;
-    uint256 public VEFLY_NUM_RATE = 1;
-    uint256 public VEFLY_DENOM_RATE = 1;
+    uint256 public VEFLY_NUM_RATE = 14;
+    uint256 public VEFLY_DENOM_RATE = 3600000;
     uint256 public VEFLY_CAP = 100;
 
     function expectErrorAndSuccess(

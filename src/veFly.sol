@@ -23,9 +23,8 @@ contract veFly {
 
     struct GenerationDetails {
         uint128 maxRatio;
-        uint32 generationRateNumerator;
-        uint32 generationRateDenominator;
-        uint64 lastUpdatedTime;
+        uint64 generationRateNumerator;
+        uint64 generationRateDenominator;
     }
 
     GenerationDetails public genDetails;
@@ -72,9 +71,8 @@ contract veFly {
 
         genDetails = GenerationDetails({
             maxRatio: uint128(_maxRatio),
-            generationRateNumerator: uint32(_generationRateNumerator),
-            generationRateDenominator: uint32(_generationRateDenominator),
-            lastUpdatedTime: uint64(block.timestamp)
+            generationRateNumerator: uint64(_generationRateNumerator),
+            generationRateDenominator: uint64(_generationRateDenominator)
         });
     }
 
@@ -95,8 +93,8 @@ contract veFly {
     ) external onlyOwner {
         GenerationDetails storage gen = genDetails;
         gen.maxRatio = uint128(_maxRatio);
-        gen.generationRateNumerator = uint32(_generationRateNumerator);
-        gen.generationRateDenominator = uint32(_generationRateDenominator);
+        gen.generationRateNumerator = uint64(_generationRateNumerator);
+        gen.generationRateDenominator = uint64(_generationRateDenominator);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -185,9 +183,9 @@ contract veFly {
         uint256 flyBalance = flyBalanceOf[account];
 
         uint256 veBalance = veFlyBalance[account] +
-            (flyBalance / gen.generationRateDenominator) *
-            (block.timestamp - userSnapshot[account]) *
-            gen.generationRateNumerator;
+            ((flyBalance * gen.generationRateNumerator) *
+                (block.timestamp - userSnapshot[account])) /
+            gen.generationRateDenominator;
 
         uint256 maxVe = gen.maxRatio * flyBalance;
         if (veBalance > maxVe) {
