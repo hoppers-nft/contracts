@@ -27,7 +27,6 @@ contract Pond is Zone {
         override
         returns (uint256)
     {
-        return
-            uint256(hopper.strength) * uint256(hopper.level);
+        return uint256(hopper.strength) * uint256(hopper.level);
     }
 }
