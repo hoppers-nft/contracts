@@ -336,7 +336,7 @@ abstract contract Zone {
         );
     }
 
-    function _getLevelUpCost(uint256 level) internal returns (uint256) {
+    function _getLevelUpCost(uint256 level) internal pure returns (uint256) {
         unchecked {
             ++level;
         }
@@ -360,7 +360,11 @@ abstract contract Zone {
         }
     }
 
-    function getLevelUpCost(uint256 currentLevel) public returns (uint256) {
+    function getLevelUpCost(uint256 currentLevel)
+        public
+        pure
+        returns (uint256)
+    {
         return _getLevelUpCost(currentLevel);
     }
 
@@ -429,12 +433,16 @@ abstract contract Zone {
             HOPPER
         ).getHopperWithData(arrData, _tokenId);
 
+        uint256 levelCost = hopper.level == 1
+            ? 1.5 ether
+            : _getLevelUpCost(hopper.level - 1);
+
         return (
             hopper,
             uint256(_data[0]), // hopperGauge
             uint256(hopper.level) == 100
                 ? type(uint256).max
-                : flyLevelCapRatio * uint256(hopper.level) * 1e18 // gaugeLimit
+                : flyLevelCapRatio * levelCost // gaugeLimit
         );
     }
 
