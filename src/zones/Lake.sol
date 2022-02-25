@@ -24,8 +24,8 @@ contract Lake is Zone {
             hopper.intelligence != 5 ||
             hopper.strength != 5 ||
             hopper.level != 20
-        ) return true;
-        return false;
+        ) return false;
+        return true;
     }
 
     function _calculateBaseShare(HopperNFT.Hopper memory hopper)

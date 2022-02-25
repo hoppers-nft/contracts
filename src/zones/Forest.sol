@@ -23,8 +23,8 @@ contract Forest is Zone {
             hopper.vitality != 5 ||
             hopper.intelligence != 5 ||
             hopper.level != 15
-        ) return true;
-        return false;
+        ) return false;
+        return true;
     }
 
     function _calculateBaseShare(HopperNFT.Hopper memory hopper)
