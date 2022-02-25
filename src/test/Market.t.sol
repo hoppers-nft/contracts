@@ -199,11 +199,11 @@ contract MarketTest is BaseTest {
 
         // Invalid Owner Tests
         hevm.prank(user1);
-        hevm.expectRevert(abi.encodeWithSelector(Market.InvalidOwner.selector));
+        hevm.expectRevert(abi.encodeWithSelector(Market.Unauthorized.selector));
         MARKET.updateListing(0, 0 ether);
 
         hevm.prank(user1);
-        hevm.expectRevert(abi.encodeWithSelector(Market.InvalidOwner.selector));
+        hevm.expectRevert(abi.encodeWithSelector(Market.Unauthorized.selector));
         MARKET.cancelListing(0);
 
         updateListing(user2, 1, 1 ether);

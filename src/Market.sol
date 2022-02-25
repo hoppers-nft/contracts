@@ -4,11 +4,11 @@ pragma solidity ^0.8.11;
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC721} from "@solmate/tokens/ERC721.sol";
 
+//slither-disable-next-line locked-ether
 contract Market {
     using SafeTransferLib for address;
 
     address public owner;
-    address public ownerCandidate;
 
     struct Listing {
         uint256 id;
@@ -56,9 +56,8 @@ contract Market {
     error InvalidListing();
     error InactiveListing();
     error InsufficientValue();
-    error InvalidOwner();
-    error OnlyEmergency();
     error Unauthorized();
+    error OnlyEmergency();
     error InvalidTokenAddress();
 
     /*///////////////////////////////////////////////////////////////
@@ -67,11 +66,6 @@ contract Market {
 
     constructor(uint256 _marketFee) {
         owner = msg.sender;
-
-        if (_marketFee > 100) {
-            revert Percentage0to100();
-        }
-
         marketFee = _marketFee;
     }
 
@@ -81,6 +75,7 @@ contract Market {
     }
 
     function setOwner(address _newOwner) external onlyOwner {
+        //slither-disable-next-line missing-zero-check
         owner = _newOwner;
         emit OwnerUpdated(_newOwner);
     }
@@ -90,7 +85,7 @@ contract Market {
     }
 
     function removeTokenAddress(address _tokenAddress) external onlyOwner {
-        validTokenAddresses[_tokenAddress] = false;
+        delete validTokenAddresses[_tokenAddress];
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -99,13 +94,13 @@ contract Market {
 
     function openMarket() external onlyOwner {
         if (emergencyDelisting) {
-            emergencyDelisting = false;
+            delete emergencyDelisting;
         }
         isMarketOpen = true;
     }
 
     function closeMarket() external onlyOwner {
-        isMarketOpen = false;
+        delete isMarketOpen;
     }
 
     function allowEmergencyDelisting() external onlyOwner {
@@ -113,10 +108,6 @@ contract Market {
     }
 
     function adjustFees(uint256 newMarketFee) external onlyOwner {
-        if (newMarketFee > 100) {
-            revert Percentage0to100();
-        }
-
         marketFee = newMarketFee;
     }
 
@@ -184,7 +175,7 @@ contract Market {
     function updateListing(uint256 id, uint256 price) external {
         if (!isMarketOpen) revert ClosedMarket();
         if (id >= listingsLength) revert InvalidListing();
-        if (listings[id].owner != msg.sender) revert InvalidOwner();
+        if (listings[id].owner != msg.sender) revert Unauthorized();
 
         listings[id].price = price;
         emit UpdateListingEv(id, price);
@@ -196,9 +187,7 @@ contract Market {
         Listing memory listing = listings[id];
 
         if (!listing.active) revert InactiveListing();
-        if (listing.owner != msg.sender) revert InvalidOwner();
-
-        listings[id].active = false;
+        if (listing.owner != msg.sender) revert Unauthorized();
 
         delete listings[id];
 
@@ -219,11 +208,7 @@ contract Market {
 
         if (!listing.active) revert InactiveListing();
         if (msg.value < listing.price) revert InsufficientValue();
-        if (msg.sender == listing.owner) revert InvalidOwner();
-
-        listing.owner.safeTransferETH(
-            listing.price - (listing.price * marketFee) / 100
-        );
+        if (msg.sender == listing.owner) revert Unauthorized();
 
         delete listings[id];
 
@@ -233,6 +218,10 @@ contract Market {
             address(this),
             msg.sender,
             listing.tokenId
+        );
+
+        listing.owner.safeTransferETH(
+            listing.price - ((listing.price * marketFee) / 100)
         );
     }
 

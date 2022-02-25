@@ -6,6 +6,7 @@ import {Fly} from "./Fly.sol";
 import {Ballot} from "./Ballot.sol";
 import {HopperNFT} from "./Hopper.sol";
 import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
+import {ABDKMath64x64} from "@abdk/ABDKMath64x64.sol";
 
 abstract contract Zone {
     /*///////////////////////////////////////////////////////////////
@@ -336,23 +337,35 @@ abstract contract Zone {
         );
     }
 
+    function _getLevelUpCost(uint256 level) internal  returns (uint256) {
+        unchecked {
+            ++level;
+        }
+
+        // x**(1.43522) / 7.5 for x >= 21 where x is next level
+        // packing costs in 7 bits
+
+        if (level > 1  && level < 21) {
+            return (level * 1e18) >> 1;
+        } else if (level >= 21 && level < 51) {
+            uint256 packed = 0x1223448501f3c74e1b3464c172c54a9426488901e3c70d183058a;
+            return ((packed >> (7 * (level - 21))) & 127)*1e18;
+        } else if (level >= 51 && level < 81) {
+            uint256 packed = 0x23c68b0e14180f9ebc76e9c376cd5a3262c17ae5ab15a9509d325;
+            return ((packed >> (7 * (level - 51))) & 127)*1e18;
+        } else if (level >= 81 && level < 101) {
+            uint256 packed = 0xc58705ebb6ed59af5aad3a5467ce9b2e549;
+            return ((packed >> (7 * (level - 81))) & 127)*1e18;
+        } else {
+            return type(uint256).max;
+        }
+    }
+
     function getLevelUpCost(uint256 currentLevel)
-        internal
-        pure
+        public
         returns (uint256)
     {
-        if (currentLevel == 1 && currentLevel <= 19) {
-            unchecked {
-                return (currentLevel + 1) * (10**18);
-            }
-        } else if (currentLevel == 100) {
-            return type(uint256).max;
-        } else {
-            // todo (currentLevel + 1) $FLY **1.43522
-            unchecked {
-                return (currentLevel + 1) * (10**18);
-            }
-        }
+        return _getLevelUpCost(currentLevel);
     }
 
     function levelUp(uint256 tokenId, bool useOwnRewards) external {
