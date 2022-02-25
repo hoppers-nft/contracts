@@ -143,6 +143,10 @@
 
     send HOPPER addZone($POND)
     send HOPPER addZone($STREAM)
+    send HOPPER addZone($SWAMP)
+    send HOPPER addZone($RIVER)
+    send HOPPER addZone($FOREST)
+    send HOPPER addZone($LAKE)
 
     # Market
     send MARKET openMarket ()
