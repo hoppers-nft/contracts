@@ -3,6 +3,8 @@
 .declare
     EMPTY_BYTES_32 00*32
 
+    HOPPER_IMAGE_URL "uri"
+    HOPPER_URI "uri"
     TADPOLE_URI "uri"
 
     # todo
