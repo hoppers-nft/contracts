@@ -18,7 +18,6 @@ contract TadpoleNFT is ERC721 {
     // 2 Exceptional
     // 3 Epic
     // 4 Legendary
-    // mapping(uint256 => uint256) public tadpoleCategory;
 
     struct Tadpole {
         uint128 category;
@@ -29,7 +28,7 @@ contract TadpoleNFT is ERC721 {
 
     mapping(uint256 => Tadpole) public tadpoles;
 
-    uint256 public totalSupply;
+    uint256 public nextTokenID;
     string public baseURI;
 
     /*///////////////////////////////////////////////////////////////
@@ -132,7 +131,7 @@ contract TadpoleNFT is ERC721 {
         if (breedingSpot != msg.sender) revert Unauthorized();
 
         unchecked {
-            uint256 tokenId = totalSupply++;
+            uint256 tokenId = nextTokenID++;
             _mint(_receiver, tokenId);
 
             uint256 category = _getCategory(_seed);
@@ -146,9 +145,11 @@ contract TadpoleNFT is ERC721 {
         }
     }
 
-    function burn(address _owner, uint256 _tokenId) external {
+    function burn(address _tadOwner, uint256 _tokenId) external {
         if (exchanger != msg.sender) revert Unauthorized();
-        if (ownerOf[_tokenId] != _owner) revert Unauthorized();
+        if (ownerOf[_tokenId] != _tadOwner) revert Unauthorized();
+
+        delete tadpoles[_tokenId];
 
         _burn(_tokenId);
     }
@@ -209,7 +210,7 @@ contract TadpoleNFT is ERC721 {
         override
         returns (string memory)
     {
-        if (tokenId >= totalSupply) revert InvalidTokenID();
+        if (ownerOf[tokenId] == address(0)) revert InvalidTokenID();
 
         return _jsonString(tokenId);
     }

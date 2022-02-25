@@ -20,8 +20,8 @@ contract Fly is ERC20 {
 
     event OwnerUpdated(address indexed newOwner);
 
-    constructor(string memory _NFT_NAME, string memory _NFT_SYMBOL)
-        ERC20(_NFT_NAME, _NFT_SYMBOL, 18)
+    constructor(string memory _NAME, string memory _SYMBOL)
+        ERC20(_NAME, _SYMBOL, 18)
     {
         owner = msg.sender;
     }

@@ -108,7 +108,7 @@ contract BreedingTest is BaseTest {
         // Unlucky
         hevm.warp(1 days);
         BREEDING.exit(tokenId);
-        assertEq(TADPOLE.totalSupply(), 0);
+        assertEq(TADPOLE.nextTokenID(), 0);
         assertEq(HOPPER.ownerOf(tokenId), user1);
 
         // Lucky
@@ -116,7 +116,7 @@ contract BreedingTest is BaseTest {
         BREEDING.enter(tokenId);
         hevm.warp(2 days);
         BREEDING.exit(tokenId);
-        assertEq(TADPOLE.totalSupply(), 1);
+        assertEq(TADPOLE.nextTokenID(), 1);
         assertEq(TADPOLE.ownerOf(0), user1);
         assertEq(HOPPER.ownerOf(tokenId), user1);
 
@@ -142,7 +142,7 @@ contract BreedingTest is BaseTest {
             EXCHANGER
         );
 
-        assertEq(TADPOLE.totalSupply(), 1);
+        assertEq(TADPOLE.nextTokenID(), 1);
         assertEq(TADPOLE.ownerOf(0), address(0));
 
         hevm.stopPrank();
@@ -151,7 +151,7 @@ contract BreedingTest is BaseTest {
     function testTadPoleMinting() public {
         hevm.startPrank(address(BREEDING));
         TADPOLE.mint(user1, 0);
-        assertEq(TADPOLE.totalSupply(), 1);
+        assertEq(TADPOLE.nextTokenID(), 1);
         hevm.stopPrank();
     }
 
