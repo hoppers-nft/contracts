@@ -73,7 +73,9 @@ contract BreedingTest is BaseTest {
     function testBreedingScenario() public {
         // Set up
         hevm.prank(owner);
-        FLY.addZone(address(BREEDING));
+        address[] memory _b = new address[](1);
+        _b[0] = address(BREEDING);
+        FLY.addZones(_b);
 
         hevm.prank(address(POND));
         FLY.mint(user1, 100 ether);

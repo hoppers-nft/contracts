@@ -155,9 +155,11 @@ contract BaseTest is DSTest {
         STREAM.setBallot(address(BALLOT));
 
         // FLY minters
-        FLY.addZone(_zones[0]);
-        FLY.addZone(_zones[1]);
-        FLY.addZone(address(BALLOT)); // for reward
+        FLY.addZones(_zones);
+
+        address[] memory _b = new address[](1);
+        _b[0] = address(BALLOT);
+        FLY.addZones(_b); // for reward
 
         // BALLOT
         BALLOT.addZones(_zones);
@@ -174,8 +176,7 @@ contract BaseTest is DSTest {
         hevm.deal(user3, 100_000 ether);
 
         // LevelUp && Name Authorization
-        HOPPER.addZone(_zones[0]);
-        HOPPER.addZone(_zones[1]);
+        HOPPER.addZones(_zones);
 
         // Approvals
         hevm.startPrank(user1);

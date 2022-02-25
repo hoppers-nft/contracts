@@ -187,8 +187,11 @@ contract HopperNFT is ERC721 {
                     HOPPER VALID ZONES/ADVENTURES
     //////////////////////////////////////////////////////////////*/
 
-    function addZone(address _zone) external onlyOwner {
-        zones[_zone] = true;
+    function addZones(address[] calldata _zones) external onlyOwner {
+        uint256 length = _zones.length;
+        for (uint256 i; i < length; ++i) {
+            zones[_zones[i]] = true;
+        }
     }
 
     function removeZone(address _zone) external onlyOwner {

@@ -19,10 +19,13 @@ contract FLYTest is BaseTest {
 
         address zone1 = address(0xe1e1);
 
+        address[] memory _a = new address[](1);
+        _a[0] = zone1;
+
         expectErrorAndSuccess(
             address(_FLY),
             Fly.Unauthorized.selector,
-            abi.encodeWithSelector(Fly.addZone.selector, zone1),
+            abi.encodeWithSelector(Fly.addZones.selector, _a),
             user1,
             owner
         );
@@ -40,7 +43,9 @@ contract FLYTest is BaseTest {
         assert(!_FLY.zones(zone1));
 
         hevm.prank(owner);
-        _FLY.addZone(zone1);
+        address[] memory _b = new address[](1);
+        _b[0] = zone1;
+        _FLY.addZones(_b);
 
         assertEq(_FLY.totalSupply(), 0);
 

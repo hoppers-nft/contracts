@@ -50,8 +50,11 @@ contract Fly is ERC20 {
         _;
     }
 
-    function addZone(address zone) external onlyOwner {
-        zones[zone] = true;
+    function addZones(address[] calldata _zones) external onlyOwner {
+        uint256 length = _zones.length;
+        for (uint256 i; i < length; ++i) {
+            zones[_zones[i]] = true;
+        }
     }
 
     function removeZone(address zone) external onlyOwner {
