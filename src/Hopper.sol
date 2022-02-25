@@ -112,7 +112,7 @@ contract HopperNFT is ERC721 {
         WL_MINT_COST = 1.2 ether;
         MAX_SUPPLY = 10_000;
         MAX_PER_ADDRESS = 10;
-        LEGENDARY_ID_START = 9970;
+        LEGENDARY_ID_START = 9968;
 
         nameFee = _NAME_FEE;
         hopperMaxAttributeValue = 10;
