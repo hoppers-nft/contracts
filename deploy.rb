@@ -125,13 +125,9 @@
     send LAKE setBallot($BALLOT)
 
     # Zone FLY Minting
-    send FLY addZone($POND)
-    send FLY addZone($STREAM)
-    send FLY addZone($SWAMP)
-    send FLY addZone($RIVER)
-    send FLY addZone($FOREST)
-    send FLY addZone($LAKE)
-    send FLY addZone($BALLOT)
+    send FLY addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE,$BALLOT])
+
+    send VEFLY addBallot($BALLOT)
 
     # Ballots
     send BALLOT addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE])
@@ -139,14 +135,7 @@
     send BALLOT setCountRewardRate(@REWARD_EMISSION_RATE)
     send BALLOT openBallot()
 
-    send VEFLY addBallot($BALLOT)
-
-    send HOPPER addZone($POND)
-    send HOPPER addZone($STREAM)
-    send HOPPER addZone($SWAMP)
-    send HOPPER addZone($RIVER)
-    send HOPPER addZone($FOREST)
-    send HOPPER addZone($LAKE)
+    send HOPPER addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE])
 
     # Market
     send MARKET openMarket ()
