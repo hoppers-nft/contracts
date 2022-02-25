@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 import {HopperNFT} from "../Hopper.sol";
 import {Zone} from "../Zone.sol";
 
-contract Pond is Zone {
+contract Forest is Zone {
     constructor(
         address fly,
         address vefly,
@@ -18,7 +18,13 @@ contract Pond is Zone {
         override
         returns (bool)
     {
-        return true;
+        if (
+            hopper.agility != 5 ||
+            hopper.vitality != 5 ||
+            hopper.intelligence != 5 ||
+            hopper.level != 15
+        ) return true;
+        return false;
     }
 
     function _calculateBaseShare(HopperNFT.Hopper memory hopper)
@@ -28,7 +34,10 @@ contract Pond is Zone {
         returns (uint256)
     {
         return
-            (uint256(hopper.strength) * uint256(hopper.level) * 10e8) /
-            (10 * 100);
+            (uint256(hopper.agility) *
+                uint256(hopper.vitality) *
+                uint256(hopper.intelligence) *
+                uint256(hopper.level) *
+                10e8) / (10 * 10 * 10 * 100);
     }
 }
