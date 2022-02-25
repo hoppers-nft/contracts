@@ -220,4 +220,45 @@ contract HopperTest is BaseTest {
 
         hevm.stopPrank();
     }
+
+    function testURI() public {
+        hevm.prank(user1, user1);
+        HOPPER.normalMint{value: MINT_COST}(1);
+        uint256 tokenId = 4142;
+        string memory baseURI = "https://dot.com/api/id/";
+        string memory imageURL = "https://dot.com/img/id/";
+
+        expectErrorAndSuccess(
+            address(HOPPER),
+            HopperNFT.Unauthorized.selector,
+            abi.encodeWithSelector(HopperNFT.setBaseURI.selector, baseURI),
+            user1,
+            owner
+        );
+
+        expectErrorAndSuccess(
+            address(HOPPER),
+            HopperNFT.Unauthorized.selector,
+            abi.encodeWithSelector(HopperNFT.setImageURL.selector, imageURL),
+            user1,
+            owner
+        );
+
+        assertEq(
+            HOPPER._jsonString(tokenId),
+            '{"name":"hopper #4142", "description":"Hopper", "attributes":[{"trait_type": "level", "value": 1},{"trait_type": "rebirths", "value": 0},{"trait_type": "strength", "value": 8},{"trait_type": "agility", "value": 1},{"trait_type": "vitality", "value": 3},{"trait_type": "intelligence", "value": 9},{"trait_type": "fertility", "value": 8}],"image":"https://dot.com/img/id/4142.png"}'
+        );
+
+        assertEq(HOPPER.tokenURI(tokenId), "https://dot.com/api/id/4142");
+
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.InvalidTokenID.selector)
+        );
+        HOPPER.tokenURI(0);
+
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.InvalidTokenID.selector)
+        );
+        HOPPER._jsonString(0);
+    }
 }

@@ -51,6 +51,9 @@ contract HopperNFT is ERC721 {
 
     mapping(uint256 => uint256) public indexer;
 
+    string public baseURI;
+    string public imageURL;
+
     /*///////////////////////////////////////////////////////////////
                              
     //////////////////////////////////////////////////////////////*/
@@ -152,6 +155,14 @@ contract HopperNFT is ERC721 {
     function setNameChangeFee(uint256 _nameFee) external onlyOwner {
         nameFee = _nameFee;
         emit UpdatedNameFee(_nameFee);
+    }
+
+    function setBaseURI(string calldata _baseURI) external onlyOwner {
+        baseURI = _baseURI;
+    }
+
+    function setImageURL(string calldata _imageURL) external onlyOwner {
+        imageURL = _imageURL;
     }
 
     function setSaleDetails(
@@ -489,7 +500,6 @@ contract HopperNFT is ERC721 {
                           HOPPER VIEW FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    // todo fix
     function getHopper(uint256 tokenId) external view returns (Hopper memory) {
         return hoppers[tokenId];
     }
@@ -506,8 +516,56 @@ contract HopperNFT is ERC721 {
         }
     }
 
-    function _jsonString(uint256 tokenId) public returns (string memory) {
-        return "todo";
+    function _getTraits(Hopper memory hopper)
+        internal
+        pure
+        returns (string memory)
+    {
+        return
+            string.concat(
+                '{"trait_type": "rebirths", "value": ',
+                _toString(hopper.rebirths),
+                "},",
+                '{"trait_type": "strength", "value": ',
+                _toString(hopper.strength),
+                "},",
+                '{"trait_type": "agility", "value": ',
+                _toString(hopper.agility),
+                "},",
+                '{"trait_type": "vitality", "value": ',
+                _toString(hopper.vitality),
+                "},",
+                '{"trait_type": "intelligence", "value": ',
+                _toString(hopper.intelligence),
+                "},",
+                '{"trait_type": "fertility", "value": ',
+                _toString(hopper.fertility),
+                "}"
+            );
+    }
+
+    function _jsonString(uint256 tokenId)
+        external
+        view
+        returns (string memory)
+    {
+        Hopper memory hopper = hoppers[tokenId];
+        if (hopper.level == 0) revert InvalidTokenID();
+        return
+            string.concat(
+                '{"name":"hopper #',
+                _toString(tokenId),
+                '", "description":"Hopper", "attributes":[',
+                '{"trait_type": "level", "value": ',
+                _toString(hopper.level),
+                "},",
+                _getTraits(hopper),
+                "],",
+                '"image":"',
+                imageURL,
+                _toString(tokenId),
+                '.png"}'
+            );
     }
 
     function tokenURI(uint256 tokenId)
@@ -516,9 +574,9 @@ contract HopperNFT is ERC721 {
         override
         returns (string memory)
     {
-        //slither-disable-next-line redundant-statements
-        tokenId;
-        return "TODO"; // todo
+        if (hoppers[tokenId].level == 0) revert InvalidTokenID();
+
+        return string.concat(baseURI, _toString(tokenId));
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -528,5 +586,24 @@ contract HopperNFT is ERC721 {
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _toString(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 }
