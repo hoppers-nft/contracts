@@ -132,7 +132,6 @@ contract HopperWorld is BaseTest {
     }
 
     function testLevelUpCosts() public {
-
         assertEq(POND.getLevelUpCost(2 - 1), 1.0 ether);
         assertEq(POND.getLevelUpCost(3 - 1), 1.5 ether);
         assertEq(POND.getLevelUpCost(4 - 1), 2.0 ether);

@@ -94,9 +94,11 @@ contract Breeding {
 
         uint256 rand = enoughRandom() % 10_000;
 
-        uint256 chance = 45 *
-            (((50 * uint256(hopper.fertility)) / 10) +
-                ((150 * uint256(hopper.level)) / 100));
+        uint256 chance = (90000 *
+            uint256(hopper.fertility) +
+            9000 *
+            3 *
+            uint256(hopper.level)) / 400;
 
         if (rand < chance) TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
     }
