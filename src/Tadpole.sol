@@ -37,6 +37,7 @@ contract TadpoleNFT is ERC721 {
     //////////////////////////////////////////////////////////////*/
 
     error Unauthorized();
+    error InvalidTokenID();
 
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
@@ -177,29 +178,27 @@ contract TadpoleNFT is ERC721 {
     function _jsonString(uint256 tokenId) public view returns (string memory) {
         Tadpole memory tadpole = tadpoles[tokenId];
         return
-            string(
-                bytes.concat(
-                    '{"name":"tadpole #',
-                    bytes(_toString(tokenId)),
-                    '", "description":"Tadpole", "attributes":[',
-                    '{"trait_type": "category", "value": "',
-                    bytes(_getCategoryName(tadpole.category)),
-                    '"},',
-                    '{"trait_type": "background", "value": ',
-                    bytes(_toString(tadpole.background)),
-                    "},",
-                    '{"trait_type": "hat", "value": ',
-                    bytes(_toString(tadpole.hat)),
-                    "},",
-                    '{"trait_type": "skin", "value": ',
-                    bytes(_toString(tadpole.skin)),
-                    "}",
-                    "],",
-                    '"image":"https://',
-                    bytes(baseURI),
-                    bytes(_toString(tokenId)),
-                    '"}'
-                )
+            string.concat(
+                '{"name":"tadpole #',
+                _toString(tokenId),
+                '", "description":"Tadpole", "attributes":[',
+                '{"trait_type": "category", "value": "',
+                _getCategoryName(tadpole.category),
+                '"},',
+                '{"trait_type": "background", "value": ',
+                _toString(tadpole.background),
+                "},",
+                '{"trait_type": "hat", "value": ',
+                _toString(tadpole.hat),
+                "},",
+                '{"trait_type": "skin", "value": ',
+                _toString(tadpole.skin),
+                "}",
+                "],",
+                '"image":"',
+                baseURI,
+                _toString(tokenId),
+                '.png"}'
             );
     }
 
@@ -209,9 +208,9 @@ contract TadpoleNFT is ERC721 {
         override
         returns (string memory)
     {
-        //slither-disable-next-line redundant-statements
-        tokenId;
-        return "TODO"; // todo
+        if (tokenId >= totalSupply) revert InvalidTokenID();
+
+        return _jsonString(tokenId);
     }
 
     function _toString(uint256 value) internal pure returns (string memory) {

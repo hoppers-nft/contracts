@@ -154,4 +154,32 @@ contract BreedingTest is BaseTest {
         assertEq(TADPOLE.totalSupply(), 1);
         hevm.stopPrank();
     }
+
+    function testTadURI() public {
+        hevm.prank(address(BREEDING));
+        TADPOLE.mint(user1, 0);
+        uint256 tokenId = 0;
+
+        string memory baseURI = "https://dot.com/img/id/";
+
+        expectErrorAndSuccess(
+            address(TADPOLE),
+            TadpoleNFT.Unauthorized.selector,
+            abi.encodeWithSelector(TadpoleNFT.setBaseURI.selector, baseURI),
+            user1,
+            owner
+        );
+
+        assertEq(
+            TADPOLE._jsonString(tokenId),
+            '{"name":"tadpole #0", "description":"Tadpole", "attributes":[{"trait_type": "category", "value": "Undefined"},{"trait_type": "background", "value": 0},{"trait_type": "hat", "value": 4},{"trait_type": "skin", "value": 0}],"image":"https://dot.com/img/id/0.png"}'
+        );
+
+        assertEq(TADPOLE.tokenURI(tokenId), TADPOLE._jsonString(tokenId));
+
+        hevm.expectRevert(
+            abi.encodeWithSelector(TadpoleNFT.InvalidTokenID.selector)
+        );
+        TADPOLE.tokenURI(1);
+    }
 }
