@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.12;
-
-import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20} from "@solmate/tokens/ERC20.sol";
 
 contract Fly is ERC20 {
