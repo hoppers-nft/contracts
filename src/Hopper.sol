@@ -399,7 +399,7 @@ contract HopperNFT is ERC721 {
                 tokenId = index;
             }
 
-            // Swapped the picked tokenId for the last element
+            // Swap the picked tokenId for the last element
             --_indexerLength;
             uint256 last = indexer[_indexerLength];
             if (last == 0) {

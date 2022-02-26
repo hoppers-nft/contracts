@@ -131,14 +131,18 @@ contract Ballot {
         for (uint256 i; i < length; ++i) {
             address zone = arrZones[i];
 
-            zonesVotes[zone] -= zonesUserVotes[zone][_user];
-            delete userVeFlyUsed[_user];
-            delete zonesUserVotes[zone][_user];
+            uint256 zoneUserVotes = zonesUserVotes[zone][_user];
 
-            // Done already by veFly on its _forceUncastAllVotes
-            // veFly(VEFLY).unsetHasVoted(user)
+            if (zoneUserVotes > 0) {
+                zonesVotes[zone] -= zonesUserVotes[zone][_user];
+                delete userVeFlyUsed[_user];
+                delete zonesUserVotes[zone][_user];
 
-            Zone(zone).forceUnvote(_user);
+                // Done already by veFly on its _forceUncastAllVotes
+                // veFly(VEFLY).unsetHasVoted(user)
+
+                Zone(zone).forceUnvote(_user);
+            }
         }
     }
 
