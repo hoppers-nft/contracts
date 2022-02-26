@@ -401,13 +401,15 @@ contract HopperNFT is ERC721 {
             }
 
             // Swapped the picked tokenId for the last element
-            uint256 last = indexer[_indexerLength - 1];
+            --_indexerLength;
+            uint256 last = indexer[_indexerLength];
             if (last == 0) {
-                indexer[index] = _indexerLength - 1;
+                // this _indexerLength value had not been picked before
+                indexer[index] = _indexerLength;
             } else {
+                // this _indexerLength value had been picked and swapped before
                 indexer[index] = last;
             }
-            _indexerLength -= 1;
 
             // Mint Hopper and generate its attributes
             _mint(msg.sender, tokenId);
