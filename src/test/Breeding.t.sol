@@ -73,7 +73,9 @@ contract BreedingTest is BaseTest {
     function testBreedingScenario() public {
         // Set up
         hevm.prank(owner);
-        FLY.addZone(address(BREEDING));
+        address[] memory _b = new address[](1);
+        _b[0] = address(BREEDING);
+        FLY.addZones(_b);
 
         hevm.prank(address(POND));
         FLY.mint(user1, 100 ether);
@@ -172,7 +174,7 @@ contract BreedingTest is BaseTest {
 
         assertEq(
             TADPOLE._jsonString(tokenId),
-            '{"name":"tadpole #0", "description":"Tadpole", "attributes":[{"trait_type": "category", "value": "Common"},{"trait_type": "background", "value": 1},{"trait_type": "hat", "value": 3},{"trait_type": "skin", "value": 7}],"image":"https://dot.com/img/id/0.png"}'
+            '{"name":"tadpole #0", "description":"Tadpole", "attributes":[{"trait_type": "category", "value": "Common"},{"trait_type": "background", "value": 1},{"trait_type": "hat", "value": 3},{"trait_type": "skin", "value": 7}],"image":"https://dot.com/img/id/0"}'
         );
 
         assertEq(TADPOLE.tokenURI(tokenId), TADPOLE._jsonString(tokenId));

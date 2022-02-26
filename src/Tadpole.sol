@@ -200,7 +200,7 @@ contract TadpoleNFT is ERC721 {
                 '"image":"',
                 baseURI,
                 _toString(tokenId),
-                '.png"}'
+                '"}'
             );
     }
 

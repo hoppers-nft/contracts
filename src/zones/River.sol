@@ -22,8 +22,8 @@ contract River is Zone {
             hopper.strength != 5 ||
             hopper.intelligence != 5 ||
             hopper.level != 10
-        ) return true;
-        return false;
+        ) return false;
+        return true;
     }
 
     function _calculateBaseShare(HopperNFT.Hopper memory hopper)
@@ -33,9 +33,8 @@ contract River is Zone {
         returns (uint256)
     {
         return
-            (uint256(hopper.strength) *
-                uint256(hopper.intelligence) *
-                uint256(hopper.level) *
-                10e8) / (10 * 10 * 100);
+            uint256(hopper.strength) *
+            uint256(hopper.intelligence) *
+            uint256(hopper.level);
     }
 }

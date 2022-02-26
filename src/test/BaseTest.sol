@@ -64,8 +64,8 @@ contract BaseTest is DSTest {
     uint256 public ZONE_EMISSION_RATE = 3;
     uint256 public BONUS_EMISSION_RATE = 2;
     uint256 public REWARD_EMISSION_RATE = 1;
-    uint256 public VEFLY_NUM_RATE = 1;
-    uint256 public VEFLY_DENOM_RATE = 1;
+    uint256 public VEFLY_NUM_RATE = 14;
+    uint256 public VEFLY_DENOM_RATE = 3600000;
     uint256 public VEFLY_CAP = 100;
 
     function expectErrorAndSuccess(
@@ -155,9 +155,11 @@ contract BaseTest is DSTest {
         STREAM.setBallot(address(BALLOT));
 
         // FLY minters
-        FLY.addZone(_zones[0]);
-        FLY.addZone(_zones[1]);
-        FLY.addZone(address(BALLOT)); // for reward
+        FLY.addZones(_zones);
+
+        address[] memory _b = new address[](1);
+        _b[0] = address(BALLOT);
+        FLY.addZones(_b); // for reward
 
         // BALLOT
         BALLOT.addZones(_zones);
@@ -174,8 +176,7 @@ contract BaseTest is DSTest {
         hevm.deal(user3, 100_000 ether);
 
         // LevelUp && Name Authorization
-        HOPPER.addZone(_zones[0]);
-        HOPPER.addZone(_zones[1]);
+        HOPPER.addZones(_zones);
 
         // Approvals
         hevm.startPrank(user1);

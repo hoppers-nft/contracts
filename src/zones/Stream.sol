@@ -27,8 +27,6 @@ contract Stream is Zone {
         override
         returns (uint256)
     {
-        return
-            (uint256(hopper.agility) * uint256(hopper.level) * 10e8) /
-            (10 * 100);
+        return uint256(hopper.agility) * uint256(hopper.level);
     }
 }

@@ -3,20 +3,43 @@
 .declare
     EMPTY_BYTES_32 00*32
 
-    TADPOLE_URI "uri"
+    # URLS
 
-    # todo
-    POND_EMISSION_RATE 0.0001ether
-    STREAM_EMISSION_RATE 0.0001ether
-    SWAMP_EMISSION_RATE 0.0001ether
-    RIVER_EMISSION_RATE 0.0001ether
-    FOREST_EMISSION_RATE 0.0001ether
-    LAKE_EMISSION_RATE 0.0001ether
+    HOPPER_IMAGE_URL "https://ipfs.io/ipfs/QmPaq4Gh7sXsQ2W8wxZxFXs6fihiZgs7KsQUEe2FYj8AtS/"
+    HOPPER_URI "https://hoppersgame.io/api/uri/hopper/"
+    TADPOLE_URI "https://hoppersgame.io/api/tadpole/"
+
+    # EMISSION RATES
     
-    BONUS_EMISSION_RATE 0.0001ether
+    # 30 % From eShare per second
+    POND_EMISSION_RATE 0.11574ether
+    STREAM_EMISSION_RATE 0.11574ether
+    SWAMP_EMISSION_RATE 0.11574ether
 
+    # 30 % From eShare per second
+    RIVER_EMISSION_RATE 0.3472ether
+    
+    # 25 % From eShare per second
+    FOREST_EMISSION_RATE 0.23148ether
+    
+    # 15 % From eShare per second
+    LAKE_EMISSION_RATE 0.173611ether
 
-    REWARD_EMISSION_RATE 0.0001ether
+    # From veShare per second
+    BONUS_EMISSION_RATE 0.5787ether
+
+    # To whoever recounts the votes per second
+    REWARD_EMISSION_RATE 0.00007ether
+
+    # veFLY generation per second
+    VEFLY_NUMERATOR 14
+    VEFLY_DENOMINATOR 3600000
+    VEFLY_RATIO_CAP 100
+
+    # Payable Actions
+    
+    BREEDING_COST 10ether
+    NAME_CHANGE_COST 100ether
 
     # %
     MARKET_FEE 2
@@ -56,25 +79,31 @@
     # Deployments
     ##
 
-    deploy HOPPER (Hopper, hopper, 11ether)
+    deploy HOPPER (Hopper, hopper, @NAME_CHANGE_COST)
     deploy TADPOLE (Tad, Tad)
 
     deploy FLY (FLY, FLY)
-    deploy VEFLY ($FLY, 1, 1, 100)
+
+    deploy VEFLY ($FLY, @VEFLY_NUMERATOR, @VEFLY_DENOMINATOR, @VEFLY_RATIO_CAP)
 
     deploy POND ($FLY, $VEFLY, $HOPPER)
     deploy STREAM ($FLY, $VEFLY, $HOPPER)
+    deploy SWAMP ($FLY, $VEFLY, $HOPPER)
+    deploy RIVER ($FLY, $VEFLY, $HOPPER)
+    deploy FOREST ($FLY, $VEFLY, $HOPPER)
+    deploy LAKE ($FLY, $VEFLY, $HOPPER)
+
     deploy BALLOT ($FLY, $VEFLY)
 
-    deploy BREEDING ($FLY, $HOPPER, $TADPOLE, 0.1ether)
+    deploy BREEDING ($FLY, $HOPPER, $TADPOLE, @BREEDING_COST)
 
     deploy MARKET (@MARKET_FEE)
 
     ####
     # Setting Parameters
     ####
-    send HOPPER setBaseURI (...)
-    send HOPPER setImageURL (...)
+    send HOPPER setBaseURI (@HOPPER_URI)
+    send HOPPER setImageURL (@HOPPER_IMAGE_URL)
     send HOPPER setSaleDetails(1, @EMPTY_BYTES_32, @EMPTY_BYTES_32, 0)
 
     send TADPOLE setBreedingSpot ($BREEDING)
@@ -101,24 +130,17 @@
     send LAKE setBallot($BALLOT)
 
     # Zone FLY Minting
-    send FLY addZone($POND)
-    send FLY addZone($STREAM)
-    send FLY addZone($SWAMP)
-    send FLY addZone($RIVER)
-    send FLY addZone($FOREST)
-    send FLY addZone($LAKE)
-    send FLY addZone($BALLOT)
+    send FLY addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE,$BALLOT])
+
+    send VEFLY addBallot($BALLOT)
 
     # Ballots
-    send BALLOT addZones([$POND,$STREAM])
+    send BALLOT addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE])
     send BALLOT setBonusEmissionRate(@BONUS_EMISSION_RATE)
     send BALLOT setCountRewardRate(@REWARD_EMISSION_RATE)
     send BALLOT openBallot()
 
-    send VEFLY addBallot($BALLOT)
-
-    send HOPPER addZone($POND)
-    send HOPPER addZone($STREAM)
+    send HOPPER addZones([$POND,$STREAM,$SWAMP,$RIVER,$FOREST,$LAKE])
 
     # Market
     send MARKET openMarket ()

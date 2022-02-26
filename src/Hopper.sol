@@ -112,7 +112,7 @@ contract HopperNFT is ERC721 {
         WL_MINT_COST = 1.2 ether;
         MAX_SUPPLY = 10_000;
         MAX_PER_ADDRESS = 10;
-        LEGENDARY_ID_START = 9970;
+        LEGENDARY_ID_START = 9968;
 
         nameFee = _NAME_FEE;
         hopperMaxAttributeValue = 10;
@@ -187,8 +187,11 @@ contract HopperNFT is ERC721 {
                     HOPPER VALID ZONES/ADVENTURES
     //////////////////////////////////////////////////////////////*/
 
-    function addZone(address _zone) external onlyOwner {
-        zones[_zone] = true;
+    function addZones(address[] calldata _zones) external onlyOwner {
+        uint256 length = _zones.length;
+        for (uint256 i; i < length; ++i) {
+            zones[_zones[i]] = true;
+        }
     }
 
     function removeZone(address _zone) external onlyOwner {
