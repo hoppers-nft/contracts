@@ -404,6 +404,11 @@ abstract contract Zone {
 
             _updateAccountRewards(msg.sender);
             _updateVeShares(newBaseShare, 0, false);
+
+            // Make sure getLevelUpCost is passed its current level
+            unchecked {
+                --hopper.level;
+            }
         }
 
         payAction(getLevelUpCost(hopper.level), useOwnRewards);

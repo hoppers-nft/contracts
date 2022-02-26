@@ -39,6 +39,7 @@ contract Ballot {
     //////////////////////////////////////////////////////////////*/
 
     event UpdatedOwner(address indexed owner);
+    event Helper(uint256);
 
     /*///////////////////////////////////////////////////////////////
                               ERRORS
@@ -69,8 +70,13 @@ contract Ballot {
         emit UpdatedOwner(_owner);
     }
 
-    function openBallot() external onlyOwner {
+    function openBallot(uint256 _countRewardRate, uint256 _bonusEmissionRate)
+        external
+        onlyOwner
+    {
         rewardSnapshot = block.timestamp;
+        countRewardRate = _countRewardRate;
+        bonusEmissionRate = _bonusEmissionRate;
     }
 
     function closeBallot() external onlyOwner {
@@ -82,6 +88,10 @@ contract Ballot {
         onlyOwner
     {
         bonusEmissionRate = _bonusEmissionRate;
+    }
+
+    function setCountRewardRate(uint256 _countRewardRate) external onlyOwner {
+        countRewardRate = _countRewardRate;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -113,7 +123,6 @@ contract Ballot {
                             VOTING
     //////////////////////////////////////////////////////////////*/
 
-    // todo test
     function forceUnvote(address _user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
 
@@ -121,17 +130,18 @@ contract Ballot {
 
         for (uint256 i; i < length; ++i) {
             address zone = arrZones[i];
-            uint256 userVotes = zonesUserVotes[zone][_user];
 
+            zonesVotes[zone] -= zonesUserVotes[zone][_user];
             delete userVeFlyUsed[_user];
             delete zonesUserVotes[zone][_user];
-            zonesVotes[zone] -= userVotes;
+
+            // Done already by veFly on its _forceUncastAllVotes
+            // veFly(VEFLY).unsetHasVoted(user)
 
             Zone(zone).forceUnvote(_user);
         }
     }
 
-    // todo test
     function _updateVotes(address user, uint256 vefly) internal {
         zonesVotes[msg.sender] =
             zonesVotes[msg.sender] -
@@ -141,38 +151,38 @@ contract Ballot {
         zonesUserVotes[msg.sender][user] = vefly;
     }
 
-    // todo test
     function vote(address user, uint256 vefly) external onlyZone {
         // veFly Accounting
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
+
         if (totalVeFly > veFly(VEFLY).balanceOf(user)) revert NotEnoughVeFly();
 
-        userVeFlyUsed[user] = totalVeFly;
+        if (vefly > 0) {
+            userVeFlyUsed[user] = totalVeFly;
+            veFly(VEFLY).setHasVoted(user);
 
-        if (totalVeFly > 0) veFly(VEFLY).setHasVoted(user);
-
-        _updateVotes(user, totalVeFly);
+            _updateVotes(user, zonesUserVotes[msg.sender][user] + vefly);
+        }
     }
 
-    // todo test
     function unvote(address user, uint256 vefly) external onlyZone {
         // veFly Accounting
         if (userVeFlyUsed[user] < vefly) revert NotEnoughVeFly();
         uint256 remainingVeFly = userVeFlyUsed[user] - vefly;
         userVeFlyUsed[user] = remainingVeFly;
 
+        uint256 zoneUserVotes = zonesUserVotes[msg.sender][user];
+
+        if (zoneUserVotes < vefly) revert NotEnoughVeFly();
+
         if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
 
-        _updateVotes(user, remainingVeFly);
+        _updateVotes(user, zoneUserVotes - vefly);
     }
 
     /*///////////////////////////////////////////////////////////////
                             COUNTING
     //////////////////////////////////////////////////////////////*/
-
-    function setCountRewardRate(uint256 _countRewardRate) external onlyOwner {
-        countRewardRate = _countRewardRate;
-    }
 
     function countReward() public view returns (uint256) {
         uint256 _rewardSnapshot = rewardSnapshot;
@@ -182,12 +192,9 @@ contract Ballot {
         return countRewardRate * (block.timestamp - _rewardSnapshot);
     }
 
-    // todo test
     function count() external {
         uint256 reward = countReward();
         rewardSnapshot = block.timestamp;
-
-        if (reward == 0) revert TooSoon();
 
         uint256 totalVotes;
         address[] memory _arrZones = arrZones;
@@ -198,11 +205,17 @@ contract Ballot {
         }
 
         for (uint256 i; i < length; ++i) {
-            Zone(_arrZones[i]).setBonusEmissionRate(
-                (bonusEmissionRate * zonesVotes[_arrZones[i]]) / totalVotes
-            );
+            if (totalVotes == 0) {
+                Zone(_arrZones[i]).setBonusEmissionRate(0);
+            } else {
+                Zone(_arrZones[i]).setBonusEmissionRate(
+                    (bonusEmissionRate * zonesVotes[_arrZones[i]]) / totalVotes
+                );
+            }
         }
 
-        Fly(FLY).mint(tx.origin, reward);
+        if (reward > 0) {
+            Fly(FLY).mint(tx.origin, reward);
+        }
     }
 }

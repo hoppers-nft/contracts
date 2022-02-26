@@ -165,7 +165,7 @@ contract BaseTest is DSTest {
         BALLOT.addZones(_zones);
         BALLOT.setBonusEmissionRate(BONUS_EMISSION_RATE);
         BALLOT.setCountRewardRate(REWARD_EMISSION_RATE);
-        BALLOT.openBallot();
+        BALLOT.openBallot(REWARD_EMISSION_RATE, BONUS_EMISSION_RATE);
 
         // Valid Voting
         VEFLY.addBallot(address(BALLOT));
