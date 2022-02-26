@@ -43,9 +43,9 @@ contract HopperTest is BaseTest {
         HOPPER.normalMint{value: MINT_COST}(1);
         uint256 tokenId = 4142;
 
-        // Default name is "Unnamed"
+        // Default name is "hopper #{tokenid}"
         assert(
-            keccak256(bytes("Unnamed")) ==
+            keccak256(bytes("hopper #4142")) ==
                 keccak256(bytes(HOPPER.getHopperName(tokenId)))
         );
 
@@ -93,6 +93,14 @@ contract HopperTest is BaseTest {
         hevm.prank(owner);
         HOPPER.setNameChangeFee(1337);
         assertEq(HOPPER.nameFee(), 1337);
+
+        hevm.prank(address(POND));
+        HOPPER.changeHopperName(tokenId, "");
+
+        assert(
+            keccak256(bytes("hopper #4142")) ==
+                keccak256(bytes(HOPPER.getHopperName(tokenId)))
+        );
     }
 
     function testLevels() public {

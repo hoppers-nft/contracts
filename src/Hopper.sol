@@ -517,7 +517,7 @@ contract HopperNFT is ERC721 {
         name = hoppersNames[tokenId];
 
         if (bytes(name).length == 0) {
-            name = "Unnamed";
+            name = string.concat("hopper #", _toString(tokenId));
         }
     }
 
@@ -558,8 +558,8 @@ contract HopperNFT is ERC721 {
         if (hopper.level == 0) revert InvalidTokenID();
         return
             string.concat(
-                '{"name":"hopper #',
-                _toString(tokenId),
+                '{"name":"',
+                getHopperName(tokenId),
                 '", "description":"Hopper", "attributes":[',
                 '{"trait_type": "level", "value": ',
                 _toString(hopper.level),
