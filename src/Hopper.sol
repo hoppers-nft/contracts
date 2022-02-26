@@ -99,7 +99,7 @@ contract HopperNFT is ERC721 {
     error NameTaken();
     error OnlyLvL100();
     error TooSoon();
-    error RootNotSet();
+    error ReservedAmountInvalid();
 
     constructor(
         string memory _NFT_NAME,
@@ -443,19 +443,19 @@ contract HopperNFT is ERC721 {
         }
     }
 
-    // todo test
     function freeMint(
         uint256 numberOfMints,
         uint256 totalGiven,
         bytes32[] memory proof
     ) external {
-        if (freeRedeemed[msg.sender] == totalGiven) revert Unauthorized();
-        if (reserved < numberOfMints) revert RootNotSet();
-
         unchecked {
             if (block.timestamp < preSaleOpenTime + 30 minutes)
                 revert TooSoon();
         }
+
+        if (freeRedeemed[msg.sender] + numberOfMints > totalGiven)
+            revert Unauthorized();
+        if (reserved < numberOfMints) revert ReservedAmountInvalid();
 
         if (
             !MerkleProof.verify(
