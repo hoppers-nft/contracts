@@ -123,7 +123,6 @@ contract Ballot {
                             VOTING
     //////////////////////////////////////////////////////////////*/
 
-    // todo test
     function forceUnvote(address _user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
 

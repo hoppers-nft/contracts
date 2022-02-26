@@ -5,7 +5,10 @@ import {BaseTest, HEVM, HopperNFT, Ballot} from "./BaseTest.sol";
 contract mockZone {
     uint256 public bonusEmissionRate;
 
-    function forceUnvote(address) public {}
+    function forceUnvote(address user) public {
+        // user1
+        assert(user == address(0x3333));
+    }
 
     function setBonusEmissionRate(uint256 fakeRate) public {
         bonusEmissionRate = fakeRate;
@@ -67,6 +70,7 @@ contract BallotTest is BaseTest {
             Ballot.Unauthorized.selector,
             abi.encodeWithSelector(
                 Ballot.openBallot.selector,
+                REWARD_EMISSION_RATE,
                 BONUS_EMISSION_RATE
             ),
             user1,
@@ -189,6 +193,41 @@ contract BallotTest is BaseTest {
 
         assertEq(_ZONE1.bonusEmissionRate(), 0 ether);
         assertEq(_ZONE2.bonusEmissionRate(), 0 ether);
+
+        ////////////////////
+        ////////////////////
+        /// Force unvoting
+
+        hevm.prank(address(_ZONE1));
+        _BALLOT.vote(address(0x3333), 0.5 ether);
+
+        hevm.prank(address(_ZONE2));
+        _BALLOT.vote(address(0x3333), 0.5 ether);
+
+        _BALLOT.count();
+
+        assertEq(_ZONE1.bonusEmissionRate(), 0.5 ether);
+        assertEq(_ZONE2.bonusEmissionRate(), 0.5 ether);
+
+        hevm.prank(address(_VEFLY));
+        _BALLOT.forceUnvote(address(0x3333));
+
+        _BALLOT.count();
+
+        assertEq(_ZONE1.bonusEmissionRate(), 0 ether);
+        assertEq(_ZONE2.bonusEmissionRate(), 0 ether);
+
+        assertEq(_BALLOT.userVeFlyUsed(address(0x3333)), 0 ether);
+        assertEq(_BALLOT.zonesVotes(address(_ZONE1)), 0 ether);
+        assertEq(_BALLOT.zonesVotes(address(_ZONE2)), 0 ether);
+        assertEq(
+            _BALLOT.zonesUserVotes(address(_ZONE1), address(0x3333)),
+            0 ether
+        );
+        assertEq(
+            _BALLOT.zonesUserVotes(address(_ZONE2), address(0x3333)),
+            0 ether
+        );
 
         ////////////////////
         ////////////////////
