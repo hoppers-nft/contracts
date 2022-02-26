@@ -69,8 +69,9 @@ contract Ballot {
         emit UpdatedOwner(_owner);
     }
 
-    function openBallot() external onlyOwner {
+    function openBallot(uint256 _countRewardRate) external onlyOwner {
         rewardSnapshot = block.timestamp;
+        countRewardRate = _countRewardRate;
     }
 
     function closeBallot() external onlyOwner {
@@ -187,8 +188,6 @@ contract Ballot {
         uint256 reward = countReward();
         rewardSnapshot = block.timestamp;
 
-        if (reward == 0) revert TooSoon();
-
         uint256 totalVotes;
         address[] memory _arrZones = arrZones;
         uint256 length = _arrZones.length;
@@ -203,6 +202,8 @@ contract Ballot {
             );
         }
 
-        Fly(FLY).mint(tx.origin, reward);
+        if (reward > 0) {
+            Fly(FLY).mint(tx.origin, reward);
+        }
     }
 }

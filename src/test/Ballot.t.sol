@@ -37,7 +37,10 @@ contract BallotTest is BaseTest {
         expectErrorAndSuccess(
             address(BALLOT),
             Ballot.Unauthorized.selector,
-            abi.encodeWithSelector(Ballot.openBallot.selector),
+            abi.encodeWithSelector(
+                Ballot.openBallot.selector,
+                BONUS_EMISSION_RATE
+            ),
             user1,
             owner
         );
