@@ -122,11 +122,13 @@ contract Ballot {
 
         for (uint256 i; i < length; ++i) {
             address zone = arrZones[i];
-            uint256 userVotes = zonesUserVotes[zone][_user];
 
+            zonesVotes[zone] -= zonesUserVotes[zone][_user];
             delete userVeFlyUsed[_user];
             delete zonesUserVotes[zone][_user];
-            zonesVotes[zone] -= userVotes;
+
+            // Done already by veFly on its _forceUncastAllVotes
+            // veFly(VEFLY).unsetHasVoted(user)
 
             Zone(zone).forceUnvote(_user);
         }
@@ -148,11 +150,12 @@ contract Ballot {
         uint256 totalVeFly = userVeFlyUsed[user] + vefly;
         if (totalVeFly > veFly(VEFLY).balanceOf(user)) revert NotEnoughVeFly();
 
+        if (totalVeFly > 0) {
         userVeFlyUsed[user] = totalVeFly;
-
-        if (totalVeFly > 0) veFly(VEFLY).setHasVoted(user);
+            veFly(VEFLY).setHasVoted(user);
 
         _updateVotes(user, totalVeFly);
+        }
     }
 
     // todo test
