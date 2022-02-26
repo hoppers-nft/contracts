@@ -448,7 +448,7 @@ contract HopperNFT is ERC721 {
         uint256 numberOfMints,
         uint256 totalGiven,
         bytes32[] memory proof
-    ) external payable {
+    ) external {
         if (freeRedeemed[msg.sender] == totalGiven) revert Unauthorized();
         if (reserved < numberOfMints) revert RootNotSet();
 
