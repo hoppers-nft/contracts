@@ -165,6 +165,31 @@ contract HopperTest is BaseTest {
         assertEq(currentHopper.intelligence, 10);
         assertEq(currentHopper.fertility, 10);
         assertEq(currentHopper.level, 1);
+
+        // Make sure setHopperMaxAttributeValue has an effect
+        expectErrorAndSuccess(
+            address(HOPPER),
+            HopperNFT.Unauthorized.selector,
+            abi.encodeWithSelector(
+                HopperNFT.setHopperMaxAttributeValue.selector,
+                11
+            ),
+            user1,
+            owner
+        );
+
+        increaseLevels(tokenId, 99);
+        hevm.prank(user1);
+        HOPPER.rebirth(tokenId);
+
+        currentHopper = HOPPER.getHopper(tokenId);
+
+        assertEq(currentHopper.agility, 11);
+        assertEq(currentHopper.strength, 11);
+        assertEq(currentHopper.vitality, 11);
+        assertEq(currentHopper.intelligence, 11);
+        assertEq(currentHopper.fertility, 11);
+        assertEq(currentHopper.level, 1);
     }
 
     function testHopperMintAll() public {

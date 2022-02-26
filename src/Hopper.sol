@@ -144,7 +144,6 @@ contract HopperNFT is ERC721 {
         emit OwnerUpdated(newOwner);
     }
 
-    // todo test
     function setHopperMaxAttributeValue(uint256 _hopperMaxAttributeValue)
         external
         onlyOwner
