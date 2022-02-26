@@ -43,9 +43,9 @@ contract HopperTest is BaseTest {
         HOPPER.normalMint{value: MINT_COST}(1);
         uint256 tokenId = 4142;
 
-        // Default name is "Unnamed"
+        // Default name is "hopper #{tokenid}"
         assert(
-            keccak256(bytes("Unnamed")) ==
+            keccak256(bytes("hopper #4142")) ==
                 keccak256(bytes(HOPPER.getHopperName(tokenId)))
         );
 
@@ -93,6 +93,14 @@ contract HopperTest is BaseTest {
         hevm.prank(owner);
         HOPPER.setNameChangeFee(1337);
         assertEq(HOPPER.nameFee(), 1337);
+
+        hevm.prank(address(POND));
+        HOPPER.changeHopperName(tokenId, "");
+
+        assert(
+            keccak256(bytes("hopper #4142")) ==
+                keccak256(bytes(HOPPER.getHopperName(tokenId)))
+        );
     }
 
     function testLevels() public {
@@ -157,6 +165,31 @@ contract HopperTest is BaseTest {
         assertEq(currentHopper.intelligence, 10);
         assertEq(currentHopper.fertility, 10);
         assertEq(currentHopper.level, 1);
+
+        // Make sure setHopperMaxAttributeValue has an effect
+        expectErrorAndSuccess(
+            address(HOPPER),
+            HopperNFT.Unauthorized.selector,
+            abi.encodeWithSelector(
+                HopperNFT.setHopperMaxAttributeValue.selector,
+                11
+            ),
+            user1,
+            owner
+        );
+
+        increaseLevels(tokenId, 99);
+        hevm.prank(user1);
+        HOPPER.rebirth(tokenId);
+
+        currentHopper = HOPPER.getHopper(tokenId);
+
+        assertEq(currentHopper.agility, 11);
+        assertEq(currentHopper.strength, 11);
+        assertEq(currentHopper.vitality, 11);
+        assertEq(currentHopper.intelligence, 11);
+        assertEq(currentHopper.fertility, 11);
+        assertEq(currentHopper.level, 1);
     }
 
     function testHopperMintAll() public {
@@ -217,6 +250,84 @@ contract HopperTest is BaseTest {
             abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
         );
         HOPPER.whitelistMint{value: WL_MINT_COST}(proof);
+
+        hevm.stopPrank();
+    }
+
+    function testHopperFreeMint() public {
+        uint256 given1 = 12;
+        uint256 given2 = 5;
+
+        bytes32 l1 = keccak256(abi.encodePacked(user1, given1));
+        bytes32 l2 = keccak256(abi.encodePacked(user2, given2));
+
+        bytes32 root = keccak256(abi.encodePacked(l1, l2));
+        bytes32[] memory proof = new bytes32[](1);
+        proof[0] = l2;
+
+        hevm.startPrank(user1, user1);
+
+        // Trigger TooSoon
+        hevm.prank(owner);
+        HOPPER.setSaleDetails(
+            type(uint256).max - 30 minutes,
+            bytes32(0),
+            bytes32(0),
+            0
+        );
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.TooSoon.selector));
+        HOPPER.freeMint(1, given1, proof);
+
+        // Revert Sale times
+        hevm.prank(owner);
+        HOPPER.setSaleDetails(
+            type(uint256).max - 30 minutes + 1,
+            bytes32(0),
+            bytes32(0),
+            0
+        );
+
+        // Revert if there are no reservations
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.ReservedAmountInvalid.selector)
+        );
+        HOPPER.freeMint(1, given1, proof);
+
+        // Set reservations Sale times
+        hevm.prank(owner);
+        HOPPER.setSaleDetails(
+            type(uint256).max - 30 minutes + 1,
+            bytes32(0),
+            root,
+            given1 + given2 + 100
+        );
+
+        // Not eligible
+        hevm.prank(address(0x1234));
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
+        HOPPER.freeMint(1, given1, proof);
+
+        HOPPER.freeMint(1, given1, proof);
+
+        // Make sure totalGiven is working
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
+        HOPPER.freeMint(20, given1, proof);
+
+        // Make sure MAX_PER_ADDRESS is working
+        hevm.expectRevert(abi.encodeWithSelector(HopperNFT.MintLimit.selector));
+        HOPPER.freeMint(given1 - 1, given1, proof);
+        HOPPER.freeMint(1, given1, proof);
+        HOPPER.freeMint(10, given1, proof);
+
+        // Run out
+        hevm.expectRevert(
+            abi.encodeWithSelector(HopperNFT.Unauthorized.selector)
+        );
+        HOPPER.freeMint(1, given1, proof);
 
         hevm.stopPrank();
     }

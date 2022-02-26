@@ -99,7 +99,7 @@ contract HopperNFT is ERC721 {
     error NameTaken();
     error OnlyLvL100();
     error TooSoon();
-    error RootNotSet();
+    error ReservedAmountInvalid();
 
     constructor(
         string memory _NFT_NAME,
@@ -144,7 +144,6 @@ contract HopperNFT is ERC721 {
         emit OwnerUpdated(newOwner);
     }
 
-    // todo test
     function setHopperMaxAttributeValue(uint256 _hopperMaxAttributeValue)
         external
         onlyOwner
@@ -401,13 +400,15 @@ contract HopperNFT is ERC721 {
             }
 
             // Swapped the picked tokenId for the last element
-            uint256 last = indexer[_indexerLength - 1];
+            --_indexerLength;
+            uint256 last = indexer[_indexerLength];
             if (last == 0) {
-                indexer[index] = _indexerLength - 1;
+                // this _indexerLength value had not been picked before
+                indexer[index] = _indexerLength;
             } else {
+                // this _indexerLength value had been picked and swapped before
                 indexer[index] = last;
             }
-            _indexerLength -= 1;
 
             // Mint Hopper and generate its attributes
             _mint(msg.sender, tokenId);
@@ -441,19 +442,19 @@ contract HopperNFT is ERC721 {
         }
     }
 
-    // todo test
     function freeMint(
         uint256 numberOfMints,
         uint256 totalGiven,
         bytes32[] memory proof
-    ) external payable {
-        if (freeRedeemed[msg.sender] == totalGiven) revert Unauthorized();
-        if (reserved < numberOfMints) revert RootNotSet();
-
+    ) external {
         unchecked {
             if (block.timestamp < preSaleOpenTime + 30 minutes)
                 revert TooSoon();
         }
+
+        if (freeRedeemed[msg.sender] + numberOfMints > totalGiven)
+            revert Unauthorized();
+        if (reserved < numberOfMints) revert ReservedAmountInvalid();
 
         if (
             !MerkleProof.verify(
@@ -515,7 +516,7 @@ contract HopperNFT is ERC721 {
         name = hoppersNames[tokenId];
 
         if (bytes(name).length == 0) {
-            name = "Unnamed";
+            name = string.concat("hopper #", _toString(tokenId));
         }
     }
 
@@ -556,8 +557,8 @@ contract HopperNFT is ERC721 {
         if (hopper.level == 0) revert InvalidTokenID();
         return
             string.concat(
-                '{"name":"hopper #',
-                _toString(tokenId),
+                '{"name":"',
+                getHopperName(tokenId),
                 '", "description":"Hopper", "attributes":[',
                 '{"trait_type": "level", "value": ',
                 _toString(hopper.level),
