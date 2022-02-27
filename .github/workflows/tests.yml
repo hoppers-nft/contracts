@@ -41,12 +41,15 @@ jobs:
           sudo add-apt-repository -y ppa:ethereum/ethereum-dev
           sudo apt-get update
           sudo apt-get install -y solc
-  
-      - name: Slither
-        uses: crytic/slither-action@v0.1.0
-  
+
+      - name: Slither Install
+        run: pip3 install slither-analyzer
+
       - name: Solhint Install
         run: npm install -g solhint prettier prettier-plugin-solidity
+
+      - name: Slither Run
+        run: slither src/ --config-file slither.config.json
       
       - name: Solhint Run
         run: solhint src/*.sol -w 0
