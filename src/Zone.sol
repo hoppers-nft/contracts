@@ -32,7 +32,7 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
     uint256 public emissionRate;
 
-    uint256 public totalSupply;
+    uint256 public totalBaseShare;
     uint256 public lastUpdatedTime;
     uint256 public rewardPerShareStored;
 
@@ -113,7 +113,7 @@ abstract contract Zone {
     }
 
     function setEmissionRate(uint256 _emissionRate) external onlyOwner {
-        _updateBaseRewardPerShareStored();
+        _updateBaseRewardPerShareStored(); // todo
 
         emissionRate = _emissionRate;
         emit UpdatedEmission(_emissionRate);
@@ -123,13 +123,13 @@ abstract contract Zone {
         external
         onlyBallotOrOwner
     {
-        _updateBonusRewardPerShareStored();
+        _updateBonusRewardPerShareStored(); // todo
 
         bonusEmissionRate = _bonusEmissionRate;
     }
 
     function setFlyLevelCapRatio(uint256 _flyLevelCapRatio) external onlyOwner {
-        flyLevelCapRatio = _flyLevelCapRatio;
+        flyLevelCapRatio = _flyLevelCapRatio; // todo
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -140,6 +140,7 @@ abstract contract Zone {
         address account,
         uint256 _totalAccountShares
     ) public view returns (uint256, uint256) {
+        // userMaxFlyGeneration gets updated at _updateAccountBaseReward which happens before this is called
         uint256 cappedFly = userMaxFlyGeneration[account];
         uint256 generatedFly = ((_totalAccountShares *
             (bonusRewardPerShare() - userBonusRewardPerSharePaid[account])) /
@@ -151,13 +152,13 @@ abstract contract Zone {
         );
     }
 
-    function getUserGeneratedFly(address account, uint256 _totalBaseShares)
+    function getUserGeneratedFly(address account, uint256 _totalUserBaseShares)
         public
         view
         returns (uint256, uint256)
     {
         uint256 cappedFly = userMaxFlyGeneration[account];
-        uint256 generatedFly = ((_totalBaseShares *
+        uint256 generatedFly = ((_totalUserBaseShares *
             (baseRewardPerShare() - userRewardPerSharePaid[account])) / 1e18);
 
         return (
@@ -168,7 +169,7 @@ abstract contract Zone {
 
     function _updateHopperGenerationData(
         address _account,
-        uint256 _totalAccountShares,
+        uint256 _totalAccountKindShares,
         bool isBonus
     ) internal returns (uint256) {
         uint256 cappedFly;
@@ -177,18 +178,18 @@ abstract contract Zone {
         if (isBonus) {
             (cappedFly, generatedFly) = getUserBonusGeneratedFly(
                 _account,
-                _totalAccountShares
+                _totalAccountKindShares
             );
         } else {
             (cappedFly, generatedFly) = getUserGeneratedFly(
                 _account,
-                _totalAccountShares
+                _totalAccountKindShares
             );
         }
 
         // todo scale?
         generatedPerShareStored[_account] += (generatedFly /
-            _totalAccountShares);
+            _totalAccountKindShares);
         return cappedFly;
     }
 
@@ -206,13 +207,13 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
 
     function baseRewardPerShare() public view returns (uint256) {
-        if (totalSupply == 0) {
+        if (totalBaseShare == 0) {
             return 0;
         }
         return
             rewardPerShareStored +
             (((block.timestamp - lastUpdatedTime) * emissionRate * 1e18) /
-                totalSupply);
+                totalBaseShare);
     }
 
     function _updateBaseRewardPerShareStored() internal {
@@ -235,8 +236,8 @@ abstract contract Zone {
 
             unchecked {
                 rewards[_account] += cappedFly;
-                userMaxFlyGeneration[_account] -= cappedFly;
             }
+            userMaxFlyGeneration[_account] -= cappedFly;
         }
 
         userRewardPerSharePaid[_account] = rewardPerShareStored;
@@ -268,7 +269,7 @@ abstract contract Zone {
     ) internal {
         _updateBonusRewardPerShareStored();
 
-        if (veSharesBalance[_account] > 0) {
+        if (_totalAccountShares > 0) {
             uint256 cappedFly = _updateHopperGenerationData(
                 _account,
                 _totalAccountShares,
@@ -277,8 +278,8 @@ abstract contract Zone {
 
             unchecked {
                 rewards[_account] += cappedFly;
-                userMaxFlyGeneration[_account] -= cappedFly;
             }
+            userMaxFlyGeneration[_account] -= cappedFly;
         }
 
         userBonusRewardPerSharePaid[_account] = bonusRewardPerShareStored;
@@ -450,7 +451,7 @@ abstract contract Zone {
             hopper,
             uint256(_data[0]), // hopperGauge
             uint256(hopper.level) == 100
-                ? type(uint256).max
+                ? type(uint256).max // todo 100 has cap as well
                 : flyLevelCapRatio * levelCost // gaugeLimit
         );
     }
@@ -483,22 +484,22 @@ abstract contract Zone {
             unchecked {
                 // Increment user shares
                 _baseShares += _calculateBaseShare(hopper);
-
-                // Update the maximum FLY this user can generate
-                // todo gaugeLimit should always be less than hopperGauge, should..
-                flyCapIncrease += (gaugeLimit - hopperGauge);
             }
+
+            // Update the maximum FLY this user can generate
+            // todo gaugeLimit should always be less than hopperGauge, should..
+            flyCapIncrease += (gaugeLimit - hopperGauge);
 
             // Hopper Accounting
             hopperOwners[tokenId] = msg.sender;
             HopperNFT(HOPPER).transferFrom(msg.sender, address(this), tokenId);
         }
 
+        baseSharesBalance[msg.sender] = _baseShares;
         unchecked {
-            baseSharesBalance[msg.sender] = _baseShares;
             userMaxFlyGeneration[msg.sender] += flyCapIncrease;
 
-            totalSupply = totalSupply + _baseShares - prevBaseShares;
+            totalBaseShare = totalBaseShare + _baseShares - prevBaseShares;
         }
 
         _updateVeShares(_baseShares, 0, false);
@@ -562,7 +563,7 @@ abstract contract Zone {
             baseSharesBalance[msg.sender] = _baseShares;
             userMaxFlyGeneration[msg.sender] -= flyCapDecrease;
 
-            totalSupply = totalSupply + _baseShares - prevBaseShares;
+            totalBaseShare = totalBaseShare + _baseShares - prevBaseShares;
         }
 
         _updateVeShares(_baseShares, 0, false);
@@ -612,13 +613,13 @@ abstract contract Zone {
     function _updateVeShares(
         uint256 baseShares,
         uint256 veFlyAmount,
-        bool increment
+        bool incrementVeFlyAmount
     ) internal {
         uint256 beforeVeShare = veSharesBalance[msg.sender];
 
         if (beforeVeShare > 0 || veFlyAmount > 0) {
             if (veFlyAmount > 0) {
-                if (increment) {
+                if (incrementVeFlyAmount) {
                     //slither-disable-next-line reentrancy-benign
                     Ballot(ballot).vote(msg.sender, veFlyAmount);
                     veFlyBalance[msg.sender] += veFlyAmount;
