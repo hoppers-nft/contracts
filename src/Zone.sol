@@ -545,13 +545,11 @@ abstract contract Zone {
                     : bytes32(currentGauge)
             );
 
-            unchecked {
-                // Decrement user shares
-                _baseShares -= _hopperShare;
+            // Decrement user shares
+            _baseShares -= _hopperShare;
 
-                // Update the maximum FLY this user can generate
-                flyCapDecrease += (gaugeLimit - prevHopperGauge);
-            }
+            // Update the maximum FLY this user can generate
+            flyCapDecrease += (gaugeLimit - prevHopperGauge);
 
             // Hopper Accounting
             //slither-disable-next-line costly-loop
@@ -601,12 +599,12 @@ abstract contract Zone {
                             VOTE veFLY 
     //////////////////////////////////////////////////////////////*/
 
-    function _calcVeShare(uint256 eshares, uint256 vefly)
+    function _calcVeShare(uint256 accountTotalBaseShares, uint256 vefly)
         internal
         pure
         returns (uint256)
     {
-        return FixedPointMathLib.sqrt(eshares * vefly);
+        return FixedPointMathLib.sqrt(accountTotalBaseShares * vefly);
     }
 
     //slither-disable-next-line reentrancy-no-eth
@@ -619,6 +617,7 @@ abstract contract Zone {
 
         if (beforeVeShare > 0 || veFlyAmount > 0) {
             if (veFlyAmount > 0) {
+                // Ballot checks if the user has the veFly amount necessary, otherwise reverts
                 if (incrementVeFlyAmount) {
                     //slither-disable-next-line reentrancy-benign
                     Ballot(ballot).vote(msg.sender, veFlyAmount);
@@ -661,8 +660,10 @@ abstract contract Zone {
     function forceUnvote(address user) external {
         if (msg.sender != ballot) revert Unauthorized();
 
-        _updateAccountBonusReward(user, veSharesBalance[user]);
+        uint256 userVeShares = veSharesBalance[user];
+        _updateAccountBonusReward(user, userVeShares);
 
+        totalVeShare -= userVeShares;
         delete veSharesBalance[user];
         delete veFlyBalance[user];
     }
