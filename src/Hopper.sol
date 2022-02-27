@@ -534,7 +534,7 @@ contract HopperNFT is ERC721 {
         name = hoppersNames[tokenId];
 
         if (bytes(name).length == 0) {
-            name = string.concat("hopper #", _toString(tokenId));
+            name = string(bytes.concat("hopper #", bytes(_toString(tokenId))));
         }
     }
 
@@ -543,27 +543,26 @@ contract HopperNFT is ERC721 {
         pure
         returns (string memory)
     {
-        return
-            string.concat(
+        return string(bytes.concat(
                 '{"trait_type": "rebirths", "value": ',
-                _toString(hopper.rebirths),
+                bytes(_toString(hopper.rebirths)),
                 "},",
                 '{"trait_type": "strength", "value": ',
-                _toString(hopper.strength),
+                bytes(_toString(hopper.strength)),
                 "},",
                 '{"trait_type": "agility", "value": ',
-                _toString(hopper.agility),
+                bytes(_toString(hopper.agility)),
                 "},",
                 '{"trait_type": "vitality", "value": ',
-                _toString(hopper.vitality),
+                bytes(_toString(hopper.vitality)),
                 "},",
                 '{"trait_type": "intelligence", "value": ',
-                _toString(hopper.intelligence),
+                bytes(_toString(hopper.intelligence)),
                 "},",
                 '{"trait_type": "fertility", "value": ',
-                _toString(hopper.fertility),
+                bytes(_toString(hopper.fertility)),
                 "}"
-            );
+            ));
     }
 
     function _jsonString(uint256 tokenId)
@@ -573,21 +572,20 @@ contract HopperNFT is ERC721 {
     {
         Hopper memory hopper = hoppers[tokenId];
         if (hopper.level == 0) revert InvalidTokenID();
-        return
-            string.concat(
+        return string(bytes.concat(
                 '{"name":"',
-                getHopperName(tokenId),
+                bytes(getHopperName(tokenId)),
                 '", "description":"Hopper", "attributes":[',
                 '{"trait_type": "level", "value": ',
-                _toString(hopper.level),
+                bytes(_toString(hopper.level)),
                 "},",
-                _getTraits(hopper),
+                bytes(_getTraits(hopper)),
                 "],",
                 '"image":"',
-                imageURL,
-                _toString(tokenId),
+                bytes(imageURL),
+                bytes(_toString(tokenId)),
                 '.png"}'
-            );
+            ));
     }
 
     function tokenURI(uint256 tokenId)
@@ -598,7 +596,7 @@ contract HopperNFT is ERC721 {
     {
         if (hoppers[tokenId].level == 0) revert InvalidTokenID();
 
-        return string.concat(baseURI, _toString(tokenId));
+        return string(bytes.concat(bytes(baseURI), bytes(_toString(tokenId))));
     }
 
     function supportsInterface(bytes4 interfaceId)

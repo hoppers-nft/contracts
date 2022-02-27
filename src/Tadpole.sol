@@ -180,27 +180,27 @@ contract TadpoleNFT is ERC721 {
     function _jsonString(uint256 tokenId) public view returns (string memory) {
         Tadpole memory tadpole = tadpoles[tokenId];
         return
-            string.concat(
+            string(bytes.concat(
                 '{"name":"tadpole #',
-                _toString(tokenId),
+                bytes(_toString(tokenId)),
                 '", "description":"Tadpole", "attributes":[',
                 '{"trait_type": "category", "value": "',
-                _getCategoryName(tadpole.category),
+                bytes(_getCategoryName(tadpole.category)),
                 '"},',
                 '{"trait_type": "background", "value": ',
-                _toString(tadpole.background),
+                bytes(_toString(tadpole.background)),
                 "},",
                 '{"trait_type": "hat", "value": ',
-                _toString(tadpole.hat),
+                bytes(_toString(tadpole.hat)),
                 "},",
                 '{"trait_type": "skin", "value": ',
-                _toString(tadpole.skin),
+                bytes(_toString(tadpole.skin)),
                 "}",
                 "],",
                 '"image":"',
-                baseURI,
-                _toString(tokenId),
-                '"}'
+                bytes(baseURI),
+                bytes(_toString(tokenId)),
+                '"}')
             );
     }
 
