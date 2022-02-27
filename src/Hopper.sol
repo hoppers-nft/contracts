@@ -100,6 +100,7 @@ contract HopperNFT is ERC721 {
     error OnlyLvL100();
     error TooSoon();
     error ReservedAmountInvalid();
+    error OnlyAlphanumeric();
 
     constructor(
         string memory _NFT_NAME,
@@ -311,15 +312,32 @@ contract HopperNFT is ERC721 {
         emit LevelUp(hoppers[tokenId].level);
     }
 
-    function changeHopperName(uint256 tokenId, string calldata newName)
+    function changeHopperName(uint256 tokenId, string calldata _newName)
         external
         onlyZone
         returns (uint256)
     {
-        if (bytes(newName).length > 25) revert MaxLength25();
+        bytes memory newName = bytes(_newName);
+        uint256 newLength = newName.length;
+
+        if (newLength > 25) revert MaxLength25();
+
+        // Checks it's only alphanumeric characters
+        for (uint256 i; i < newLength; i++) {
+            bytes1 char = newName[i];
+
+            if (
+                !(char >= 0x30 && char <= 0x39) && //9-0
+                !(char >= 0x41 && char <= 0x5A) && //A-Z
+                !(char >= 0x61 && char <= 0x7A) && //a-z
+                !(char == 0x2E) //.
+            ) {
+                revert OnlyAlphanumeric();
+            }
+        }
 
         // Checks new name uniqueness
-        bytes32 nameHash = keccak256(bytes(newName));
+        bytes32 nameHash = keccak256(newName);
         if (takenNames[nameHash]) revert NameTaken();
 
         // Free previous name
@@ -327,7 +345,7 @@ contract HopperNFT is ERC721 {
 
         // Reserve name
         takenNames[nameHash] = true;
-        hoppersNames[tokenId] = newName;
+        hoppersNames[tokenId] = _newName;
 
         emit NameChange(tokenId);
 

@@ -101,6 +101,20 @@ contract HopperTest is BaseTest {
             keccak256(bytes("hopper #4142")) ==
                 keccak256(bytes(HOPPER.getHopperName(tokenId)))
         );
+
+        // Check only alphanumeric characters are accepted
+        string memory invalid_chars = '!@#$%^&*()+=-_`"';
+
+        for (uint256 i; i < bytes(invalid_chars).length; i++) {
+            hevm.prank(address(POND));
+            hevm.expectRevert(
+                abi.encodeWithSelector(HopperNFT.OnlyAlphanumeric.selector)
+            );
+            HOPPER.changeHopperName(
+                tokenId,
+                string(bytes.concat(bytes(""), (bytes(invalid_chars)[i])))
+            );
+        }
     }
 
     function testLevels() public {
