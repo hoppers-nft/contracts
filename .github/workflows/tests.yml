@@ -43,7 +43,7 @@ jobs:
           sudo apt-get install -y solc
   
       - name: Slither
-      - uses: crytic/slither-action@v0.1.0
+        uses: crytic/slither-action@v0.1.0
         with:
           target: 'src/'
   
