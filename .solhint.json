@@ -13,6 +13,7 @@
     ],
     "var-name-mixedcase": "off",
     "quotes": "off",
-    "not-rely-on-time": "off"
+    "not-rely-on-time": "off",
+    "max-states-count": "off"
   }
 }

@@ -145,9 +145,8 @@ contract veFlyTest is BaseTest {
         hevm.warp(1 hours); // capped veFLY
         assert(VEFLY.balanceOf(user1) > 0);
 
-        // todo withdrawal with votes casted
         // Any withdrawal triggers the veFLY reset
-        assert(VEFLY.canWithdraw(user1));
+        assert(VEFLY.hasUserVotedAny(user1));
         assert(VEFLY.balanceOf(user1) == 0.014 ether);
         VEFLY.withdraw(0.001 ether);
         assert(VEFLY.flyBalanceOf(user1) == 1 ether - 0.001 ether);

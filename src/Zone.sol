@@ -347,14 +347,17 @@ abstract contract Zone {
         if (level > 1 && level < 21) {
             return (level * 1e18) >> 1;
         } else if (level >= 21 && level < 51) {
-            uint256 packed = 0x1223448501f3c74e1b3464c172c54a9426488901e3c70d183058a;
-            return ((packed >> (7 * (level - 21))) & 127) * 1e18;
+            return
+                ((0x1223448501f3c74e1b3464c172c54a9426488901e3c70d183058a >>
+                    (7 * (level - 21))) & 127) * 1e18;
         } else if (level >= 51 && level < 81) {
-            uint256 packed = 0x23c68b0e14180f9ebc76e9c376cd5a3262c17ae5ab15a9509d325;
-            return ((packed >> (7 * (level - 51))) & 127) * 1e18;
+            return
+                ((0x23c68b0e14180f9ebc76e9c376cd5a3262c17ae5ab15a9509d325 >>
+                    (7 * (level - 51))) & 127) * 1e18;
         } else if (level >= 81 && level < 101) {
-            uint256 packed = 0xc58705ebb6ed59af5aad3a5467ce9b2e549;
-            return ((packed >> (7 * (level - 81))) & 127) * 1e18;
+            return
+                ((0xc58705ebb6ed59af5aad3a5467ce9b2e549 >> (7 * (level - 81))) &
+                    127) * 1e18;
         } else {
             return type(uint256).max;
         }
@@ -368,6 +371,7 @@ abstract contract Zone {
         return _getLevelUpCost(currentLevel);
     }
 
+    //slither-disable-next-line reentrancy-no-eth
     function levelUp(uint256 tokenId, bool useOwnRewards) external {
         if (useOwnRewards) {
             _updateAccountRewards(msg.sender);
@@ -500,6 +504,7 @@ abstract contract Zone {
         _updateVeShares(_baseShares, 0, false);
     }
 
+    //slither-disable-next-line reentrancy-no-eth
     function exit(uint256[] calldata tokenIds) external {
         _updateAccountRewards(msg.sender);
 
@@ -548,6 +553,7 @@ abstract contract Zone {
             }
 
             // Hopper Accounting
+            //slither-disable-next-line costly-loop
             delete hopperOwners[tokenId];
             HopperNFT(HOPPER).transferFrom(address(this), msg.sender, tokenId);
         }
@@ -602,6 +608,7 @@ abstract contract Zone {
         return FixedPointMathLib.sqrt(eshares * vefly);
     }
 
+    //slither-disable-next-line reentrancy-no-eth
     function _updateVeShares(
         uint256 baseShares,
         uint256 veFlyAmount,
@@ -612,9 +619,11 @@ abstract contract Zone {
         if (beforeVeShare > 0 || veFlyAmount > 0) {
             if (veFlyAmount > 0) {
                 if (increment) {
+                    //slither-disable-next-line reentrancy-benign
                     Ballot(ballot).vote(msg.sender, veFlyAmount);
                     veFlyBalance[msg.sender] += veFlyAmount;
                 } else {
+                    //slither-disable-next-line reentrancy-benign
                     Ballot(ballot).unvote(msg.sender, veFlyAmount);
                     veFlyBalance[msg.sender] -= veFlyAmount;
                 }

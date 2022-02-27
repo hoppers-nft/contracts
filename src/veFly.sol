@@ -12,8 +12,10 @@ contract veFly {
 
     address public owner;
 
-    string public name = "veFLY";
-    string public symbol = "veFLY";
+    // solhint-disable-next-line const-name-snakecase
+    string public constant name = "veFLY";
+    // solhint-disable-next-line const-name-snakecase
+    string public constant symbol = "veFLY";
 
     address public immutable FLY;
 
@@ -129,9 +131,9 @@ contract veFly {
         uint256 length = arrValidBallots.length;
         for (uint256 i; i < length; ++i) {
             address ballot = arrValidBallots[i];
+            delete hasUserVoted[ballot][msg.sender];
 
             Ballot(ballot).forceUnvote(msg.sender);
-            delete hasUserVoted[ballot][msg.sender];
         }
     }
 
@@ -155,13 +157,13 @@ contract veFly {
         unchecked {
             flyBalanceOf[msg.sender] += amount;
         }
+
+        // slither-disable-next-line unchecked-transfer
         Fly(FLY).transferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) external {
         if (flyBalanceOf[msg.sender] < amount) revert InvalidAmount();
-
-        _forceUncastAllVotes();
 
         // Reset veFly calculations
         delete veFlyBalance[msg.sender];
@@ -170,6 +172,10 @@ contract veFly {
         unchecked {
             flyBalanceOf[msg.sender] -= amount;
         }
+
+        _forceUncastAllVotes();
+
+        // slither-disable-next-line unchecked-transfer
         Fly(FLY).transfer(msg.sender, amount);
     }
 
@@ -195,7 +201,7 @@ contract veFly {
         }
     }
 
-    function canWithdraw(address account) public view returns (bool) {
+    function hasUserVotedAny(address account) external view returns (bool) {
         uint256 length = arrValidBallots.length;
         for (uint256 i; i < length; ++i) {
             if (hasUserVoted[arrValidBallots[i]][account]) return false;
