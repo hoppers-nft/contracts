@@ -1,5 +1,5 @@
 {
-  "detectors_to_exclude": "events-maths,assembly,naming-convention,solc-version,timestamp,uninitialized-state,uninitialized-local,missing-zero-check",
+  "detectors_to_exclude": "calls-loop,events-maths,assembly,naming-convention,solc-version,timestamp,uninitialized-state,uninitialized-local,missing-zero-check",
   "solc_disable_warnings": true,
   "filter_paths": "lib/",
   "solc_remaps": [

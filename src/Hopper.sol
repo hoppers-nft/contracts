@@ -410,6 +410,7 @@ contract HopperNFT is ERC721 {
             seed >>= i;
 
             // Find the next available tokenID
+            //slither-disable-next-line weak-prng
             uint256 index = seed % _indexerLength;
             uint256 tokenId = indexer[index];
 
@@ -543,26 +544,29 @@ contract HopperNFT is ERC721 {
         pure
         returns (string memory)
     {
-        return string(bytes.concat(
-                '{"trait_type": "rebirths", "value": ',
-                bytes(_toString(hopper.rebirths)),
-                "},",
-                '{"trait_type": "strength", "value": ',
-                bytes(_toString(hopper.strength)),
-                "},",
-                '{"trait_type": "agility", "value": ',
-                bytes(_toString(hopper.agility)),
-                "},",
-                '{"trait_type": "vitality", "value": ',
-                bytes(_toString(hopper.vitality)),
-                "},",
-                '{"trait_type": "intelligence", "value": ',
-                bytes(_toString(hopper.intelligence)),
-                "},",
-                '{"trait_type": "fertility", "value": ',
-                bytes(_toString(hopper.fertility)),
-                "}"
-            ));
+        return
+            string(
+                bytes.concat(
+                    '{"trait_type": "rebirths", "value": ',
+                    bytes(_toString(hopper.rebirths)),
+                    "},",
+                    '{"trait_type": "strength", "value": ',
+                    bytes(_toString(hopper.strength)),
+                    "},",
+                    '{"trait_type": "agility", "value": ',
+                    bytes(_toString(hopper.agility)),
+                    "},",
+                    '{"trait_type": "vitality", "value": ',
+                    bytes(_toString(hopper.vitality)),
+                    "},",
+                    '{"trait_type": "intelligence", "value": ',
+                    bytes(_toString(hopper.intelligence)),
+                    "},",
+                    '{"trait_type": "fertility", "value": ',
+                    bytes(_toString(hopper.fertility)),
+                    "}"
+                )
+            );
     }
 
     function _jsonString(uint256 tokenId)
@@ -571,21 +575,27 @@ contract HopperNFT is ERC721 {
         returns (string memory)
     {
         Hopper memory hopper = hoppers[tokenId];
+
+        //slither-disable-next-line incorrect-equality
         if (hopper.level == 0) revert InvalidTokenID();
-        return string(bytes.concat(
-                '{"name":"',
-                bytes(getHopperName(tokenId)),
-                '", "description":"Hopper", "attributes":[',
-                '{"trait_type": "level", "value": ',
-                bytes(_toString(hopper.level)),
-                "},",
-                bytes(_getTraits(hopper)),
-                "],",
-                '"image":"',
-                bytes(imageURL),
-                bytes(_toString(tokenId)),
-                '.png"}'
-            ));
+
+        return
+            string(
+                bytes.concat(
+                    '{"name":"',
+                    bytes(getHopperName(tokenId)),
+                    '", "description":"Hopper", "attributes":[',
+                    '{"trait_type": "level", "value": ',
+                    bytes(_toString(hopper.level)),
+                    "},",
+                    bytes(_getTraits(hopper)),
+                    "],",
+                    '"image":"',
+                    bytes(imageURL),
+                    bytes(_toString(tokenId)),
+                    '.png"}'
+                )
+            );
     }
 
     function tokenURI(uint256 tokenId)
@@ -594,6 +604,7 @@ contract HopperNFT is ERC721 {
         override
         returns (string memory)
     {
+        //slither-disable-next-line incorrect-equality
         if (hoppers[tokenId].level == 0) revert InvalidTokenID();
 
         return string(bytes.concat(bytes(baseURI), bytes(_toString(tokenId))));
@@ -609,6 +620,7 @@ contract HopperNFT is ERC721 {
     }
 
     function _toString(uint256 value) internal pure returns (string memory) {
+        //slither-disable-next-line incorrect-equality
         if (value == 0) {
             return "0";
         }
@@ -621,6 +633,7 @@ contract HopperNFT is ERC721 {
         bytes memory buffer = new bytes(digits);
         while (value != 0) {
             digits -= 1;
+            //slither-disable-next-line weak-prng
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }

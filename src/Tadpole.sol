@@ -180,27 +180,29 @@ contract TadpoleNFT is ERC721 {
     function _jsonString(uint256 tokenId) public view returns (string memory) {
         Tadpole memory tadpole = tadpoles[tokenId];
         return
-            string(bytes.concat(
-                '{"name":"tadpole #',
-                bytes(_toString(tokenId)),
-                '", "description":"Tadpole", "attributes":[',
-                '{"trait_type": "category", "value": "',
-                bytes(_getCategoryName(tadpole.category)),
-                '"},',
-                '{"trait_type": "background", "value": ',
-                bytes(_toString(tadpole.background)),
-                "},",
-                '{"trait_type": "hat", "value": ',
-                bytes(_toString(tadpole.hat)),
-                "},",
-                '{"trait_type": "skin", "value": ',
-                bytes(_toString(tadpole.skin)),
-                "}",
-                "],",
-                '"image":"',
-                bytes(baseURI),
-                bytes(_toString(tokenId)),
-                '"}')
+            string(
+                bytes.concat(
+                    '{"name":"tadpole #',
+                    bytes(_toString(tokenId)),
+                    '", "description":"Tadpole", "attributes":[',
+                    '{"trait_type": "category", "value": "',
+                    bytes(_getCategoryName(tadpole.category)),
+                    '"},',
+                    '{"trait_type": "background", "value": ',
+                    bytes(_toString(tadpole.background)),
+                    "},",
+                    '{"trait_type": "hat", "value": ',
+                    bytes(_toString(tadpole.hat)),
+                    "},",
+                    '{"trait_type": "skin", "value": ',
+                    bytes(_toString(tadpole.skin)),
+                    "}",
+                    "],",
+                    '"image":"',
+                    bytes(baseURI),
+                    bytes(_toString(tokenId)),
+                    '"}'
+                )
             );
     }
 
@@ -216,6 +218,7 @@ contract TadpoleNFT is ERC721 {
     }
 
     function _toString(uint256 value) internal pure returns (string memory) {
+        //slither-disable-next-line incorrect-equality
         if (value == 0) {
             return "0";
         }
@@ -228,6 +231,7 @@ contract TadpoleNFT is ERC721 {
         bytes memory buffer = new bytes(digits);
         while (value != 0) {
             digits -= 1;
+            //slither-disable-next-line weak-prng
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }

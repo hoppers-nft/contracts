@@ -146,7 +146,7 @@ contract veFlyTest is BaseTest {
         assert(VEFLY.balanceOf(user1) > 0);
 
         // Any withdrawal triggers the veFLY reset
-        assert(VEFLY.canWithdraw(user1));
+        assert(VEFLY.hasUserVotedAny(user1));
         assert(VEFLY.balanceOf(user1) == 0.014 ether);
         VEFLY.withdraw(0.001 ether);
         assert(VEFLY.flyBalanceOf(user1) == 1 ether - 0.001 ether);

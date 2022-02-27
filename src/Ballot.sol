@@ -123,6 +123,7 @@ contract Ballot {
                             VOTING
     //////////////////////////////////////////////////////////////*/
 
+    //slither-disable-next-line costly-loop
     function forceUnvote(address _user) external {
         if (msg.sender != VEFLY) revert Unauthorized();
 
@@ -163,9 +164,13 @@ contract Ballot {
 
         if (vefly > 0) {
             userVeFlyUsed[user] = totalVeFly;
-            veFly(VEFLY).setHasVoted(user);
 
             _updateVotes(user, zonesUserVotes[msg.sender][user] + vefly);
+
+            // First time he has voted
+            if (totalVeFly == vefly) {
+                veFly(VEFLY).setHasVoted(user);
+            }
         }
     }
 
@@ -179,9 +184,9 @@ contract Ballot {
 
         if (zoneUserVotes < vefly) revert NotEnoughVeFly();
 
-        if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
-
         _updateVotes(user, zoneUserVotes - vefly);
+
+        if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -219,6 +224,7 @@ contract Ballot {
         }
 
         if (reward > 0) {
+            // solhint-disable-next-line avoid-tx-origin
             Fly(FLY).mint(tx.origin, reward);
         }
     }
