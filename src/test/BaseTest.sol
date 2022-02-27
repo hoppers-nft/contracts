@@ -30,6 +30,8 @@ interface HEVM {
     function deal(address, uint256) external;
 
     function expectRevert(bytes calldata) external;
+
+    function assume(bool) external;
 }
 
 contract BaseTest is DSTest {
