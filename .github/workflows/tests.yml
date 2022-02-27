@@ -44,8 +44,6 @@ jobs:
   
       - name: Slither
         uses: crytic/slither-action@v0.1.0
-        with:
-          target: 'src/'
   
       - name: Solhint Install
         run: npm install -g solhint prettier prettier-plugin-solidity
