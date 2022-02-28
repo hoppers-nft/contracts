@@ -405,11 +405,19 @@ contract ZoneTest is BaseTest {
         hevm.prank(user2);
         VEFLY.withdraw(1);
 
+        assertEq(VEFLY.balanceOf(user2), 0);
+        assertEq(POND.veFlyBalance(user2), 0);
         assertEq(POND.veSharesBalance(user2), 0);
         assertEq(POND.totalVeShare(), 0);
 
         hevm.warp(12);
         assertEq(POND.claimable(user2), 4.5 ether); // cap hit
+
+        // votes have to be cast again
+        assertGt(VEFLY.balanceOf(user2), 0);
+        assertEq(POND.veFlyBalance(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
 
         hevm.warp(13);
         hevm.prank(user2);
