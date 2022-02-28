@@ -259,13 +259,13 @@ contract ZoneTest is BaseTest {
         assertEq(POND.totalVeShare(), 2828427124);
         POND.claim();
         assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
-        
+
         hevm.warp(8);
         hevm.prank(user2);
         POND.exit(tokenIds3);
         POND.claim();
         assertEq(POND.claimable(user2), 0);
-        
+
         hevm.warp(9);
         assertEq(POND.claimable(user2), 0);
         assertEq(POND.veSharesBalance(user2), 0);
@@ -273,8 +273,43 @@ contract ZoneTest is BaseTest {
         assertEq(POND.userMaxFlyGeneration(user2), 0);
         assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
 
-       
+        ////////////
+        //// LEVEL UP
+        ////////////
+        tokenIds1[0] = 2;
+        hevm.prank(user2);
+        POND.levelUp(2, false);
 
+        uint256 beforeBalance = FLY.balanceOf(user2);
+        hevm.prank(user2);
+        POND.enter(tokenIds1);
+
+        assertEq(POND.veSharesBalance(user2), 2449489742);
+        assertEq(POND.totalVeShare(), 2449489742);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 3);
+        assertEq(POND.userMaxFlyGeneration(user2), 4.5 ether); // level 3
+
+        hevm.warp(10);
+        assertEq(POND.claimable(user2), 2857142857142857141); // 2 ether(bonus) + (6/14) * 2 ether(base)
+        hevm.warp(11);
+        assertEq(POND.claimable(user2), 4.5 ether); // cap hit
+
+        hevm.prank(user2);
+        POND.exit(tokenIds1);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(POND.claimable(user2), 0);
+        assertEq(FLY.balanceOf(user2), beforeBalance + 4.5 ether);
+
+        hevm.warp(12);
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(POND.claimable(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(FLY.balanceOf(user2), beforeBalance + 4.5 ether);
     }
 
     function testLevelUpCosts() public {
