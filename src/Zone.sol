@@ -113,7 +113,7 @@ abstract contract Zone {
     }
 
     function setEmissionRate(uint256 _emissionRate) external onlyOwner {
-        _updateBaseRewardPerShareStored(); // todo
+        _updateBaseRewardPerShareStored();
 
         emissionRate = _emissionRate;
         emit UpdatedEmission(_emissionRate);
@@ -123,13 +123,13 @@ abstract contract Zone {
         external
         onlyBallotOrOwner
     {
-        _updateBonusRewardPerShareStored(); // todo
+        _updateBonusRewardPerShareStored();
 
         bonusEmissionRate = _bonusEmissionRate;
     }
 
     function setFlyLevelCapRatio(uint256 _flyLevelCapRatio) external onlyOwner {
-        flyLevelCapRatio = _flyLevelCapRatio; // todo
+        flyLevelCapRatio = _flyLevelCapRatio;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -187,7 +187,6 @@ abstract contract Zone {
             );
         }
 
-        // todo scale?
         generatedPerShareStored[_account] += (generatedFly /
             _totalAccountKindShares);
         return cappedFly;
@@ -451,7 +450,7 @@ abstract contract Zone {
             hopper,
             uint256(_data[0]), // hopperGauge
             uint256(hopper.level) == 100
-                ? type(uint256).max // todo 100 has cap as well
+                ? 294 * 1e18
                 : flyLevelCapRatio * levelCost // gaugeLimit
         );
     }
@@ -487,7 +486,6 @@ abstract contract Zone {
             }
 
             // Update the maximum FLY this user can generate
-            // todo gaugeLimit should always be less than hopperGauge, should..
             flyCapIncrease += (gaugeLimit - hopperGauge);
 
             // Hopper Accounting
