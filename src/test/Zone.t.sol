@@ -250,7 +250,6 @@ contract ZoneTest is BaseTest {
         hevm.prank(user2);
         POND.enter(tokenIds3);
 
-
         hevm.warp(6);
         assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
         assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);

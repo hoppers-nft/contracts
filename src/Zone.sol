@@ -26,6 +26,7 @@ abstract contract Zone {
 
     address public owner;
     address public ballot;
+    bool public emergency;
 
     /*///////////////////////////////////////////////////////////////
                         Accounting/Rewards NFT
@@ -107,6 +108,11 @@ abstract contract Zone {
     function setOwner(address _owner) external onlyOwner {
         owner = _owner;
         emit UpdatedOwner(_owner);
+    }
+
+    function enableEmergency() external onlyOwner {
+        // no going back
+        emergency = true;
     }
 
     function setBallot(address _ballot) external onlyOwner {
@@ -212,6 +218,7 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
 
     function baseRewardPerShare() public view returns (uint256) {
+        //slither-disable-next-line incorrect-equality
         if (totalBaseShare == 0) {
             return rewardPerShareStored;
         }
@@ -253,6 +260,7 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
 
     function bonusRewardPerShare() public view returns (uint256) {
+        //slither-disable-next-line incorrect-equality
         if (totalVeShare == 0) {
             return bonusRewardPerShareStored;
         }
@@ -368,14 +376,6 @@ abstract contract Zone {
         }
     }
 
-    function getLevelUpCost(uint256 currentLevel)
-        public
-        pure
-        returns (uint256)
-    {
-        return _getLevelUpCost(currentLevel);
-    }
-
     //slither-disable-next-line reentrancy-no-eth
     function levelUp(uint256 tokenId, bool useOwnRewards) external {
         if (useOwnRewards) {
@@ -395,24 +395,34 @@ abstract contract Zone {
 
         // Update owners shares if hopper is staked
         if (zoneHopperOwner == msg.sender) {
-            // Resets this hopper generation tracking
-            tokenCapFilledPerShare[tokenId] = generatedPerShareStored[
-                msg.sender
-            ];
+            // Updated above if true
+            if (!useOwnRewards) {
+                _updateAccountRewards(msg.sender);
+            }
 
+            // Fill hopper gauge so we can find whats the remaining
+            (, uint256 remainingGauge) = _updateHopperGaugeFill(tokenId);
+
+            // Calculate the baseShare that we need to subtract from the user and total
             uint256 prevHopperShare = _calculateBaseShare(hopper);
             unchecked {
                 ++hopper.level;
             }
-            uint256 hopperShare = _calculateBaseShare(hopper);
+            // Calculate the baseShare that we need to add to the user and total
+            uint256 newHopperShare = _calculateBaseShare(hopper);
 
-            uint256 newBaseShare = baseSharesBalance[msg.sender] -
-                prevHopperShare +
-                hopperShare;
+            // Calculate new baseShares
+            uint256 diff = newHopperShare - prevHopperShare;
+            uint256 newBaseShare = baseSharesBalance[msg.sender] + diff;
             baseSharesBalance[msg.sender] = newBaseShare;
+            totalBaseShare += diff;
 
-            _updateAccountRewards(msg.sender);
+            // Update new value of veShares
             _updateVeShares(newBaseShare, 0, false);
+
+            // Update the new cap
+            userMaxFlyGeneration[msg.sender] += (_getGaugeLimit(hopper.level) -
+                remainingGauge);
 
             // Make sure getLevelUpCost is passed its current level
             unchecked {
@@ -432,31 +442,9 @@ abstract contract Zone {
                     STAKE / UNSTAKE NFT && CLAIM FLY
     //////////////////////////////////////////////////////////////*/
 
-    function _getGaugeLimit(uint256 level) internal view returns (uint256) {
-        if (level == 1) return 1.5 ether;
-        if (level == 100) return 294 ether;
-        return flyLevelCapRatio * _getLevelUpCost(level - 1);
-    }
-
-    function _getHopperAndGauge(uint256 _tokenId)
-        internal
-        view
-        returns (
-            HopperNFT.Hopper memory,
-            uint256, // hopperGauge
-            uint256 // gaugeLimit
-        )
-    {
-        string[] memory arrData = new string[](1);
-        arrData[0] = LEVEL_GAUGE_KEY;
-        (HopperNFT.Hopper memory hopper, bytes32[] memory _data) = HopperNFT(
-            HOPPER
-        ).getHopperWithData(arrData, _tokenId);
-
-        return (hopper, uint256(_data[0]), _getGaugeLimit(hopper.level));
-    }
-
     function enter(uint256[] calldata tokenIds) external {
+        if (emergency) revert Unauthorized();
+
         _updateAccountRewards(msg.sender);
 
         uint256 prevBaseShares = baseSharesBalance[msg.sender];
@@ -506,6 +494,8 @@ abstract contract Zone {
 
     //slither-disable-next-line reentrancy-no-eth
     function exit(uint256[] calldata tokenIds) external {
+        if (emergency) revert Unauthorized();
+
         _updateAccountRewards(msg.sender);
 
         uint256 prevBaseShares = baseSharesBalance[msg.sender];
@@ -520,38 +510,16 @@ abstract contract Zone {
             // Can the user unstake this hopper
             if (hopperOwners[tokenId] != msg.sender) revert WrongTokenID();
 
-            // Find the amount of uncapped FLY generated by this Hopper
-            uint256 filledCapPerShare = generatedPerShareStored[msg.sender] -
-                tokenCapFilledPerShare[tokenId];
-
             (
-                HopperNFT.Hopper memory hopper,
-                uint256 prevHopperGauge,
-                uint256 gaugeLimit
-            ) = _getHopperAndGauge(tokenId);
-
-            uint256 _hopperShare = _calculateBaseShare(hopper);
-
-            uint256 flyGeneratedAndBurned = prevHopperGauge +
-                filledCapPerShare *
-                _hopperShare;
-
-            uint256 currentGauge = flyGeneratedAndBurned > gaugeLimit
-                ? gaugeLimit
-                : flyGeneratedAndBurned;
-
-            // Update the HOPPER gauge
-            HopperNFT(HOPPER).setData(
-                LEVEL_GAUGE_KEY,
-                tokenId,
-                bytes32(currentGauge)
-            );
+                uint256 _hopperShare,
+                uint256 _remainingGauge
+            ) = _updateHopperGaugeFill(tokenId);
 
             // Decrement user shares
             _baseShares -= _hopperShare;
 
             // Update the maximum FLY this user can generate
-            flyCapDecrease += (gaugeLimit - currentGauge);
+            flyCapDecrease += _remainingGauge;
 
             // Hopper Accounting
             //slither-disable-next-line costly-loop
@@ -565,6 +533,26 @@ abstract contract Zone {
 
         _updateVeShares(_baseShares, 0, false);
     }
+
+    function emergencyExit(uint256[] calldata tokenIds, address user) external {
+        if (!emergency) revert Unauthorized();
+
+        uint256 numTokens = tokenIds.length;
+        for (uint256 i; i < numTokens; ++i) {
+            uint256 tokenId = tokenIds[i];
+
+            // Can the user unstake this hopper
+            if (hopperOwners[tokenId] != user) revert WrongTokenID();
+
+            //slither-disable-next-line costly-loop
+            delete hopperOwners[tokenId];
+            HopperNFT(HOPPER).transferFrom(address(this), user, tokenId);
+        }
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                            CLAIMING
+    //////////////////////////////////////////////////////////////*/
 
     function claimable(address _account) external view returns (uint256) {
         uint256 cappedFly = userMaxFlyGeneration[_account];
@@ -664,8 +652,68 @@ abstract contract Zone {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    HELPER VIEW FUNCTIONS
+                    HELPER GAUGE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    function _updateHopperGaugeFill(uint256 tokenId)
+        internal
+        returns (uint256 _hopperShare, uint256 _remaining)
+    {
+        // Resets this hopper generation tracking
+        uint256 filledCapPerShare = generatedPerShareStored[msg.sender] -
+            tokenCapFilledPerShare[tokenId];
+
+        tokenCapFilledPerShare[tokenId] = generatedPerShareStored[msg.sender];
+
+        (
+            HopperNFT.Hopper memory hopper,
+            uint256 prevHopperGauge,
+            uint256 gaugeLimit
+        ) = _getHopperAndGauge(tokenId);
+
+        _hopperShare = _calculateBaseShare(hopper);
+
+        uint256 flyGeneratedAndBurned = prevHopperGauge +
+            filledCapPerShare *
+            _hopperShare;
+
+        uint256 currentGauge = flyGeneratedAndBurned > gaugeLimit
+            ? gaugeLimit
+            : flyGeneratedAndBurned;
+
+        // Update the HOPPER gauge
+        HopperNFT(HOPPER).setData(
+            LEVEL_GAUGE_KEY,
+            tokenId,
+            bytes32(currentGauge)
+        );
+
+        return (_hopperShare, (gaugeLimit - currentGauge));
+    }
+
+    function _getGaugeLimit(uint256 level) internal view returns (uint256) {
+        if (level == 1) return 1.5 ether;
+        if (level == 100) return 294 ether;
+        return flyLevelCapRatio * _getLevelUpCost(level - 1);
+    }
+
+    function _getHopperAndGauge(uint256 _tokenId)
+        internal
+        view
+        returns (
+            HopperNFT.Hopper memory,
+            uint256, // hopperGauge
+            uint256 // gaugeLimit
+        )
+    {
+        string[] memory arrData = new string[](1);
+        arrData[0] = LEVEL_GAUGE_KEY;
+        (HopperNFT.Hopper memory hopper, bytes32[] memory _data) = HopperNFT(
+            HOPPER
+        ).getHopperWithData(arrData, _tokenId);
+
+        return (hopper, uint256(_data[0]), _getGaugeLimit(hopper.level));
+    }
 
     function getHopperAndGauge(uint256 tokenId)
         external
@@ -677,6 +725,18 @@ abstract contract Zone {
         )
     {
         return _getHopperAndGauge(tokenId);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                VIEW
+    //////////////////////////////////////////////////////////////*/
+
+    function getLevelUpCost(uint256 currentLevel)
+        public
+        pure
+        returns (uint256)
+    {
+        return _getLevelUpCost(currentLevel);
     }
 
     /*///////////////////////////////////////////////////////////////
