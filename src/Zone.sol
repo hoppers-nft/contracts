@@ -91,6 +91,7 @@ abstract contract Zone {
         flyLevelCapRatio = 3;
         LEVEL_GAUGE_KEY = "LEVEL_GAUGE_KEY";
         lastUpdatedTime = block.timestamp;
+        lastBonusUpdatedTime = block.timestamp;
     }
 
     modifier onlyOwner() {
@@ -181,15 +182,19 @@ abstract contract Zone {
                 _account,
                 _totalAccountKindShares
             );
+
+            // Makes calculations easier, since we don't need to add another
+            //    state keeping track of generatedPerVeshare
+            generatedPerShareStored[_account] += (generatedFly /
+                baseSharesBalance[_account]);
         } else {
             (cappedFly, generatedFly) = getUserGeneratedFly(
                 _account,
                 _totalAccountKindShares
             );
+            generatedPerShareStored[_account] += (generatedFly /
+                _totalAccountKindShares);
         }
-
-        generatedPerShareStored[_account] += (generatedFly /
-            _totalAccountKindShares);
         return cappedFly;
     }
 
@@ -208,7 +213,7 @@ abstract contract Zone {
 
     function baseRewardPerShare() public view returns (uint256) {
         if (totalBaseShare == 0) {
-            return 0;
+            return rewardPerShareStored;
         }
         return
             rewardPerShareStored +
@@ -249,7 +254,7 @@ abstract contract Zone {
 
     function bonusRewardPerShare() public view returns (uint256) {
         if (totalVeShare == 0) {
-            return 0;
+            return bonusRewardPerShareStored;
         }
         return
             bonusRewardPerShareStored +
@@ -281,7 +286,6 @@ abstract contract Zone {
             }
             userMaxFlyGeneration[_account] -= cappedFly;
         }
-
         userBonusRewardPerSharePaid[_account] = bonusRewardPerShareStored;
     }
 
@@ -577,7 +581,7 @@ abstract contract Zone {
         gen += bonusGen;
         cappedFly = gen > cappedFly ? cappedFly : gen;
 
-        return rewards[msg.sender] + gen;
+        return rewards[msg.sender] + cappedFly;
     }
 
     function claim() external {
@@ -608,30 +612,27 @@ abstract contract Zone {
         bool incrementVeFlyAmount
     ) internal {
         uint256 beforeVeShare = veSharesBalance[msg.sender];
-
-        if (beforeVeShare > 0 || veFlyAmount > 0) {
-            if (veFlyAmount > 0) {
-                // Ballot checks if the user has the veFly amount necessary, otherwise reverts
-                if (incrementVeFlyAmount) {
-                    //slither-disable-next-line reentrancy-benign
-                    Ballot(ballot).vote(msg.sender, veFlyAmount);
-                    veFlyBalance[msg.sender] += veFlyAmount;
-                } else {
-                    //slither-disable-next-line reentrancy-benign
-                    Ballot(ballot).unvote(msg.sender, veFlyAmount);
-                    veFlyBalance[msg.sender] -= veFlyAmount;
-                }
+        if (veFlyAmount > 0) {
+            // Ballot checks if the user has the veFly amount necessary, otherwise reverts
+            if (incrementVeFlyAmount) {
+                //slither-disable-next-line reentrancy-benign
+                Ballot(ballot).vote(msg.sender, veFlyAmount);
+                veFlyBalance[msg.sender] += veFlyAmount;
+            } else {
+                //slither-disable-next-line reentrancy-benign
+                Ballot(ballot).unvote(msg.sender, veFlyAmount);
+                veFlyBalance[msg.sender] -= veFlyAmount;
             }
+        }
 
-            uint256 currentVeShare = _calcVeShare(
-                baseShares,
-                veFlyBalance[msg.sender]
-            );
-            veSharesBalance[msg.sender] = currentVeShare;
+        uint256 currentVeShare = _calcVeShare(
+            baseShares,
+            veFlyBalance[msg.sender]
+        );
+        veSharesBalance[msg.sender] = currentVeShare;
 
-            unchecked {
-                totalVeShare = totalVeShare + currentVeShare - beforeVeShare;
-            }
+        unchecked {
+            totalVeShare = totalVeShare + currentVeShare - beforeVeShare;
         }
     }
 

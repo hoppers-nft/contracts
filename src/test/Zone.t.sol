@@ -84,6 +84,199 @@ contract ZoneTest is BaseTest {
         );
     }
 
+    function testScenarioWithGauges() public {
+        // Setting up
+        uint256[] memory tokenIds1 = new uint256[](1);
+        uint256[] memory tokenIds2 = new uint256[](1);
+        uint256[] memory tokenIds3 = new uint256[](2);
+        hevm.prank(user1);
+        HOPPER.addHopper(0);
+        hevm.prank(user1);
+        HOPPER.addHopper(1);
+        tokenIds2[0] = 1;
+
+        hevm.prank(user2);
+        HOPPER.addHopper(2);
+        hevm.prank(user2);
+        HOPPER.addHopper(3);
+        tokenIds3[0] = 2;
+        tokenIds3[1] = 3;
+
+        hevm.prank(owner);
+        POND.setEmissionRate(2 ether);
+        hevm.prank(owner);
+        POND.setBonusEmissionRate(2 ether);
+
+        FLY.mockMint(user1, 2 ether);
+        FLY.mockMint(user2, 2 ether);
+        // Start
+
+        hevm.prank(user1);
+        POND.enter(tokenIds1);
+        assertEq(POND.baseSharesBalance(user1), 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user1), 3 ether);
+        assertEq(POND.totalBaseShare(), 2 * 2);
+        assertEq(POND.hopperOwners(0), user1);
+
+        hevm.prank(user1);
+        POND.enter(tokenIds2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2);
+        assertEq(POND.baseSharesBalance(user1), 2 * 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user1), 6 ether);
+
+        hevm.prank(user2);
+        HOPPER.setApprovalForAll(address(POND), true);
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+        assertEq(POND.hopperOwners(2), user2);
+        assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
+
+        hevm.warp(1);
+        assertEq(POND.claimable(user1), 1 ether);
+        assertEq(POND.claimable(user2), 1 ether);
+        hevm.warp(6);
+        assertEq(POND.claimable(user1), 6 ether);
+        assertEq(POND.claimable(user2), 6 ether);
+        hevm.warp(7);
+        assertEq(POND.claimable(user1), 6 ether);
+        assertEq(POND.claimable(user2), 6 ether);
+        hevm.prank(user1);
+        POND.claim();
+        assertEq(FLY.balanceOf(user1), 2 ether + 6 ether);
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
+        assertEq(POND.userMaxFlyGeneration(user1), 0 ether);
+        assertEq(POND.userMaxFlyGeneration(user2), 0 ether);
+
+        hevm.prank(user2);
+        POND.exit(tokenIds3);
+        assertEq(POND.baseSharesBalance(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2);
+        (
+            HopperNFT.Hopper memory hopper,
+            uint256 prevHopperGauge,
+            uint256 gaugeLimit
+        ) = POND.getHopperAndGauge(2);
+        assertEq(prevHopperGauge, 3 ether);
+        assertEq(prevHopperGauge, gaugeLimit);
+
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+        assertEq(POND.hopperOwners(2), user2);
+        assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+    }
+
+    function testVeFLYInfluence() public {
+        // Setting up
+        uint256[] memory tokenIds1 = new uint256[](1);
+        uint256[] memory tokenIds2 = new uint256[](1);
+        uint256[] memory tokenIds3 = new uint256[](2);
+        hevm.prank(user1);
+        HOPPER.addHopper(0);
+        hevm.prank(user1);
+        HOPPER.addHopper(1);
+        tokenIds2[0] = 1;
+
+        hevm.prank(user2);
+        HOPPER.addHopper(2);
+        hevm.prank(user2);
+        HOPPER.addHopper(3);
+        tokenIds3[0] = 2;
+        tokenIds3[1] = 3;
+
+        hevm.prank(owner);
+        POND.setEmissionRate(2 ether);
+        hevm.prank(owner);
+        POND.setBonusEmissionRate(2 ether);
+
+        FLY.mockMint(user1, 3 ether);
+        FLY.mockMint(user2, 3 ether);
+
+        hevm.prank(user1);
+        FLY.approve(address(VEFLY), 1000 ether);
+        hevm.prank(user1);
+        VEFLY.deposit(1 ether);
+
+        hevm.prank(user2);
+        FLY.approve(address(VEFLY), 1000 ether);
+        hevm.prank(user2);
+        VEFLY.deposit(1 ether);
+        hevm.prank(owner);
+        VEFLY.setGenerationDetails(100, 1000000, 1);
+
+        // Start
+
+        hevm.prank(user1);
+        POND.enter(tokenIds1);
+
+        hevm.prank(user1);
+        POND.enter(tokenIds2);
+
+        hevm.prank(user2);
+        HOPPER.setApprovalForAll(address(POND), true);
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+
+        hevm.warp(1);
+        hevm.prank(user2);
+        POND.vote(1 ether, false);
+        hevm.warp(2);
+        assertEq(POND.veSharesBalance(user2), 2828427124);
+        assertEq(POND.totalVeShare(), 2828427124);
+        assertEq(POND.claimable(user2), 3999999999999999999); // precision loss
+        hevm.warp(4);
+        assertEq(POND.claimable(user2), 6 ether); // caps
+
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
+
+        hevm.warp(5);
+        assertEq(POND.claimable(user2), 0); // caps
+        POND.claim();
+        assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
+
+        hevm.prank(user2);
+        POND.exit(tokenIds3);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+
+
+        hevm.warp(6);
+        assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 2828427124);
+        assertEq(POND.totalVeShare(), 2828427124);
+        POND.claim();
+        assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
+        
+        hevm.warp(8);
+        hevm.prank(user2);
+        POND.exit(tokenIds3);
+        POND.claim();
+        assertEq(POND.claimable(user2), 0);
+        
+        hevm.warp(9);
+        assertEq(POND.claimable(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
+
+       
+
+    }
+
     function testLevelUpCosts() public {
         assertEq(POND.getLevelUpCost(2 - 1), 1.0 ether);
         assertEq(POND.getLevelUpCost(3 - 1), 1.5 ether);
