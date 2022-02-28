@@ -427,13 +427,19 @@ abstract contract Zone {
                     STAKE / UNSTAKE NFT && CLAIM FLY
     //////////////////////////////////////////////////////////////*/
 
+    function _getGaugeLimit(uint256 level) internal view returns (uint256) {
+        if (level == 1) return 1.5 ether;
+        if (level == 100) return 294 ether;
+        return flyLevelCapRatio * _getLevelUpCost(level - 1);
+    }
+
     function _getHopperAndGauge(uint256 _tokenId)
         internal
         view
         returns (
             HopperNFT.Hopper memory,
-            uint256,
-            uint256
+            uint256, // hopperGauge
+            uint256 // gaugeLimit
         )
     {
         string[] memory arrData = new string[](1);
@@ -442,17 +448,7 @@ abstract contract Zone {
             HOPPER
         ).getHopperWithData(arrData, _tokenId);
 
-        uint256 levelCost = hopper.level == 1
-            ? 1.5 ether
-            : _getLevelUpCost(hopper.level - 1);
-
-        return (
-            hopper,
-            uint256(_data[0]), // hopperGauge
-            uint256(hopper.level) == 100
-                ? 294 * 1e18
-                : flyLevelCapRatio * levelCost // gaugeLimit
-        );
+        return (hopper, uint256(_data[0]), _getGaugeLimit(hopper.level));
     }
 
     function enter(uint256[] calldata tokenIds) external {
@@ -664,6 +660,22 @@ abstract contract Zone {
         totalVeShare -= userVeShares;
         delete veSharesBalance[user];
         delete veFlyBalance[user];
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    HELPER VIEW FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function getHopperAndGauge(uint256 tokenId)
+        external
+        view
+        returns (
+            HopperNFT.Hopper memory,
+            uint256,
+            uint256
+        )
+    {
+        return _getHopperAndGauge(tokenId);
     }
 
     /*///////////////////////////////////////////////////////////////
