@@ -34,6 +34,35 @@ interface HEVM {
     function assume(bool) external;
 }
 
+contract mockHopper is HopperNFT {
+    constructor(
+        string memory _NFT_NAME,
+        string memory _NFT_SYMBOL,
+        uint256 _NAME_FEE
+    ) HopperNFT(_NFT_NAME, _NFT_SYMBOL, 1 ether) {}
+
+    function addHopper(uint256 tokenId) public {
+        _mint(msg.sender, tokenId);
+        hoppers[tokenId] = Hopper({
+            strength: 2,
+            agility: 2,
+            vitality: 2,
+            intelligence: 2,
+            fertility: 2,
+            level: 2,
+            rebirths: 0
+        });
+    }
+}
+
+contract testFly is Fly {
+    constructor(string memory a, string memory b) Fly(a, b) {}
+
+    function mockMint(address user, uint256 amount) public {
+        _mint(user, amount);
+    }
+}
+
 contract BaseTest is DSTest {
     // Cheatcodes
     HEVM public hevm = HEVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -55,8 +84,8 @@ contract BaseTest is DSTest {
     address public EXCHANGER = address(0xabab);
     TadpoleNFT public TADPOLE;
     Breeding public BREEDING;
-    HopperNFT public HOPPER;
-    Fly public FLY;
+    mockHopper public HOPPER;
+    testFly public FLY;
     veFly public VEFLY;
     Pond public POND;
     Stream public STREAM;
@@ -111,7 +140,7 @@ contract BaseTest is DSTest {
         hevm.startPrank(owner);
 
         // NFT
-        HOPPER = new HopperNFT(
+        HOPPER = new mockHopper(
             "Hopper",
             "Hopper",
             0.01 ether // namefee
@@ -125,7 +154,7 @@ contract BaseTest is DSTest {
         );
 
         // Initiate Contracts
-        FLY = new Fly("FLY", "FLY");
+        FLY = new testFly("FLY", "FLY");
         VEFLY = new veFly(
             address(FLY),
             VEFLY_NUM_RATE,

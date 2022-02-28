@@ -3,7 +3,7 @@ pragma solidity 0.8.12;
 
 import "ds-test/test.sol";
 
-import {BaseTest, HEVM, ERC721, Ballot, veFly} from "./BaseTest.sol";
+import {BaseTest, HEVM, ERC721, Ballot, veFly, HopperNFT} from "./BaseTest.sol";
 
 contract HopperWorld is BaseTest {
     function getHoppers(uint256 numHoppers, bool firstBatch)
@@ -78,6 +78,197 @@ contract HopperWorld is BaseTest {
         assertGt(STREAM.veSharesBalance(user1), 0);
     }
 
+    function testSimpleScenario() public {
+        uint256 earnIn1Hour = setVotingScenario();
+
+        hevm.startPrank(user1, user1);
+
+        // FLY reward should be higher than 3 hours because of veShare
+        hevm.warp(3 hours);
+        POND.claim();
+        STREAM.claim();
+        // 2 * earnIn1Hour because of the staked FLY
+        assertGt(FLY.balanceOf(user1), 2 * earnIn1Hour);
+
+        hevm.stopPrank();
+    }
+
+    function testScenarioForceUnvote() public {
+        uint256 earnIn1Hour = setVotingScenario();
+
+        hevm.startPrank(user1, user1);
+
+        // veFLY unstake forces unvotes
+        VEFLY.withdraw(earnIn1Hour);
+
+        assertEq(POND.veSharesBalance(user1), 0);
+        assertEq(STREAM.veSharesBalance(user1), 0);
+        assertEq(VEFLY.balanceOf(user1), 0);
+
+        // Since time hasn't passed, should only get the earnIn1Hour after 3 hours
+        hevm.warp(3 hours);
+        assertEq(POND.claimable(user1), earnIn1Hour / 2);
+        assertEq(STREAM.claimable(user1), earnIn1Hour / 2);
+
+        POND.claim();
+        STREAM.claim();
+        assertEq(FLY.balanceOf(user1), 3 * earnIn1Hour);
+
+        hevm.stopPrank();
+    }
+
+    function testScenarioUnvote() public {
+        uint256 earnIn1Hour = setVotingScenario();
+
+        hevm.startPrank(user1, user1);
+
+        uint256 beforeVeFlyBalance = VEFLY.balanceOf(user1);
+        assertGt(beforeVeFlyBalance, 0);
+
+        // veFLY unstake forces unvotes
+        POND.unvote(VEFLY.balanceOf(user1) / 2, false);
+        STREAM.unvote(VEFLY.balanceOf(user1) / 2, false);
+
+        assertEq(POND.veSharesBalance(user1), 0);
+        assertEq(STREAM.veSharesBalance(user1), 0);
+        assertEq(VEFLY.balanceOf(user1), beforeVeFlyBalance);
+
+        // Since time hasn't passed, should only get the earnIn1Hour after 3 hours
+        hevm.warp(3 hours);
+        POND.claim();
+        STREAM.claim();
+        assertEq(FLY.balanceOf(user1), 2 * earnIn1Hour);
+
+        hevm.stopPrank();
+    }
+
+    function testScenarioWithGauges() public {
+        // Setting up
+        uint256[] memory tokenIds1 = new uint256[](1);
+        uint256[] memory tokenIds2 = new uint256[](1);
+        uint256[] memory tokenIds3 = new uint256[](2);
+        hevm.prank(user1);
+        HOPPER.addHopper(0);
+        hevm.prank(user1);
+        HOPPER.addHopper(1);
+        tokenIds2[0] = 1;
+
+        hevm.prank(user2);
+        HOPPER.addHopper(2);
+        hevm.prank(user2);
+        HOPPER.addHopper(3);
+        tokenIds3[0] = 2;
+        tokenIds3[1] = 3;
+
+        hevm.prank(owner);
+        POND.setEmissionRate(2 ether);
+        hevm.prank(owner);
+        POND.setBonusEmissionRate(2 ether);
+
+        FLY.mockMint(user1, 2 ether);
+        FLY.mockMint(user2, 2 ether);
+        // Start
+
+        hevm.prank(user1);
+        POND.enter(tokenIds1);
+        assertEq(POND.baseSharesBalance(user1), 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user1), 3 ether);
+        assertEq(POND.totalBaseShare(), 2 * 2);
+        assertEq(POND.hopperOwners(0), user1);
+
+        hevm.prank(user1);
+        POND.enter(tokenIds2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2);
+        assertEq(POND.baseSharesBalance(user1), 2 * 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user1), 6 ether);
+
+        hevm.prank(user2);
+        HOPPER.setApprovalForAll(address(POND), true);
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+        assertEq(POND.hopperOwners(2), user2);
+        assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
+
+        hevm.warp(1);
+        assertEq(POND.claimable(user1), 1 ether);
+        assertEq(POND.claimable(user2), 1 ether);
+        hevm.warp(6);
+        assertEq(POND.claimable(user1), 6 ether);
+        assertEq(POND.claimable(user2), 6 ether);
+        hevm.warp(7);
+        assertEq(POND.claimable(user1), 6 ether);
+        assertEq(POND.claimable(user2), 6 ether);
+        hevm.prank(user1);
+        POND.claim();
+        assertEq(FLY.balanceOf(user1), 2 ether + 6 ether);
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
+        assertEq(POND.userMaxFlyGeneration(user1), 0 ether);
+        assertEq(POND.userMaxFlyGeneration(user2), 0 ether);
+
+        hevm.prank(user2);
+        POND.exit(tokenIds3);
+        assertEq(POND.baseSharesBalance(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2);
+        (
+            HopperNFT.Hopper memory hopper,
+            uint256 prevHopperGauge,
+            uint256 gaugeLimit
+        ) = POND.getHopperAndGauge(2);
+        assertEq(prevHopperGauge, 3 ether);
+        assertEq(prevHopperGauge, gaugeLimit);
+
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+        assertEq(POND.hopperOwners(2), user2);
+        assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
+        assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+    }
+
+    function testOtherScenario2() public {
+        // Setting up
+        uint256[] memory tokenIds1 = new uint256[](1);
+        uint256[] memory tokenIds2 = new uint256[](1);
+        uint256[] memory tokenIds3 = new uint256[](2);
+        hevm.prank(user1);
+        HOPPER.addHopper(0);
+        hevm.prank(user1);
+        HOPPER.addHopper(1);
+        tokenIds2[0] = 1;
+
+        hevm.prank(user2);
+        HOPPER.addHopper(2);
+        hevm.prank(user2);
+        HOPPER.addHopper(3);
+        tokenIds3[0] = 2;
+        tokenIds3[1] = 3;
+
+        hevm.prank(owner);
+        POND.setEmissionRate(2 ether);
+        hevm.prank(owner);
+        POND.setBonusEmissionRate(2 ether);
+
+        FLY.mockMint(user1, 2 ether);
+        FLY.mockMint(user2, 2 ether);
+        // Start
+
+        hevm.prank(user1);
+        POND.enter(tokenIds1);
+
+        hevm.prank(user1);
+        POND.enter(tokenIds2);
+
+        hevm.prank(user2);
+        HOPPER.setApprovalForAll(address(POND), true);
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+
+        // VEFLY
+    }
     // function testFuzzedScenario(
     //     bool[10] calldata acts,
     //     uint256[10] calldata amounts
@@ -175,65 +366,4 @@ contract HopperWorld is BaseTest {
 
     //     hevm.stopPrank();
     // }
-
-    function testSimpleScenario() public {
-        uint256 earnIn1Hour = setVotingScenario();
-
-        hevm.startPrank(user1, user1);
-
-        // FLY reward should be higher than 3 hours because of veShare
-        hevm.warp(3 hours);
-        POND.claim();
-        STREAM.claim();
-        // 2 * earnIn1Hour because of the staked FLY
-        assertGt(FLY.balanceOf(user1), 2 * earnIn1Hour);
-
-        hevm.stopPrank();
-    }
-
-    function testScenarioForceUnvote() public {
-        uint256 earnIn1Hour = setVotingScenario();
-
-        hevm.startPrank(user1, user1);
-
-        // veFLY unstake forces unvotes
-        VEFLY.withdraw(earnIn1Hour);
-
-        assertEq(POND.veSharesBalance(user1), 0);
-        assertEq(STREAM.veSharesBalance(user1), 0);
-        assertEq(VEFLY.balanceOf(user1), 0);
-
-        // Since time hasn't passed, should only get the earnIn1Hour after 3 hours
-        hevm.warp(3 hours);
-        POND.claim();
-        STREAM.claim();
-        assertEq(FLY.balanceOf(user1), 3 * earnIn1Hour);
-
-        hevm.stopPrank();
-    }
-
-    function testScenarioUnvote() public {
-        uint256 earnIn1Hour = setVotingScenario();
-
-        hevm.startPrank(user1, user1);
-
-        uint256 beforeVeFlyBalance = VEFLY.balanceOf(user1);
-        assertGt(beforeVeFlyBalance, 0);
-
-        // veFLY unstake forces unvotes
-        POND.unvote(VEFLY.balanceOf(user1) / 2, false);
-        STREAM.unvote(VEFLY.balanceOf(user1) / 2, false);
-
-        assertEq(POND.veSharesBalance(user1), 0);
-        assertEq(STREAM.veSharesBalance(user1), 0);
-        assertEq(VEFLY.balanceOf(user1), beforeVeFlyBalance);
-
-        // Since time hasn't passed, should only get the earnIn1Hour after 3 hours
-        hevm.warp(3 hours);
-        POND.claim();
-        STREAM.claim();
-        assertEq(FLY.balanceOf(user1), 2 * earnIn1Hour);
-
-        hevm.stopPrank();
-    }
 }

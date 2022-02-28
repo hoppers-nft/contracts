@@ -90,6 +90,7 @@ abstract contract Zone {
 
         flyLevelCapRatio = 3;
         LEVEL_GAUGE_KEY = "LEVEL_GAUGE_KEY";
+        lastUpdatedTime = block.timestamp;
     }
 
     modifier onlyOwner() {
@@ -526,24 +527,27 @@ abstract contract Zone {
             ) = _getHopperAndGauge(tokenId);
 
             uint256 _hopperShare = _calculateBaseShare(hopper);
-            uint256 currentGauge = prevHopperGauge +
+
+            uint256 flyGeneratedAndBurned = prevHopperGauge +
                 filledCapPerShare *
                 _hopperShare;
+
+            uint256 currentGauge = flyGeneratedAndBurned > gaugeLimit
+                ? gaugeLimit
+                : flyGeneratedAndBurned;
 
             // Update the HOPPER gauge
             HopperNFT(HOPPER).setData(
                 LEVEL_GAUGE_KEY,
                 tokenId,
-                currentGauge > gaugeLimit
-                    ? bytes32(gaugeLimit)
-                    : bytes32(currentGauge)
+                bytes32(currentGauge)
             );
 
             // Decrement user shares
             _baseShares -= _hopperShare;
 
             // Update the maximum FLY this user can generate
-            flyCapDecrease += (gaugeLimit - prevHopperGauge);
+            flyCapDecrease += (gaugeLimit - currentGauge);
 
             // Hopper Accounting
             //slither-disable-next-line costly-loop
@@ -551,17 +555,13 @@ abstract contract Zone {
             HopperNFT(HOPPER).transferFrom(address(this), msg.sender, tokenId);
         }
 
-        unchecked {
-            baseSharesBalance[msg.sender] = _baseShares;
-            userMaxFlyGeneration[msg.sender] -= flyCapDecrease;
-
-            totalBaseShare = totalBaseShare + _baseShares - prevBaseShares;
-        }
+        baseSharesBalance[msg.sender] = _baseShares;
+        totalBaseShare = totalBaseShare + _baseShares - prevBaseShares;
+        userMaxFlyGeneration[msg.sender] -= flyCapDecrease;
 
         _updateVeShares(_baseShares, 0, false);
     }
 
-    // todo test
     function claimable(address _account) external view returns (uint256) {
         uint256 cappedFly = userMaxFlyGeneration[_account];
 
