@@ -569,7 +569,7 @@ abstract contract Zone {
         gen += bonusGen;
         cappedFly = gen > cappedFly ? cappedFly : gen;
 
-        return rewards[msg.sender] + cappedFly;
+        return rewards[_account] + cappedFly;
     }
 
     function claim() external {
