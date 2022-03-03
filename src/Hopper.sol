@@ -117,7 +117,10 @@ contract HopperNFT is ERC721 {
 
         nameFee = _NAME_FEE;
         hopperMaxAttributeValue = 10;
-        preSaleOpenTime = type(uint256).max - 30 minutes;
+
+        unchecked {
+            preSaleOpenTime = type(uint256).max - 30 minutes;
+        }
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -189,8 +192,11 @@ contract HopperNFT is ERC721 {
 
     function addZones(address[] calldata _zones) external onlyOwner {
         uint256 length = _zones.length;
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < length; ) {
             zones[_zones[i]] = true;
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -256,8 +262,11 @@ contract HopperNFT is ERC721 {
         uint256 length = _keys.length;
         arrData = new bytes32[](length);
 
-        for (uint256 i; i < length; i++) {
+        for (uint256 i; i < length; ) {
             arrData[i] = unlabeledData[_keys[i]][_tokenId];
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -323,7 +332,7 @@ contract HopperNFT is ERC721 {
         if (newLength > 25) revert MaxLength25();
 
         // Checks it's only alphanumeric characters
-        for (uint256 i; i < newLength; i++) {
+        for (uint256 i; i < newLength; ) {
             bytes1 char = newName[i];
 
             if (
@@ -333,6 +342,9 @@ contract HopperNFT is ERC721 {
                 !(char == 0x2E) //.
             ) {
                 revert OnlyAlphanumeric();
+            }
+            unchecked {
+                ++i;
             }
         }
 
@@ -405,8 +417,12 @@ contract HopperNFT is ERC721 {
     {
         uint256 seed = enoughRandom();
 
-        uint256 _indexerLength = MAX_SUPPLY - preTotalHoppers;
-        for (uint256 i; i < numberOfMints; ++i) {
+        uint256 _indexerLength;
+        unchecked {
+            _indexerLength = MAX_SUPPLY - preTotalHoppers;
+        }
+
+        for (uint256 i; i < numberOfMints; ) {
             seed >>= i;
 
             // Find the next available tokenID
@@ -419,7 +435,10 @@ contract HopperNFT is ERC721 {
             }
 
             // Swap the picked tokenId for the last element
-            --_indexerLength;
+            unchecked {
+                --_indexerLength;
+            }
+
             uint256 last = indexer[_indexerLength];
             if (last == 0) {
                 // this _indexerLength value had not been picked before
@@ -436,6 +455,9 @@ contract HopperNFT is ERC721 {
                 hoppers[tokenId] = generate(seed, 5, 6);
             } else {
                 hoppers[tokenId] = generate(seed, 1, 10);
+            }
+            unchecked {
+                ++i;
             }
         }
     }
