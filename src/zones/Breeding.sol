@@ -93,11 +93,17 @@ contract Breeding {
 
         uint256 rand = enoughRandom() % 10_000;
 
-        uint256 chance = (90000 *
-            uint256(hopper.fertility) +
-            9000 *
-            3 *
-            uint256(hopper.level)) / 400;
+        uint256 chance;
+
+        unchecked {
+            chance =
+                (90000 *
+                    uint256(hopper.fertility) +
+                    9000 *
+                    3 *
+                    uint256(hopper.level)) /
+                400;
+        }
 
         if (rand < chance) TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
     }
@@ -111,7 +117,10 @@ contract Breeding {
         if (msg.sender != tx.origin) revert OnlyEOAAllowed();
 
         hopperOwners[_tokenId] = msg.sender;
-        hopperUnlockTime[_tokenId] = block.timestamp + 1 days;
+
+        unchecked {
+            hopperUnlockTime[_tokenId] = block.timestamp + 1 days;
+        }
 
         ERC721(HOPPER).transferFrom(msg.sender, address(this), _tokenId);
         Fly(FLY).burn(msg.sender, breedingCost);
