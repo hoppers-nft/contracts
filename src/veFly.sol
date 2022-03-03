@@ -129,11 +129,14 @@ contract veFly {
 
     function _forceUncastAllVotes() internal {
         uint256 length = arrValidBallots.length;
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < length;) {
             address ballot = arrValidBallots[i];
             delete hasUserVoted[ballot][msg.sender];
 
             Ballot(ballot).forceUnvote(msg.sender);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -203,8 +206,11 @@ contract veFly {
 
     function hasUserVotedAny(address account) external view returns (bool) {
         uint256 length = arrValidBallots.length;
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < length;) {
             if (hasUserVoted[arrValidBallots[i]][account]) return false;
+            unchecked {
+                ++i;
+            }
         }
         return true;
     }
