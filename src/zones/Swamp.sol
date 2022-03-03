@@ -27,6 +27,8 @@ contract Swamp is Zone {
         override
         returns (uint256)
     {
-        return uint256(hopper.vitality) * uint256(hopper.level);
+        unchecked {
+            return uint256(hopper.vitality) * uint256(hopper.level);
+        }
     }
 }

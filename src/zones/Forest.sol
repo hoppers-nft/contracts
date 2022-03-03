@@ -33,10 +33,12 @@ contract Forest is Zone {
         override
         returns (uint256)
     {
-        return
-            uint256(hopper.agility) *
-            uint256(hopper.vitality) *
-            uint256(hopper.intelligence) *
-            uint256(hopper.level);
+        unchecked {
+            return
+                uint256(hopper.agility) *
+                uint256(hopper.vitality) *
+                uint256(hopper.intelligence) *
+                uint256(hopper.level);
+        }
     }
 }
