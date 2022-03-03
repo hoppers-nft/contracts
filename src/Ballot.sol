@@ -39,7 +39,6 @@ contract Ballot {
     //////////////////////////////////////////////////////////////*/
 
     event UpdatedOwner(address indexed owner);
-    event Helper(uint256);
 
     /*///////////////////////////////////////////////////////////////
                               ERRORS
@@ -105,10 +104,13 @@ contract Ballot {
 
     function addZones(address[] calldata _zones) external onlyOwner {
         uint256 length = _zones.length;
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < length; ) {
             address zone = _zones[i];
-            arrZones.push(_zones[i]);
+            arrZones.push(zone);
             zones[zone] = true;
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -129,13 +131,13 @@ contract Ballot {
 
         uint256 length = arrZones.length;
 
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < length; ) {
             address zone = arrZones[i];
 
             uint256 zoneUserVotes = zonesUserVotes[zone][_user];
 
             if (zoneUserVotes > 0) {
-                zonesVotes[zone] -= zonesUserVotes[zone][_user];
+                zonesVotes[zone] -= zoneUserVotes;
                 delete userVeFlyUsed[_user];
                 delete zonesUserVotes[zone][_user];
 
@@ -143,6 +145,9 @@ contract Ballot {
                 // veFly(VEFLY).unsetHasVoted(user)
 
                 Zone(zone).forceUnvote(_user);
+            }
+            unchecked {
+                ++i;
             }
         }
     }
@@ -165,7 +170,9 @@ contract Ballot {
         if (vefly > 0) {
             userVeFlyUsed[user] = totalVeFly;
 
-            _updateVotes(user, zonesUserVotes[msg.sender][user] + vefly);
+            unchecked {
+                _updateVotes(user, zonesUserVotes[msg.sender][user] + vefly);
+            }
 
             // First time he has voted
             if (totalVeFly == vefly) {
@@ -176,15 +183,23 @@ contract Ballot {
 
     function unvote(address user, uint256 vefly) external onlyZone {
         // veFly Accounting
-        if (userVeFlyUsed[user] < vefly) revert NotEnoughVeFly();
-        uint256 remainingVeFly = userVeFlyUsed[user] - vefly;
+        uint256 _userVeFlyUsed = userVeFlyUsed[user];
+        if (_userVeFlyUsed < vefly) revert NotEnoughVeFly();
+
+        uint256 remainingVeFly;
+        unchecked {
+            remainingVeFly = _userVeFlyUsed - vefly;
+        }
+
         userVeFlyUsed[user] = remainingVeFly;
 
         uint256 zoneUserVotes = zonesUserVotes[msg.sender][user];
 
         if (zoneUserVotes < vefly) revert NotEnoughVeFly();
 
-        _updateVotes(user, zoneUserVotes - vefly);
+        unchecked {
+            _updateVotes(user, zoneUserVotes - vefly);
+        }
 
         if (remainingVeFly == 0) veFly(VEFLY).unsetHasVoted(user);
     }
@@ -209,17 +224,23 @@ contract Ballot {
         address[] memory _arrZones = arrZones;
         uint256 length = _arrZones.length;
 
-        for (uint256 i; i < length; ++i) {
-            totalVotes += zonesVotes[_arrZones[i]];
+        for (uint256 i; i < length; ) {
+            unchecked {
+                totalVotes += zonesVotes[_arrZones[i]];
+                ++i;
+            }
         }
 
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < length; ) {
             if (totalVotes == 0) {
                 Zone(_arrZones[i]).setBonusEmissionRate(0);
             } else {
                 Zone(_arrZones[i]).setBonusEmissionRate(
                     (bonusEmissionRate * zonesVotes[_arrZones[i]]) / totalVotes
                 );
+            }
+            unchecked {
+                ++i;
             }
         }
 
