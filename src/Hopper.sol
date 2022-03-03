@@ -318,7 +318,7 @@ contract HopperNFT is ERC721 {
         unchecked {
             ++(hoppers[tokenId].level);
         }
-        emit LevelUp(hoppers[tokenId].level);
+        emit LevelUp(tokenId);
     }
 
     function changeHopperName(uint256 tokenId, string calldata _newName)
