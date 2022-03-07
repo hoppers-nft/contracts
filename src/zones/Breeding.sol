@@ -37,6 +37,7 @@ contract Breeding {
     //////////////////////////////////////////////////////////////*/
 
     event UpdatedOwner(address indexed owner);
+    event Roll(uint256 rand, uint256 chance);
 
     /*///////////////////////////////////////////////////////////////
                            CONTRACT MANAGEMENT
@@ -91,7 +92,7 @@ contract Breeding {
     function _roll(uint256 _tokenId) internal {
         HopperNFT.Hopper memory hopper = HopperNFT(HOPPER).getHopper(_tokenId);
 
-        uint256 rand = enoughRandom() % 10_000;
+        uint256 rand = enoughRandom();
 
         uint256 chance;
 
@@ -105,7 +106,8 @@ contract Breeding {
                 400;
         }
 
-        if (rand < chance) TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
+        emit Roll(rand % 10_000, chance);
+        if ((rand % 10_000) < chance) TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
     }
 
     /*///////////////////////////////////////////////////////////////
