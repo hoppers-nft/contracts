@@ -154,7 +154,8 @@ contract Ballot {
 
     function _updateVotes(address user, uint256 vefly) internal {
         zonesVotes[msg.sender] =
-            zonesVotes[msg.sender] + vefly-
+            zonesVotes[msg.sender] +
+            vefly -
             zonesUserVotes[msg.sender][user];
 
         zonesUserVotes[msg.sender][user] = vefly;

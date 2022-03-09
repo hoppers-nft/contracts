@@ -107,7 +107,8 @@ contract Breeding {
         }
 
         emit Roll(rand % 10_000, chance);
-        if ((rand % 10_000) < chance) TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
+        if ((rand % 10_000) < chance)
+            TadpoleNFT(TADPOLE).mint(msg.sender, rand >> 8);
     }
 
     /*///////////////////////////////////////////////////////////////
