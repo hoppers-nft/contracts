@@ -453,7 +453,7 @@ abstract contract Zone {
 
         uint256 flyCapIncrease;
 
-        for (uint256 i; i < numTokens; ++i) {
+        for (uint256 i; i < numTokens; ) {
             uint256 tokenId = tokenIds[i];
 
             // Resets this hopper generation tracking
@@ -480,6 +480,10 @@ abstract contract Zone {
             // Hopper Accounting
             hopperOwners[tokenId] = msg.sender;
             HopperNFT(HOPPER).transferFrom(msg.sender, address(this), tokenId);
+
+            unchecked {
+                ++i;
+            }
         }
 
         baseSharesBalance[msg.sender] = _baseShares;
@@ -504,7 +508,7 @@ abstract contract Zone {
 
         uint256 flyCapDecrease;
 
-        for (uint256 i; i < numTokens; ++i) {
+        for (uint256 i; i < numTokens; ) {
             uint256 tokenId = tokenIds[i];
 
             // Can the user unstake this hopper
@@ -525,6 +529,10 @@ abstract contract Zone {
             //slither-disable-next-line costly-loop
             delete hopperOwners[tokenId];
             HopperNFT(HOPPER).transferFrom(address(this), msg.sender, tokenId);
+
+            unchecked {
+                ++i;
+            }
         }
 
         baseSharesBalance[msg.sender] = _baseShares;
@@ -538,7 +546,7 @@ abstract contract Zone {
         if (!emergency) revert Unauthorized();
 
         uint256 numTokens = tokenIds.length;
-        for (uint256 i; i < numTokens; ++i) {
+        for (uint256 i; i < numTokens; ) {
             uint256 tokenId = tokenIds[i];
 
             // Can the user unstake this hopper
@@ -547,6 +555,10 @@ abstract contract Zone {
             //slither-disable-next-line costly-loop
             delete hopperOwners[tokenId];
             HopperNFT(HOPPER).transferFrom(address(this), user, tokenId);
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
