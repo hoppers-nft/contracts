@@ -154,7 +154,7 @@ contract veFly {
 
     function deposit(uint256 amount) external {
         //slither-disable-next-line incorrect-equality
-        if(genDetails.maxRatio == 0) revert Unauthorized(); 
+        if (genDetails.maxRatio == 0) revert Unauthorized();
 
         // Reset veFly calculations
         veFlyBalance[msg.sender] = balanceOf(msg.sender);
