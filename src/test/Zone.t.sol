@@ -311,6 +311,135 @@ contract ZoneTest is BaseTest {
         assertEq(FLY.balanceOf(user2), beforeBalance + 4.5 ether);
     }
 
+    function testVeFLYInfluenceWithStakedLevelUp() public {
+        // Setting up
+        uint256[] memory tokenIds1 = new uint256[](1);
+        uint256[] memory tokenIds2 = new uint256[](1);
+        uint256[] memory tokenIds3 = new uint256[](2);
+        hevm.prank(user1);
+        HOPPER.addHopper(0);
+        hevm.prank(user1);
+        HOPPER.addHopper(1);
+        tokenIds2[0] = 1;
+
+        hevm.prank(user2);
+        HOPPER.addHopper(2);
+        hevm.prank(user2);
+        HOPPER.addHopper(3);
+        tokenIds3[0] = 2;
+        tokenIds3[1] = 3;
+
+        hevm.prank(owner);
+        POND.setEmissionRate(2 ether);
+        hevm.prank(owner);
+        POND.setBonusEmissionRate(2 ether);
+
+        FLY.mockMint(user1, 3 ether);
+        FLY.mockMint(user2, 3 ether);
+
+        hevm.prank(user1);
+        FLY.approve(address(VEFLY), 1000 ether);
+        hevm.prank(user1);
+        VEFLY.deposit(1 ether);
+
+        hevm.prank(user2);
+        FLY.approve(address(VEFLY), 1000 ether);
+        hevm.prank(user2);
+        VEFLY.deposit(1 ether);
+        hevm.prank(owner);
+        VEFLY.setGenerationDetails(100, 1000000, 1);
+
+        // Start
+
+        hevm.prank(user1);
+        POND.enter(tokenIds1);
+
+        hevm.prank(user1);
+        POND.enter(tokenIds2);
+
+        hevm.prank(user2);
+        HOPPER.setApprovalForAll(address(POND), true);
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+
+        hevm.warp(1);
+        hevm.prank(user2);
+        POND.vote(1 ether, false);
+        hevm.warp(2);
+        hevm.warp(4);
+
+        hevm.prank(user2);
+        POND.claim();
+
+        hevm.warp(5);
+        POND.claim();
+
+        hevm.prank(user2);
+        POND.exit(tokenIds3);
+
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+
+        hevm.warp(6);
+        POND.claim();
+
+        hevm.warp(8);
+        hevm.prank(user2);
+        POND.exit(tokenIds3);
+        POND.claim();
+
+        hevm.warp(9);
+
+        tokenIds1[0] = 2;
+        hevm.prank(user2);
+        POND.enter(tokenIds1);
+        ////////////
+        //// LEVEL UP
+        ////////////
+        hevm.prank(user2);
+        POND.levelUp(2, false);
+
+        uint256 beforeBalance = FLY.balanceOf(user2);
+        hevm.warp(10);
+        hevm.warp(11);
+        hevm.prank(user2);
+        VEFLY.withdraw(1);
+
+        assertEq(VEFLY.balanceOf(user2), 0);
+        assertEq(POND.veFlyBalance(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
+
+        hevm.warp(12);
+        assertEq(POND.claimable(user2), 4.5 ether); // cap hit
+
+        // votes have to be cast again
+        assertGt(VEFLY.balanceOf(user2), 0);
+        assertEq(POND.veFlyBalance(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
+
+        hevm.warp(13);
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(FLY.balanceOf(user2), beforeBalance + 1 + 4.5 ether);
+        assertEq(POND.claimable(user2), 0); // cap hit
+
+        hevm.prank(user2);
+        POND.exit(tokenIds1);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        hevm.prank(user2);
+        POND.claim();
+
+        hevm.warp(14);
+        hevm.prank(user2);
+        POND.claim();
+        assertEq(POND.claimable(user2), 0);
+        assertEq(POND.veSharesBalance(user2), 0);
+        assertEq(POND.totalVeShare(), 0);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+    }
+
     function testLevelUpCosts() public {
         assertEq(POND.getLevelUpCost(2 - 1), 1.0 ether);
         assertEq(POND.getLevelUpCost(3 - 1), 1.5 ether);

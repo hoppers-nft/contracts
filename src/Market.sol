@@ -119,7 +119,7 @@ contract Market {
 
         uint256 len = listingIDs.length;
         //slither-disable-next-line uninitialized-local
-        for (uint256 i; i < len; ++i) {
+        for (uint256 i; i < len; ) {
             uint256 id = listingIDs[i];
             Listing memory listing = listings[id];
             if (listing.active) {
@@ -129,6 +129,9 @@ contract Market {
                     listing.owner,
                     listing.tokenId
                 );
+            }
+            unchecked {
+                ++i;
             }
         }
     }
@@ -208,7 +211,9 @@ contract Market {
 
         if (!listing.active) revert InactiveListing();
         if (msg.value < listing.price) revert InsufficientValue();
-        if (msg.sender == listing.owner) revert Unauthorized();
+
+        address listingOwner = listing.owner;
+        if (msg.sender == listingOwner) revert Unauthorized();
 
         delete listings[id];
 
@@ -220,7 +225,7 @@ contract Market {
             listing.tokenId
         );
 
-        listing.owner.safeTransferETH(
+        listingOwner.safeTransferETH(
             listing.price - ((listing.price * marketFee) / 100)
         );
     }
@@ -238,8 +243,9 @@ contract Market {
 
             Listing[] memory _listings = new Listing[](length);
             //slither-disable-next-line uninitialized-local
-            for (uint256 i; i < length; ++i) {
+            for (uint256 i; i < length; ) {
                 _listings[i] = listings[from + i];
+                ++i;
             }
             return _listings;
         }
