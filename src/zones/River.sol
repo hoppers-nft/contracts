@@ -19,9 +19,9 @@ contract River is Zone {
         returns (bool)
     {
         if (
-            hopper.strength != 5 ||
-            hopper.intelligence != 5 ||
-            hopper.level != 10
+            hopper.strength < 5 ||
+            hopper.intelligence < 5 ||
+            hopper.level < 10
         ) return false;
         return true;
     }

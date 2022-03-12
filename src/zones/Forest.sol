@@ -19,10 +19,10 @@ contract Forest is Zone {
         returns (bool)
     {
         if (
-            hopper.agility != 5 ||
-            hopper.vitality != 5 ||
-            hopper.intelligence != 5 ||
-            hopper.level != 15
+            hopper.agility < 5 ||
+            hopper.vitality < 5 ||
+            hopper.intelligence < 5 ||
+            hopper.level < 15
         ) return false;
         return true;
     }

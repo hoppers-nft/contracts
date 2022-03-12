@@ -19,11 +19,11 @@ contract Lake is Zone {
         returns (bool)
     {
         if (
-            hopper.agility != 5 ||
-            hopper.vitality != 5 ||
-            hopper.intelligence != 5 ||
-            hopper.strength != 5 ||
-            hopper.level != 20
+            hopper.agility < 5 ||
+            hopper.vitality < 5 ||
+            hopper.intelligence < 5 ||
+            hopper.strength < 5 ||
+            hopper.level < 20
         ) return false;
         return true;
     }
