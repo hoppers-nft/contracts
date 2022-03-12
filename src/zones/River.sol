@@ -18,11 +18,8 @@ contract River is Zone {
         override
         returns (bool)
     {
-        if (
-            hopper.strength < 5 ||
-            hopper.intelligence < 5 ||
-            hopper.level < 10
-        ) return false;
+        if (hopper.strength < 5 || hopper.intelligence < 5 || hopper.level < 10)
+            return false;
         return true;
     }
 
