@@ -149,7 +149,7 @@ abstract contract Zone {
         uint256 _totalUserBonusShares
     ) public view returns (uint256, uint256) {
         // userMaxFlyGeneration gets updated at _updateAccountBaseReward which happens before this is called
-        uint256 cappedFly = userMaxFlyGeneration[account];
+        uint256 cappedFly = userMaxFlyGeneration[account] / 1e12;
         uint256 generatedFly = ((_totalUserBonusShares *
             (bonusRewardPerShare() - userBonusRewardPerSharePaid[account])) /
             1e18);
@@ -165,7 +165,7 @@ abstract contract Zone {
         view
         returns (uint256, uint256)
     {
-        uint256 cappedFly = userMaxFlyGeneration[account];
+        uint256 cappedFly = userMaxFlyGeneration[account] / 1e12;
         uint256 generatedFly = ((_totalUserBaseShares *
             (baseRewardPerShare() - userRewardPerSharePaid[account])) / 1e18);
 
@@ -191,14 +191,14 @@ abstract contract Zone {
 
             // Makes calculations easier, since we don't need to add another
             //    state keeping track of generatedPerVeshare
-            generatedPerShareStored[_account] += (generatedFly /
+            generatedPerShareStored[_account] += ((generatedFly * 1e12) /
                 baseSharesBalance[_account]);
         } else {
             (cappedFly, generatedFly) = getUserGeneratedFly(
                 _account,
                 _totalAccountKindShares
             );
-            generatedPerShareStored[_account] += (generatedFly /
+            generatedPerShareStored[_account] += ((generatedFly * 1e12) /
                 _totalAccountKindShares);
         }
         return cappedFly;
@@ -250,7 +250,7 @@ abstract contract Zone {
             unchecked {
                 rewards[_account] += cappedFly;
             }
-            userMaxFlyGeneration[_account] -= cappedFly;
+            userMaxFlyGeneration[_account] -= cappedFly * 1e12;
         }
 
         userRewardPerSharePaid[_account] = rewardPerShareStored;
@@ -294,7 +294,7 @@ abstract contract Zone {
             unchecked {
                 rewards[_account] += cappedFly;
             }
-            userMaxFlyGeneration[_account] -= cappedFly;
+            userMaxFlyGeneration[_account] -= cappedFly * 1e12;
         }
         userBonusRewardPerSharePaid[_account] = bonusRewardPerShareStored;
     }
@@ -427,7 +427,8 @@ abstract contract Zone {
             }
 
             // Update the new cap
-            userMaxFlyGeneration[msg.sender] += (_getGaugeLimit(hopper.level) -
+            userMaxFlyGeneration[msg.sender] += (_getGaugeLimit(hopper.level) *
+                1e12 -
                 remainingGauge);
 
             // Make sure getLevelUpCost is passed its current level
@@ -574,7 +575,7 @@ abstract contract Zone {
     //////////////////////////////////////////////////////////////*/
 
     function claimable(address _account) external view returns (uint256) {
-        uint256 cappedFly = userMaxFlyGeneration[_account];
+        uint256 cappedFly = userMaxFlyGeneration[_account] / 1e12;
 
         (uint256 gen, ) = getUserGeneratedFly(
             _account,
@@ -678,6 +679,7 @@ abstract contract Zone {
                     HELPER GAUGE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    // _remaining is scaled with 1e12
     function _updateHopperGaugeFill(uint256 tokenId)
         internal
         returns (uint256 _hopperShare, uint256 _remaining)
@@ -710,7 +712,7 @@ abstract contract Zone {
         HopperNFT(HOPPER).setData(
             LEVEL_GAUGE_KEY,
             tokenId,
-            bytes32(currentGauge)
+            bytes32(currentGauge / 1e12)
         );
 
         return (_hopperShare, (gaugeLimit - currentGauge));
@@ -739,19 +741,24 @@ abstract contract Zone {
             HOPPER
         ).getHopperWithData(arrData, _tokenId);
 
-        return (hopper, uint256(_data[0]), _getGaugeLimit(hopper.level));
+        return (
+            hopper,
+            uint256(_data[0]) * 1e12,
+            _getGaugeLimit(hopper.level) * 1e12
+        );
     }
 
     function getHopperAndGauge(uint256 tokenId)
         external
         view
         returns (
-            HopperNFT.Hopper memory,
-            uint256,
-            uint256
+            HopperNFT.Hopper memory hopper,
+            uint256 hopperGauge,
+            uint256 gaugeLimit
         )
     {
-        return _getHopperAndGauge(tokenId);
+        (hopper, hopperGauge, gaugeLimit) = _getHopperAndGauge(tokenId);
+        return (hopper, hopperGauge / 1e12, gaugeLimit / 1e12);
     }
 
     /*///////////////////////////////////////////////////////////////

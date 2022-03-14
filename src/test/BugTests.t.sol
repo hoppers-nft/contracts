@@ -33,7 +33,6 @@ contract mockZone is Zone {
 }
 
 contract BugTest is BaseTest {
-
     function testTokenCapPrecisionLoss(uint256 x) public {
         hevm.assume(x < 36525 days);
         // Setting up
@@ -69,7 +68,6 @@ contract BugTest is BaseTest {
         hevm.prank(user2);
         POND.vote(1 ether, false);
         hevm.warp(2);
-
 
         hevm.prank(user2);
         POND.claim();
