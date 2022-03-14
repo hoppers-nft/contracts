@@ -76,6 +76,4 @@ contract BugTest is BaseTest {
         hevm.prank(user2);
         POND.exit(tokenIds3);
     }
-
-    
 }
