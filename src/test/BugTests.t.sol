@@ -48,7 +48,7 @@ contract BugTest is BaseTest {
         tokenIds3[0] = 2;
         tokenIds3[1] = 3;
 
-        FLY.mockMint(user2, 3 ether);
+        FLY.mockMint(user2, 3000000 ether);
 
         hevm.prank(user2);
         FLY.approve(address(VEFLY), 1000 ether);
@@ -75,5 +75,15 @@ contract BugTest is BaseTest {
         hevm.warp(x);
         hevm.prank(user2);
         POND.exit(tokenIds3);
+        hevm.prank(user2);
+        POND.enter(tokenIds3);
+        hevm.warp(x*2);
+        POND.claim();
+        hevm.warp(x*3);
+        hevm.prank(user2);
+        POND.levelUp(2, false);
+        hevm.warp(x*4);
+        hevm.prank(user2);
+        POND.levelUp(3, true);
     }
 }
