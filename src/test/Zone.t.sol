@@ -539,7 +539,7 @@ contract ZoneTest is BaseTest {
         assertEq(POND.getLevelUpCost(97 - 1), 94.0 ether);
         assertEq(POND.getLevelUpCost(98 - 1), 96.0 ether);
         assertEq(POND.getLevelUpCost(99 - 1), 97.0 ether);
-        assertEq(POND.getLevelUpCost(100 - 1), 98.0 ether);
+        assertEq(POND.getLevelUpCost(100 - 1), 598.0 ether);
         assertEq(POND.getLevelUpCost(101 - 1), type(uint256).max);
     }
 

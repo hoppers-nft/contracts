@@ -355,10 +355,12 @@ abstract contract Zone {
         unchecked {
             ++level;
 
+            if (level == 100) {
+                return 598 ether;
+            }
             // x**(1.43522) / 7.5 for x >= 21 where x is next level
             // packing costs in 7 bits
-
-            if (level > 1 && level < 21) {
+            else if (level > 1 && level < 21) {
                 return (level * 1e18) >> 1;
             } else if (level >= 21 && level < 51) {
                 return
