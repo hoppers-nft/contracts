@@ -114,7 +114,7 @@ contract ZoneTest is BaseTest {
         hevm.prank(user1);
         POND.enter(tokenIds1);
         assertEq(POND.baseSharesBalance(user1), 2 * 2);
-        assertEq(POND.userMaxFlyGeneration(user1), 3 ether);
+        assertEq(POND.userMaxFlyGeneration(user1) / 1e12, 3 ether);
         assertEq(POND.totalBaseShare(), 2 * 2);
         assertEq(POND.hopperOwners(0), user1);
 
@@ -122,7 +122,7 @@ contract ZoneTest is BaseTest {
         POND.enter(tokenIds2);
         assertEq(POND.totalBaseShare(), 2 * 2 * 2);
         assertEq(POND.baseSharesBalance(user1), 2 * 2 * 2);
-        assertEq(POND.userMaxFlyGeneration(user1), 6 ether);
+        assertEq(POND.userMaxFlyGeneration(user1) / 1e12, 6 ether);
 
         hevm.prank(user2);
         HOPPER.setApprovalForAll(address(POND), true);
@@ -147,13 +147,13 @@ contract ZoneTest is BaseTest {
         hevm.prank(user2);
         POND.claim();
         assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
-        assertEq(POND.userMaxFlyGeneration(user1), 0 ether);
-        assertEq(POND.userMaxFlyGeneration(user2), 0 ether);
+        assertEq(POND.userMaxFlyGeneration(user1) / 1e12, 0 ether);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0 ether);
 
         hevm.prank(user2);
         POND.exit(tokenIds3);
         assertEq(POND.baseSharesBalance(user2), 0);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
         assertEq(POND.totalBaseShare(), 2 * 2 * 2);
         (
             HopperNFT.Hopper memory hopper,
@@ -168,7 +168,7 @@ contract ZoneTest is BaseTest {
         assertEq(POND.hopperOwners(2), user2);
         assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
         assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
     }
 
     function testVeFLYInfluence() public {
@@ -245,7 +245,7 @@ contract ZoneTest is BaseTest {
         POND.exit(tokenIds3);
         assertEq(POND.veSharesBalance(user2), 0);
         assertEq(POND.totalVeShare(), 0);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
 
         hevm.prank(user2);
         POND.enter(tokenIds3);
@@ -253,7 +253,7 @@ contract ZoneTest is BaseTest {
         hevm.warp(6);
         assertEq(POND.baseSharesBalance(user2), 2 * 2 * 2);
         assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 2 * 2);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
         assertEq(POND.veSharesBalance(user2), 2828427124);
         assertEq(POND.totalVeShare(), 2828427124);
         POND.claim();
@@ -269,7 +269,7 @@ contract ZoneTest is BaseTest {
         assertEq(POND.claimable(user2), 0);
         assertEq(POND.veSharesBalance(user2), 0);
         assertEq(POND.totalVeShare(), 0);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
         assertEq(FLY.balanceOf(user2), 2 ether + 6 ether);
 
         ////////////
@@ -286,7 +286,7 @@ contract ZoneTest is BaseTest {
         assertEq(POND.veSharesBalance(user2), 2449489742);
         assertEq(POND.totalVeShare(), 2449489742);
         assertEq(POND.totalBaseShare(), 2 * 2 * 2 + 2 * 3);
-        assertEq(POND.userMaxFlyGeneration(user2), 4.5 ether); // level 3
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 4.5 ether); // level 3
 
         hevm.warp(10);
         assertEq(POND.claimable(user2), 2857142857142857141); // 2 ether(bonus) + (6/14) * 2 ether(base)
@@ -295,7 +295,7 @@ contract ZoneTest is BaseTest {
 
         hevm.prank(user2);
         POND.exit(tokenIds1);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
         hevm.prank(user2);
         POND.claim();
         assertEq(POND.claimable(user2), 0);
@@ -307,7 +307,7 @@ contract ZoneTest is BaseTest {
         assertEq(POND.claimable(user2), 0);
         assertEq(POND.veSharesBalance(user2), 0);
         assertEq(POND.totalVeShare(), 0);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
         assertEq(FLY.balanceOf(user2), beforeBalance + 4.5 ether);
     }
 
@@ -427,7 +427,7 @@ contract ZoneTest is BaseTest {
 
         hevm.prank(user2);
         POND.exit(tokenIds1);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
         hevm.prank(user2);
         POND.claim();
 
@@ -437,7 +437,7 @@ contract ZoneTest is BaseTest {
         assertEq(POND.claimable(user2), 0);
         assertEq(POND.veSharesBalance(user2), 0);
         assertEq(POND.totalVeShare(), 0);
-        assertEq(POND.userMaxFlyGeneration(user2), 0);
+        assertEq(POND.userMaxFlyGeneration(user2) / 1e12, 0);
     }
 
     function testLevelUpCosts() public {
