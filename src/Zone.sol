@@ -597,7 +597,7 @@ abstract contract Zone {
 
         for (uint256 i; i < length; ) {
             if (remaining[i] != 0) {
-                if (leftover >= remaining[i]) {
+                if (leftover > remaining[i]) {
                     HopperNFT(HOPPER).setData(
                         LEVEL_GAUGE_KEY,
                         tokenIds[i],
@@ -611,6 +611,7 @@ abstract contract Zone {
                         bytes32((limit[i] - remaining[i] + leftover) / 1e12)
                     );
                     leftover = 0;
+                    break;
                 }
             }
 
