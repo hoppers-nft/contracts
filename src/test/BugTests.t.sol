@@ -193,4 +193,41 @@ contract BugTest is BaseTest {
         emit log_uint(POND.userMaxFlyGeneration(user2));
         // assert(false);
     }
+
+    function testLevelUpBoostfill() public {
+        hevm.prank(owner);
+        POND.setEmissionRate(0.545234123 ether);
+
+        hevm.prank(owner);
+        POND.setBonusEmissionRate(0.654645234123 ether);
+
+        hevm.startPrank(user2, user2);
+        HOPPER.setApprovalForAll(address(POND), true);
+
+        HOPPER.addHopperLvl1(1);
+        HOPPER.addHopperLvl1(2);
+
+        uint256[] memory token1 = new uint256[](1);
+        uint256[] memory token2 = new uint256[](1);
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 1;
+        token1[0] = 1;
+        tokenIds[1] = 2;
+        token2[0] = 2;
+
+        FLY.mockMint(user2, 3000000 ether);
+        POND.enter(token1);
+        hevm.warp(4);
+
+        POND.enter(token2);
+        hevm.warp(5);
+        POND.claimable(user2);
+        POND.levelUp(2, false);
+        POND.exit(token2);
+        assertEq(POND.userMaxFlyGeneration(user2), 0);
+
+        assertEq(bytes32(0),HopperNFT(HOPPER).getData("LEVEL_GAUGE_KEY", 2));
+        hevm.stopPrank();
+    }
+    
 }

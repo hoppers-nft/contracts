@@ -434,10 +434,16 @@ abstract contract Zone {
                 _updateVeShares(newBaseShare, 0, false);
             }
 
+            uint256 boostFill = 0;
+            uint256 userMax = userMaxFlyGeneration[msg.sender];
+            if (userMax < remainingGauge) {
+                boostFill = remainingGauge - userMax;
+            }
+
             // Update the new cap
             userMaxFlyGeneration[msg.sender] += (_getGaugeLimit(hopper.level) *
                 1e12 -
-                remainingGauge);
+                (remainingGauge - boostFill));
 
             // Make sure getLevelUpCost is passed its current level
             unchecked {
