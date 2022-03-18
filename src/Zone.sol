@@ -191,15 +191,21 @@ abstract contract Zone {
 
             // Makes calculations easier, since we don't need to add another
             //    state keeping track of generatedPerVeshare
-            generatedPerShareStored[_account] += ((generatedFly * 1e12) /
-                baseSharesBalance[_account]);
+            generatedPerShareStored[_account] += FixedPointMathLib.mulDivUp(
+                generatedFly,
+                1e12,
+                baseSharesBalance[_account]
+            );
         } else {
             (cappedFly, generatedFly) = getUserGeneratedFly(
                 _account,
                 _totalAccountKindShares
             );
-            generatedPerShareStored[_account] += ((generatedFly * 1e12) /
-                _totalAccountKindShares);
+            generatedPerShareStored[_account] += FixedPointMathLib.mulDivUp(
+                generatedFly,
+                1e12,
+                _totalAccountKindShares
+            );
         }
         return cappedFly;
     }
@@ -355,10 +361,12 @@ abstract contract Zone {
         unchecked {
             ++level;
 
+            if (level == 100) {
+                return 598 ether;
+            }
             // x**(1.43522) / 7.5 for x >= 21 where x is next level
             // packing costs in 7 bits
-
-            if (level > 1 && level < 21) {
+            else if (level > 1 && level < 21) {
                 return (level * 1e18) >> 1;
             } else if (level >= 21 && level < 51) {
                 return
@@ -404,7 +412,7 @@ abstract contract Zone {
             }
 
             // Fill hopper gauge so we can find whats the remaining
-            (, uint256 remainingGauge) = _updateHopperGaugeFill(tokenId);
+            (, uint256 remainingGauge, ) = _updateHopperGaugeFill(tokenId);
 
             // Calculate the baseShare that we need to subtract from the user and total
             uint256 prevHopperShare = _calculateBaseShare(hopper);
@@ -426,10 +434,16 @@ abstract contract Zone {
                 _updateVeShares(newBaseShare, 0, false);
             }
 
+            uint256 boostFill = 0;
+            uint256 userMax = userMaxFlyGeneration[msg.sender];
+            if (userMax < remainingGauge) {
+                boostFill = remainingGauge - userMax;
+            }
+
             // Update the new cap
             userMaxFlyGeneration[msg.sender] += (_getGaugeLimit(hopper.level) *
                 1e12 -
-                remainingGauge);
+                (remainingGauge - boostFill));
 
             // Make sure getLevelUpCost is passed its current level
             unchecked {
@@ -460,13 +474,12 @@ abstract contract Zone {
 
         uint256 flyCapIncrease;
 
+        uint256 _generatedPerShareStored = generatedPerShareStored[msg.sender];
         for (uint256 i; i < numTokens; ) {
             uint256 tokenId = tokenIds[i];
 
             // Resets this hopper generation tracking
-            tokenCapFilledPerShare[tokenId] = generatedPerShareStored[
-                msg.sender
-            ];
+            tokenCapFilledPerShare[tokenId] = _generatedPerShareStored;
 
             (
                 HopperNFT.Hopper memory hopper,
@@ -514,6 +527,10 @@ abstract contract Zone {
         uint256 numTokens = tokenIds.length;
 
         uint256 flyCapDecrease;
+        uint256 userMax = userMaxFlyGeneration[msg.sender];
+
+        uint256[] memory rTokensRemaining = new uint256[](tokenIds.length);
+        uint256[] memory rTokensLimit = new uint256[](tokenIds.length);
 
         for (uint256 i; i < numTokens; ) {
             uint256 tokenId = tokenIds[i];
@@ -523,7 +540,8 @@ abstract contract Zone {
 
             (
                 uint256 _hopperShare,
-                uint256 _remainingGauge
+                uint256 _remainingGauge,
+                uint256 _gaugeLimit
             ) = _updateHopperGaugeFill(tokenId);
 
             // Decrement user shares
@@ -531,6 +549,10 @@ abstract contract Zone {
 
             // Update the maximum FLY this user can generate
             flyCapDecrease += _remainingGauge;
+
+            // To fill gauge later
+            rTokensRemaining[i] = _remainingGauge;
+            rTokensLimit[i] = _gaugeLimit;
 
             // Hopper Accounting
             //slither-disable-next-line costly-loop
@@ -543,11 +565,60 @@ abstract contract Zone {
         }
 
         baseSharesBalance[msg.sender] = _baseShares;
-        userMaxFlyGeneration[msg.sender] -= flyCapDecrease;
+
+        if (userMax < flyCapDecrease) {
+            // Being boosted, we need to go back and refill uncapped tokens
+            refill(
+                tokenIds,
+                rTokensRemaining,
+                rTokensLimit,
+                flyCapDecrease - userMax
+            );
+            delete userMaxFlyGeneration[msg.sender];
+        } else if (_baseShares == 0) {
+            delete userMaxFlyGeneration[msg.sender];
+        } else {
+            userMaxFlyGeneration[msg.sender] -= flyCapDecrease;
+        }
+
         unchecked {
             totalBaseShare = totalBaseShare + _baseShares - prevBaseShares;
         }
         _updateVeShares(_baseShares, 0, false);
+    }
+
+    function refill(
+        uint256[] calldata tokenIds,
+        uint256[] memory remaining,
+        uint256[] memory limit,
+        uint256 leftover
+    ) internal {
+        uint256 length = tokenIds.length;
+
+        for (uint256 i; i < length; ) {
+            if (remaining[i] != 0) {
+                if (leftover > remaining[i]) {
+                    HopperNFT(HOPPER).setData(
+                        LEVEL_GAUGE_KEY,
+                        tokenIds[i],
+                        bytes32(limit[i] / 1e12)
+                    );
+                    leftover -= remaining[i];
+                } else {
+                    HopperNFT(HOPPER).setData(
+                        LEVEL_GAUGE_KEY,
+                        tokenIds[i],
+                        bytes32((limit[i] - remaining[i] + leftover) / 1e12)
+                    );
+                    leftover = 0;
+                    break;
+                }
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     function emergencyExit(uint256[] calldata tokenIds, address user) external {
@@ -682,7 +753,11 @@ abstract contract Zone {
     // _remaining is scaled with 1e12
     function _updateHopperGaugeFill(uint256 tokenId)
         internal
-        returns (uint256 _hopperShare, uint256 _remaining)
+        returns (
+            uint256 _hopperShare,
+            uint256 _remaining,
+            uint256
+        )
     {
         uint256 _generatedPerShareStored = generatedPerShareStored[msg.sender];
 
@@ -715,7 +790,7 @@ abstract contract Zone {
             bytes32(currentGauge / 1e12)
         );
 
-        return (_hopperShare, (gaugeLimit - currentGauge));
+        return (_hopperShare, (gaugeLimit - currentGauge), gaugeLimit);
     }
 
     function _getGaugeLimit(uint256 level) internal view returns (uint256) {

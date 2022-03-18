@@ -53,6 +53,19 @@ contract mockHopper is HopperNFT {
             rebirths: 0
         });
     }
+
+    function addHopperLvl1(uint256 tokenId) public {
+        _mint(msg.sender, tokenId);
+        hoppers[tokenId] = Hopper({
+            strength: 2,
+            agility: 2,
+            vitality: 2,
+            intelligence: 2,
+            fertility: 2,
+            level: 1,
+            rebirths: 0
+        });
+    }
 }
 
 contract testFly is Fly {

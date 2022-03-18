@@ -634,7 +634,7 @@ contract HopperNFT is ERC721 {
 
     function supportsInterface(bytes4 interfaceId)
         public
-        pure
+        view
         override(ERC721)
         returns (bool)
     {
