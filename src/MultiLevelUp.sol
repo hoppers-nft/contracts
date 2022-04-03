@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
-import {ERC721} from "@solmate/tokens/ERC721.sol";
 import {HopperNFT} from "./Hopper.sol";
 import {Fly} from "./Fly.sol";
 
@@ -46,18 +44,17 @@ contract MultilevelUp {
         emit UpdatedOwner(_owner);
     }
 
-    function calculateMultiLevelUpCost(uint currentLevel, uint targetLevel) public view returns (uint) {
+    function calculateMultiLevelUpCost(uint currentLevel, uint targetLevel) public pure returns (uint) {
         if(targetLevel > 100) { revert LevelOutofBounds(); }
         return (getCumulativeLevelUpCost(targetLevel) - getCumulativeLevelUpCost(currentLevel)) * 10**17; 
     }
-
 
 
     function getValueFromBitMap(uint256 x, uint position) internal pure returns (uint) {
         return (((x >> ((position) * 16)) & type(uint16).max));
     }
 
-    function getCumulativeLevelUpCost(uint level) internal view returns  (uint) {
+    function getCumulativeLevelUpCost(uint level) internal pure returns  (uint) {
 
         uint category = level / 16;
         if (category == 0){
