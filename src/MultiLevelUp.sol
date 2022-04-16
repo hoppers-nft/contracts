@@ -90,7 +90,7 @@ contract MultilevelUp {
         if (IHOPPER.ownerOf(tokenId) != msg.sender) {
             revert WrongTokenID();
         }
-        if(levels < 1) {revert LevelOutofBounds(); } // handles the currentLevel + 0 edge case where a user can get his level up gauge 0'ed for 0 fly
+        if(levels < 1) {revert LevelOutofBounds(); } // handles the currentLevel + 0 edge case where a user can get his level gauge 0'ed for 0 fly
 
         HopperNFT.Hopper memory hopper = IHOPPER.getHopper(tokenId);
         uint currentLevel = hopper.level;
