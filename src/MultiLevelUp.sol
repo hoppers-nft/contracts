@@ -1,17 +1,17 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.12;
+pragma solidity 0.8.12;
 
 import {HopperNFT} from "./Hopper.sol";
 import {Fly} from "./Fly.sol";
 
 
 //slither-disable-next-line locked-ether
-contract MultilevelUp {
+contract MultiLevelUp {
     address public immutable FLY;
     address public immutable HOPPER;
     address public owner;
 
-    string public immutable LEVEL_GAUGE_KEY;
+    string public constant LEVEL_GAUGE_KEY = "LEVEL_GAUGE_KEY";
     uint public constant LEVEL_UP_COST_CATEGORY_0 = 1051288022900527273848688253688596547214916831956288517063648523173704499200;
     uint public constant LEVEL_UP_COST_CATEGORY_1 = 4549695761791932346867726865992642700429225143980401255780434475327577129635;
     uint public constant LEVEL_UP_COST_CATEGORY_2 = 11811543960987259923365662880439990815517098782391593173251212966463154752205;
@@ -20,18 +20,20 @@ contract MultilevelUp {
     uint public constant LEVEL_UP_COST_CATEGORY_5 = 63828299623757599652339988891003529005521872508617173962538202162096509771025;
     uint public constant LEVEL_UP_COST_CATEGORY_6 = 754575304390847322886335;
 
+    uint public multilevelFeeMultiplier;
 
     event UpdatedOwner(address indexed owner);
     error LevelOutofBounds();
     error WrongTokenID();
     error Unauthorized();
+    error FeeMultiplierOutOfRange();
 
     constructor(  address fly,address hopper
     ) {
         owner = msg.sender;
         FLY = fly;
         HOPPER = hopper;
-        LEVEL_GAUGE_KEY = "LEVEL_GAUGE_KEY";
+        multilevelFeeMultiplier = 110;
 
     }
     modifier onlyOwner() {
@@ -44,9 +46,19 @@ contract MultilevelUp {
         emit UpdatedOwner(_owner);
     }
 
-    function calculateMultiLevelUpCost(uint currentLevel, uint targetLevel) public pure returns (uint) {
+
+    function setFeePercentage (uint _feeMultiplier) external onlyOwner {
+        if(_feeMultiplier > 200 || _feeMultiplier < 100 ) revert FeeMultiplierOutOfRange();
+        multilevelFeeMultiplier = _feeMultiplier;
+    }
+
+    function calculateMultiLevelUpCost(uint currentLevel, uint targetLevel) public view returns (uint) {
         if(targetLevel > 100) { revert LevelOutofBounds(); }
-        return (getCumulativeLevelUpCost(targetLevel) - getCumulativeLevelUpCost(currentLevel)) * 10**17; 
+        uint intermediate = (getCumulativeLevelUpCost(targetLevel) - getCumulativeLevelUpCost(currentLevel));
+        if(targetLevel == 100) {
+            intermediate += 5000; // account for 598
+        } 
+        return (intermediate * multilevelFeeMultiplier * 10**17) / 100 ;
     }
 
 
